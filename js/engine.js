@@ -14,6 +14,7 @@ const Engine = {
   lastFourthWall: 0,
   lastDM: 0,
   started: false,
+  _raf: null,
 
   /* ---------- helpers ---------- */
   rnd(a, b) { return a + Math.random() * (b - a); },
@@ -39,7 +40,12 @@ const Engine = {
   genDef(id) { return DATA.GENERATORS.find(g => g.id === id); },
   genCount(id) { return State.data.generators[id] || 0; },
 
+  // cached impressions-per-second; recomputed once per simulation tick
+  _ipsCache: 0,
+  _ipsDirty: true,
+  invalidateIps() { this._ipsDirty = true; },
   totalIps() {
+    if (!this._ipsDirty) return this._ipsCache;
     const s = State.data;
     let ips = 0;
     for (const g of DATA.GENERATORS) {
@@ -62,7 +68,9 @@ const Engine = {
     // bot service add on top
     ips += Bot.botIps();
     // global scale
-    return ips * this.scale();
+    this._ipsCache = ips * this.scale();
+    this._ipsDirty = false;
+    return this._ipsCache;
   },
 
   /* ---------- post generation ---------- */
@@ -424,14 +432,14 @@ const Engine = {
     const now = Date.now();
     const rate = s.premium ? 1.6 : 1;
     // profile views (golden cookie-ish)
-    if (now - this.lastView > (2000 / rate / this.scale()) && !s.shadowbanned) {
+    if (now - this.lastView > Math.max(500, 2000 / rate / this.scale()) && !s.shadowbanned) {
       this.lastView = now;
       const reward = Math.floor(this.rnd(5, 20) * (1 + s.followers / 500) * this.scale());
       s.impressions += reward;
       this.addNotif('view', this.pick(DATA.NOTIFS.view), reward, '👀');
     }
     // generic notifications
-    if (now - this.lastNotif > (1500 / rate / this.scale())) {
+    if (now - this.lastNotif > Math.max(500, 1500 / rate / this.scale())) {
       this.lastNotif = now;
       const roll = Math.random();
       if (roll < 0.3) {
@@ -446,7 +454,7 @@ const Engine = {
       }
     }
     // recruiter DM (rare, big moment)
-    if (now - this.lastRecruiter > 12000 / this.scale() && s.followers > 20) {
+    if (now - this.lastRecruiter > Math.max(5000, 12000 / this.scale()) && s.followers > 20) {
       this.lastRecruiter = now;
       this.addNotif('recruiter', this.pick(DATA.NOTIFS.recruiter), Math.floor(this.rnd(50, 150)), '🚨');
       Juice.milestone('🚨 RECRUITER DM', 'You\'ve made it. They want you.', 'viral');
@@ -459,7 +467,7 @@ const Engine = {
     const now = Date.now();
     // DMs stream in faster as you grow — the more influence, the more opportunities
     const base = 1500;
-    const interval = Math.max(500, base - s.followers * 2 - s.connections * 1.5) / this.scale();
+    const interval = Math.max(500, (base - s.followers * 2 - s.connections * 1.5) / this.scale());
     if (now - this.lastDM > interval) {
       this.lastDM = now;
       const sender = this.pick(DATA.DM_SENDERS);
@@ -485,7 +493,7 @@ const Engine = {
     const s = State.data;
     if (!s.generators['aifactory']) return;
     const now = Date.now();
-    const interval = 10000 / this.scale(); // every 10s the factory posts
+    const interval = Math.max(500, 10000 / this.scale()); // every 10s the factory posts
     if (now - this.lastAutoPost > interval) {
       this.lastAutoPost = now;
       const post = this.makePost(this.pick(DATA.TEMPLATES.filter(t => t.id !== 'free')).text, {
@@ -499,7 +507,7 @@ const Engine = {
       post.authorName = 'You (AI)';
       post.authorEmoji = '🤖';
       s.posts.unshift(post);
-      UI.renderFeed();
+      UI.renderFeedDebounced();
       UI.updatePostCard(post);
       Juice.toast('🤖 AI Factory published a post for you');
     }
@@ -510,13 +518,13 @@ const Engine = {
   tickStream(dt) {
     const s = State.data;
     const now = Date.now();
-    const interval = 800 / this.scale(); // a new post every 0.8s (bounded by trimPosts)
+    const interval = Math.max(250, 800 / this.scale()); // a new post every 0.8s (bounded by trimPosts)
     if (now - this.lastStreamPost > interval) {
       this.lastStreamPost = now;
       const post = this.makeNPCPost();
       s.posts.unshift(post);
       this.trimPosts();
-      UI.renderFeed();
+      UI.renderFeedDebounced();
     }
   },
 
@@ -591,7 +599,7 @@ const Engine = {
   tickFourthWall(dt) {
     const s = State.data;
     const now = Date.now();
-    if (now - this.lastFourthWall > 45000 / this.scale()) {
+    if (now - this.lastFourthWall > Math.max(15000, 45000 / this.scale())) {
       this.lastFourthWall = now;
       const post = this.makeNPCPost();
       post.content = this.pick(DATA.FOURTHWALL);
@@ -601,7 +609,7 @@ const Engine = {
       post.authorColor = '#111';
       post.fourthWall = true;
       s.posts.unshift(post);
-      UI.renderFeed();
+      UI.renderFeedDebounced();
     }
   },
 
@@ -624,6 +632,7 @@ const Engine = {
       this.lastTick = now;
       const dtMs = Math.min(dt, 5000);
 
+      this.invalidateIps();
       this.tickPosts(dtMs);
       this.tickAutomation(dtMs);
       this.tickWorkers(dtMs);
@@ -638,16 +647,20 @@ const Engine = {
       this.checkMilestones();
     }, this.tick);
 
-    // UI refresh at 60fps for that casino feel
-    setInterval(() => {
+    // UI refresh at 60fps for that casino feel, but only while the tab is
+    // visible and only for post cards actually on screen.
+    const uiLoop = () => {
+      if (document.hidden) { this._raf = requestAnimationFrame(uiLoop); return; }
       UI.refresh();
       // live-update visible post cards in place
       for (const post of State.data.posts) {
-        if (post.status === 'live') UI.updatePostCard(post);
+        if (post.status === 'live' && UI.isPostVisible(post.id)) UI.updatePostCard(post);
       }
       // live-update analytics dashboard while open
       UI.anLive();
-    }, 16);
+      this._raf = requestAnimationFrame(uiLoop);
+    };
+    this._raf = requestAnimationFrame(uiLoop);
   },
 
   /* ---------- player actions ---------- */

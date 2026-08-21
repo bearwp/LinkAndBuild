@@ -46,8 +46,8 @@ const UI = {
     const a = Math.round(s.authenticity);
     $('auth-value').textContent = a + '%';
     const fill = $('auth-fill');
-    fill.style.width = a + '%';
-    fill.style.background = 'linear-gradient(90deg,#b8860b,#ffd700)';
+    if (fill.style.width !== a + '%') fill.style.width = a + '%';
+    if (fill.style.background !== 'linear-gradient(90deg,#b8860b,#ffd700)') fill.style.background = 'linear-gradient(90deg,#b8860b,#ffd700)';
     if (a >= 90) $('auth-note').textContent = 'Top 1% of creators. The algorithm is obsessed with you.';
     else if (a >= 60) $('auth-note').textContent = 'Thought leader. Recruiters are circling.';
     else if (a >= 30) $('auth-note').textContent = 'Rising fast. Your network is noticing.';
@@ -61,14 +61,19 @@ const UI = {
     else if (autoCount < 6) $('prod-headline').textContent = '"I automated everything. 40 hours saved a week."';
     else $('prod-headline').textContent = '"I haven\'t touched my keyboard in weeks. Peak productivity."';
 
-    // leaderboard-free: next unlock nudge
-    this.renderNextUnlock();
+    // leaderboard-free: next unlock nudge (throttled — cost math is cheap but
+    // the DOM writes don't need to run at 60fps)
+    const now = Date.now();
+    if (!this._nextUnlockAt || now - this._nextUnlockAt > 500) {
+      this._nextUnlockAt = now;
+      this.renderNextUnlock();
+    }
 
     // profile
-    $('profile-name').textContent = s.name;
-    $('profile-headline').textContent = s.headline;
-    $('cm-name').textContent = s.name;
-    $('cm-headline').textContent = s.headline;
+    if ($('profile-name').textContent !== s.name) $('profile-name').textContent = s.name;
+    if ($('profile-headline').textContent !== s.headline) $('profile-headline').textContent = s.headline;
+    if ($('cm-name').textContent !== s.name) $('cm-name').textContent = s.name;
+    if ($('cm-headline').textContent !== s.headline) $('cm-headline').textContent = s.headline;
     // avatar image (profile, nav, composer)
     if (s.avatar) {
       const setAvatar = (id) => {
@@ -139,6 +144,36 @@ const UI = {
   _feedIds: new Set(),
   _feedRendered: 0,
   _cards: new Map(), // postId -> card element (O(1) lookup, no querySelector scans)
+  _visiblePosts: new Set(), // postIds currently on screen (IntersectionObserver)
+  _feedDebounceT: null,
+
+  // Track which post cards are on screen so the 60fps loop only updates
+  // visible cards instead of every post in the feed.
+  _initVisibility() {
+    if (this._visObserver) return;
+    this._visObserver = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const id = e.target.dataset.postId;
+        if (!id) continue;
+        if (e.isIntersecting) this._visiblePosts.add(id);
+        else this._visiblePosts.delete(id);
+      }
+    }, { rootMargin: '200px 0px' });
+  },
+  isPostVisible(id) { return this._visiblePosts.has(id); },
+  _observeCard(card) {
+    this._initVisibility();
+    this._visObserver.observe(card);
+  },
+
+  // Coalesce rapid feed changes (stream posts, auto posts) into one render.
+  renderFeedDebounced() {
+    if (this._feedDebounceT) return;
+    this._feedDebounceT = setTimeout(() => {
+      this._feedDebounceT = null;
+      this.renderFeed();
+    }, 250);
+  },
 
   renderFeed() {
     const feed = document.getElementById('feed');
@@ -171,11 +206,14 @@ const UI = {
         card.classList.toggle('post-card-first', i === 0);
         // new posts stream in at the top of the feed
         feed.insertBefore(card, feed.firstChild);
+        this._observeCard(card);
       }
     }
     // remove cards no longer in the list
     for (const [id, card] of existing) {
       if (!seen.has(id)) {
+        if (this._visObserver) this._visObserver.unobserve(card);
+        this._visiblePosts.delete(id);
         card.remove();
         this._cards.delete(id);
       }
@@ -289,7 +327,9 @@ const UI = {
     const renderedNpcs = feed.querySelectorAll('.post-card').length - s.posts.filter(p => p.authorId === 'you').length;
     const more = npcs.slice(renderedNpcs, renderedNpcs + 6);
     for (const post of more) {
-      feed.appendChild(this.postCard(post));
+      const card = this.postCard(post);
+      feed.appendChild(card);
+      this._observeCard(card);
     }
     return more.length;
   },
@@ -695,7 +735,14 @@ const UI = {
       ge.classList.toggle('down', g < 0);
     }
     const chart = body.querySelector('#an-chart');
-    if (chart) chart.innerHTML = this.anChartHtml();
+    if (chart) {
+      // chart only needs to rebuild when a new history sample lands (~1/s)
+      const now = Date.now();
+      if (!this._anChartAt || now - this._anChartAt > 1000) {
+        this._anChartAt = now;
+        chart.innerHTML = this.anChartHtml();
+      }
+    }
   },
 
   renderAnalytics() {

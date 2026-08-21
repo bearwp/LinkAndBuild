@@ -104,7 +104,7 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 
 /* ============ Feed ============ */
 .feed { display: flex; flex-direction: column; gap: 12px; }
-.post-card { background: #fff; border-radius: 8px; border: 1px solid #e0dfdc; padding: 12px 16px; animation: postIn 0.3s ease; }
+.post-card { background: #fff; border-radius: 8px; border: 1px solid #e0dfdc; padding: 12px 16px; animation: postIn 0.3s ease; content-visibility: auto; contain-intrinsic-size: 1px 320px; }
 /* tier styling: high-influence members glow, low-influence members look muted */
 .post-card.tier-top { border-left: 3px solid #e2a33b; background: linear-gradient(180deg, #fffdf5, #fff); }
 .post-card.tier-mid { border-left: 3px solid #0a66c2; }
@@ -146,6 +146,9 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .thumb { display: inline-block; transition: transform 0.15s ease; }
 .viral-flash { animation: viralFlash 1.2s ease; }
 @keyframes viralFlash { 0% { box-shadow: 0 0 0 0 rgba(255,193,7,0.8); } 100% { box-shadow: 0 0 0 24px rgba(255,193,7,0); } }
+@media (prefers-reduced-motion: reduce) {
+  .viral-flash { animation: none; }
+}
 .feed-end { text-align: center; color: #666; font-size: 13px; padding: 16px; }
 
 /* comment minigame popover */
