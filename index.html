@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LinkedIn</title>
+<title>LockedIn</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,10 +18,11 @@
 <div id="desktop" class="desktop hidden">
   <div class="desktop-wallpaper">
     <div class="desktop-icons">
-      <div class="d-icon" data-app="linkedin"><div class="d-ico">in</div><span>LinkedIn</span></div>
+      <div class="d-icon" data-app="linkedin"><div class="d-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></div><span>LockedIn</span></div>
       <div class="d-icon" data-app="telegram"><div class="d-ico">✈️</div><span>Telegram</span></div>
       <div class="d-icon" data-app="bot"><div class="d-ico">🤖</div><span>Bot Service</span></div>
       <div class="d-icon" data-app="dark"><div class="d-ico">🕶️</div><span>Dark Web</span></div>
+      <div class="d-icon" data-app="bank"><div class="d-ico">🏦</div><span>Bank</span></div>
       <div class="d-icon" data-app="files"><div class="d-ico">📁</div><span>Files</span></div>
       <div class="d-icon" data-app="recycle"><div class="d-ico">🗑️</div><span>Recycle Bin</span></div>
     </div>
@@ -30,10 +31,11 @@
   <div class="taskbar">
     <button class="task-start" id="task-start">🪟 Start</button>
     <div class="task-apps" id="task-apps">
-      <button class="task-app active" data-app="linkedin">in</button>
+      <button class="task-app active" data-app="linkedin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></button>
       <button class="task-app" data-app="telegram">✈️</button>
       <button class="task-app" data-app="bot">🤖</button>
       <button class="task-app" data-app="dark">🕶️</button>
+      <button class="task-app" data-app="bank">🏦</button>
     </div>
     <div class="task-clock" id="task-clock">12:00 PM</div>
   </div>
@@ -43,14 +45,15 @@
 <div id="browser" class="browser hidden">
   <div class="browser-chrome">
     <div class="browser-tabs" id="browser-tabs">
-      <button class="b-tab active" data-app="linkedin"><span class="b-fav">in</span> LinkedIn</button>
+      <button class="b-tab active" data-app="linkedin"><span class="b-fav"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></span> LockedIn</button>
       <button class="b-tab" data-app="telegram"><span class="b-fav">✈️</span> Telegram</button>
       <button class="b-tab" data-app="bot"><span class="b-fav">🤖</span> Bot Service</button>
       <button class="b-tab" data-app="dark"><span class="b-fav">🕶️</span> Dark Web</button>
+      <button class="b-tab" data-app="bank"><span class="b-fav">🏦</span> Bank</button>
     </div>
     <div class="browser-addr">
       <button class="b-nav">←</button><button class="b-nav">→</button><button class="b-nav">↻</button>
-      <input class="b-url" id="b-url" value="https://www.linkedin.com/feed/">
+      <input class="b-url" id="b-url" value="https://www.lockedin.com/feed/">
     </div>
   </div>
   <div class="browser-body">
@@ -60,8 +63,8 @@
   <header class="topnav">
     <div class="topnav-inner">
       <div class="brand">
-        <span class="logo">in</span>
-        <span class="brand-name">LinkedIn</span>
+        <span class="logo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></span>
+        <span class="brand-name">LockedIn</span>
       </div>
       <div class="nav-search">
         <input type="text" placeholder="Search" aria-label="Search">
@@ -140,11 +143,35 @@
           <div class="avatar" id="composer-avatar">Y</div>
           <div class="composer-input" id="inline-post-text">Start a post</div>
         </div>
+        <div class="inline-composer hidden" id="inline-composer">
+          <div class="inline-text" id="inline-text"></div>
+          <div class="inline-actions">
+            <button class="btn btn-primary" id="inline-send" disabled>Send</button>
+          </div>
+        </div>
       </div>
 
       <!-- feed -->
       <div id="feed" class="feed"></div>
       <div class="feed-end" id="feed-end">You're all caught up. Keep scrolling anyway.</div>
+
+      <!-- network view -->
+      <div id="network-view" class="network-view hidden">
+        <div class="card network-card">
+          <div class="network-head">
+            <span class="network-title">My Network</span>
+            <span class="network-sub">People who want to Link &amp; Build with you</span>
+          </div>
+          <div class="network-list" id="network-list"></div>
+        </div>
+      </div>
+
+      <!-- jobs view -->
+      <div id="jobs-view" class="jobs-view hidden">
+        <div class="card jobs-card">
+          <div class="jobs-empty" id="jobs-empty"></div>
+        </div>
+      </div>
     </main>
 
     <!-- RIGHT RAIL -->
@@ -181,7 +208,7 @@
       <div class="card footer-card">
         <div class="footer-links">About · Accessibility · Help Center</div>
         <div class="footer-links">Privacy &amp; Terms · Ad Choices</div>
-        <div class="footer-copy">LinkedIn Corporation © 2026</div>
+        <div class="footer-copy">LockedIn Corporation © 2026</div>
       </div>
     </aside>
   </div>
@@ -316,7 +343,7 @@
   <div class="modal-overlay hidden" id="premium-modal">
     <div class="modal premium-modal">
       <div class="modal-head">
-        <span class="modal-title">LinkedIn Premium</span>
+        <span class="modal-title">LockedIn Premium</span>
         <button class="modal-close" data-close="premium-modal">✕</button>
       </div>
       <div class="premium-body">
@@ -391,7 +418,7 @@
           <div class="bot-locked" id="bot-locked">
             <div style="font-size:40px">🔒</div>
             <div class="bot-locked-title">Bot Service Locked</div>
-            <div class="bot-locked-sub">Get a DM from a "growth expert" on LinkedIn to unlock this.</div>
+            <div class="bot-locked-sub">Get a DM from a "growth expert" on LockedIn to unlock this.</div>
           </div>
         </div>
       </div>
@@ -414,6 +441,11 @@
         </div>
       </div>
     </div><!-- /app-view dark -->
+
+    <!-- ===== BANK APP ===== -->
+    <div class="app-view" data-app="bank">
+      <div class="bank-body" id="bank-body"></div>
+    </div><!-- /app-view bank -->
   </div><!-- /browser-body -->
 </div><!-- /browser -->
 
@@ -446,6 +478,7 @@
 <script src="js/telegram.js"></script>
 <script src="js/bot.js"></script>
 <script src="js/dark.js"></script>
+<script src="js/bank.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

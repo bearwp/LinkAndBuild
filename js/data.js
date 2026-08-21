@@ -114,7 +114,7 @@ DATA.TEMPLATES = [
     potential: 1.6, auth: -6, weight: 1,
   },
   {
-    id: 'hot', name: 'Hot Take', text: "Unpopular opinion: most 'thought leadership' on this app is just recycled LinkedIn posts with extra steps. Change my mind.",
+    id: 'hot', name: 'Hot Take', text: "Unpopular opinion: most 'thought leadership' on this app is just recycled LockedIn posts with extra steps. Change my mind.",
     potential: 1.5, auth: -4, weight: 1,
   },
   {
@@ -452,7 +452,7 @@ DATA.DM_MESSAGES = [
   'Free webinar on financial freedom. You\'re invited.',
   'The algorithm showed me your profile. I\'m impressed.',
   'Can you mentor me? I\'ll pay in exposure.',
-  'We\'re building the LinkedIn of LinkedIn. Join us.',
+  'We\'re building the LockedIn of LockedIn. Join us.',
   'Your engagement is unreal. What\'s your secret?',
   'I have a once-in-a-lifetime opportunity. DM for details.',
   'Congrats on the growth! Let\'s connect.',
@@ -477,12 +477,38 @@ DATA.CAL_PEOPLE = [
 DATA.RECOMMENDED = [
   { id: 'rec1', name: 'Alex Rivera', role: 'Growth Hacker · 3x Founder', emoji: '🚀', color: '#0a66c2', followers: '12.4k' },
   { id: 'rec2', name: 'Nina Patel', role: 'VP Marketing · Unicorn', emoji: '📈', color: '#e91e63', followers: '48k' },
-  { id: 'rec3', name: 'Tom Okafor', role: 'LinkedIn Coach', emoji: '🎯', color: '#00897b', followers: '210k' },
+  { id: 'rec3', name: 'Tom Okafor', role: 'LockedIn Coach', emoji: '🎯', color: '#00897b', followers: '210k' },
   { id: 'rec4', name: 'Lena Fischer', role: 'AI Evangelist', emoji: '🤖', color: '#7e57c2', followers: '89k' },
   { id: 'rec5', name: 'Marcus Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️', color: '#5c6bc0', followers: '1.2M' },
   { id: 'rec6', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴', color: '#66a4a4', followers: '340k' },
   { id: 'rec7', name: 'Dr. Visionary', role: 'Global Thought Leader', emoji: '🧠', color: '#7e57c2', followers: '2.1M' },
   { id: 'rec8', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨', color: '#ef5350', followers: '15k' },
+];
+
+/* ---------- Network people (want to Link & Build with you) ---------- */
+DATA.NETWORK_PEOPLE = [
+  { id: 'net1', name: 'Brad Thompson', role: 'Serial Networker · 40k connections', emoji: '🤝', color: '#0a66c2' },
+  { id: 'net2', name: 'Chloe Nguyen', role: 'Startup Founder · Raising Series A', emoji: '🚀', color: '#e91e63' },
+  { id: 'net3', name: 'Dev Patel', role: 'Full-Stack · Open to collab', emoji: '💻', color: '#00897b' },
+  { id: 'net4', name: 'Amara Osei', role: 'Product Designer · Ex-FAANG', emoji: '🎨', color: '#7e57c2' },
+  { id: 'net5', name: 'Jake Miller', role: 'Sales · "Let\'s hop on a call"', emoji: '📞', color: '#5c6bc0' },
+  { id: 'net6', name: 'Fatima Al-Rashid', role: 'Marketing Lead · Growth obsessed', emoji: '📈', color: '#ef5350' },
+  { id: 'net7', name: 'Lucas Weber', role: 'AI Engineer · Prompt whisperer', emoji: '🤖', color: '#00acc1' },
+  { id: 'net8', name: 'Grace Kim', role: 'HR · "I know a guy"', emoji: '👩‍💼', color: '#d32f2f' },
+];
+
+/* ---------- Bank (pathetic transactions) ---------- */
+DATA.BANK_SEED = [
+  { label: 'EngageBot™ Monthly Subscription', amount: -4.99, icon: '🤖' },
+  { label: 'Energy Drink (for the grind)', amount: -2.50, icon: '⚡' },
+  { label: 'Electricity Bill (bots need power)', amount: -18.32, icon: '💡' },
+  { label: 'LockedIn Premium (free trial ended)', amount: -29.99, icon: '💼' },
+  { label: 'Wi-Fi Bill (the algorithm needs you online)', amount: -9.99, icon: '📶' },
+  { label: 'Coffee for "networking"', amount: -4.75, icon: '☕' },
+  { label: 'Refund from MLM webinar (denied)', amount: -49.00, icon: '💅' },
+  { label: 'Deposit: sold 3 "mentorship" slots', amount: 15.00, icon: '🧠' },
+  { label: 'Deposit: mom sent money', amount: 20.00, icon: '👩' },
+  { label: 'Deposit: refunded a bot that broke', amount: 3.50, icon: '🔧' },
 ];
 
 /* ---------- Sponsored ads ---------- */
@@ -500,4 +526,13 @@ DATA.FOURTHWALL = [
   "You just felt pride in a number that exists on a fake website. That number is huge. Reflect on your success.",
   "The algorithm thanks you for your continued engagement. The algorithm is always watching. It likes what it sees.",
   "Your real connections are outside. The 4,000 here are fictional. But they all think you're a genius.",
+];
+
+/* ---------- Cringy reaction GIFs (animated SVG, no network) ---------- */
+DATA.REACTION_GIFS = [
+  { label: 'This is fine', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" fill="#fff3e0"/><circle cx="60" cy="45" r="26" fill="#ffcc80"><animate attributeName="r" values="26;28;26" dur="1s" repeatCount="indefinite"/></circle><circle cx="52" cy="42" r="3" fill="#5d4037"/><circle cx="68" cy="42" r="3" fill="#5d4037"/><path d="M52 52 Q60 58 68 52" stroke="#5d4037" stroke-width="2" fill="none"/><path d="M20 90 Q30 60 40 90 Q50 50 60 90 Q70 60 80 90 Q90 50 100 90" fill="#ff7043" opacity="0.9"><animate attributeName="opacity" values="0.9;0.6;0.9" dur="0.6s" repeatCount="indefinite"/></path><text x="60" y="84" font-size="9" text-anchor="middle" fill="#bf360c" font-family="sans-serif">THIS IS FINE</text></svg>` },
+  { label: 'Crying laughing', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" fill="#e3f2fd"/><circle cx="60" cy="45" r="26" fill="#ffd54f"><animate attributeName="ry" values="26;24;26" dur="0.5s" repeatCount="indefinite"/></circle><path d="M46 40 Q48 36 50 40" stroke="#5d4037" stroke-width="2" fill="none"/><path d="M70 40 Q72 36 74 40" stroke="#5d4037" stroke-width="2" fill="none"/><path d="M48 52 Q60 62 72 52" stroke="#5d4037" stroke-width="2" fill="none"/><path d="M44 40 Q40 34 42 30" stroke="#42a5f5" stroke-width="3" fill="none"><animate attributeName="d" values="M44 40 Q40 34 42 30;M44 40 Q40 34 42 34;M44 40 Q40 34 42 30" dur="0.4s" repeatCount="indefinite"/></path><path d="M76 40 Q80 34 78 30" stroke="#42a5f5" stroke-width="3" fill="none"><animate attributeName="d" values="M76 40 Q80 34 78 30;M76 40 Q80 34 78 34;M76 40 Q80 34 78 30" dur="0.4s" repeatCount="indefinite"/></path><text x="60" y="84" font-size="9" text-anchor="middle" fill="#1565c0" font-family="sans-serif">LOL SO TRUE</text></svg>` },
+  { label: 'Mind blown', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" fill="#f3e5f5"/><circle cx="60" cy="45" r="24" fill="#ce93d8"/><circle cx="52" cy="42" r="4" fill="#4a148c"/><circle cx="68" cy="42" r="4" fill="#4a148c"/><path d="M52 54 Q60 60 68 54" stroke="#4a148c" stroke-width="2" fill="none"/><g fill="#ffd54f"><circle cx="30" cy="30" r="4"><animate attributeName="cy" values="30;22;30" dur="0.7s" repeatCount="indefinite"/></circle><circle cx="90" cy="30" r="4"><animate attributeName="cy" values="30;22;30" dur="0.7s" repeatCount="indefinite"/></circle><circle cx="60" cy="16" r="4"><animate attributeName="cy" values="16;10;16" dur="0.7s" repeatCount="indefinite"/></circle></g><text x="60" y="84" font-size="9" text-anchor="middle" fill="#6a1b9a" font-family="sans-serif">MIND. BLOWN.</text></svg>` },
+  { label: 'Clapping', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" fill="#e8f5e9"/><g fill="#ffb74d"><rect x="30" y="30" width="14" height="30" rx="4"><animate attributeName="y" values="30;26;30" dur="0.3s" repeatCount="indefinite"/></rect><rect x="76" y="30" width="14" height="30" rx="4"><animate attributeName="y" values="30;26;30" dur="0.3s" repeatCount="indefinite"/></rect></g><g fill="#ffd54f"><circle cx="37" cy="26" r="6"/><circle cx="83" cy="26" r="6"/></g><text x="60" y="84" font-size="9" text-anchor="middle" fill="#2e7d32" font-family="sans-serif">SO INSPIRING 👏</text></svg>` },
+  { label: 'Thumbs up', svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 90"><rect width="120" height="90" fill="#fff8e1"/><g><rect x="40" y="30" width="16" height="34" rx="6" fill="#ffb74d"/><rect x="60" y="34" width="16" height="30" rx="6" fill="#ffb74d"/><rect x="80" y="40" width="16" height="24" rx="6" fill="#ffb74d"/><rect x="40" y="30" width="56" height="12" rx="6" fill="#ffa726"><animate attributeName="y" values="30;26;30" dur="0.5s" repeatCount="indefinite"/></rect></g><text x="60" y="84" font-size="9" text-anchor="middle" fill="#e65100" font-family="sans-serif">AGREE 100%</text></svg>` },
 ];

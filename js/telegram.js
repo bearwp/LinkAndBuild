@@ -10,7 +10,7 @@ const Telegram = {
     const s = State.data;
     const os = s.os.telegram;
     if (!os.unlocked) {
-      document.getElementById('tg-chats').innerHTML = '<div style="padding:12px;font-size:12px;color:#666">Locked. A LinkedIn DM will unlock this.</div>';
+      document.getElementById('tg-chats').innerHTML = '<div style="padding:12px;font-size:12px;color:#666">Locked. A LockedIn DM will unlock this.</div>';
       document.getElementById('tg-messages').innerHTML = '';
       return;
     }
@@ -27,7 +27,7 @@ const Telegram = {
     // Growth Expert direct chat (the DM that unlocked Telegram)
     const expert = {
       id: 'expert', name: 'Growth Expert', icon: '📈',
-      desc: 'The person who DMed you on LinkedIn',
+      desc: 'The person who DMed you on LockedIn',
     };
     const expertEl = document.createElement('div');
     expertEl.className = 'tg-chat' + (this.activePod === 'expert' ? ' joined' : '');

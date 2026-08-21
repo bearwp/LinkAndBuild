@@ -57,7 +57,7 @@
         return;
       }
       if (!State.data.os.unlockedApps.includes(app)) {
-        Juice.toast('Locked. A LinkedIn DM will unlock this.');
+        Juice.toast('Locked. A LockedIn DM will unlock this.');
         return;
       }
       OS.showBrowser();
@@ -69,7 +69,7 @@
   document.querySelectorAll('.task-app').forEach(t => {
     t.addEventListener('click', () => {
       if (!State.data.os.unlockedApps.includes(t.dataset.app)) {
-        Juice.toast('Locked. A LinkedIn DM will unlock this.');
+        Juice.toast('Locked. A LockedIn DM will unlock this.');
         return;
       }
       OS.switchApp(t.dataset.app);
@@ -80,7 +80,7 @@
   document.querySelectorAll('.b-tab').forEach(t => {
     t.addEventListener('click', () => {
       if (!State.data.os.unlockedApps.includes(t.dataset.app)) {
-        Juice.toast('Locked. A LinkedIn DM will unlock this.');
+        Juice.toast('Locked. A LockedIn DM will unlock this.');
         return;
       }
       OS.switchApp(t.dataset.app);
@@ -109,8 +109,9 @@
     UI.showModal('growth-modal');
   });
 
-  // inline composer — minimal "Start a post" block opens the full composer modal
-  $('composer-open').addEventListener('click', () => UI.openComposer());
+  // inline composer — "Start a post" types out a post for you, no modal
+  $('composer-open').addEventListener('click', () => UI.startInlinePost());
+  $('inline-send').addEventListener('click', () => UI.sendInlinePost());
 
   // calendar
   $('dcal-schedule').addEventListener('click', () => UI.scheduleCoffee());
@@ -210,7 +211,7 @@
   // first-time welcome
   if (!hadSave) {
     setTimeout(() => {
-      Juice.milestone('WELCOME TO LINKEDIN', 'The game. Post something.', '');
+      Juice.milestone('WELCOME TO LOCKEDIN', 'The game. Post something.', '');
       Juice.chime();
       // highlight the composer
       const composer = document.getElementById('composer');

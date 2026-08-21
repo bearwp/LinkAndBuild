@@ -32,7 +32,7 @@ const OS = {
       'Starting WorkOS 1.0...',
       'Loading professional modules...',
       'Optimizing synergy...',
-      'Booting LinkedIn...',
+      'Booting LockedIn...',
       'Welcome back. The algorithm missed you.',
     ];
     let i = 0;
@@ -83,7 +83,7 @@ const OS = {
       v.classList.toggle('active', v.dataset.app === appId);
     });
     // url bar
-    const urls = { linkedin: 'https://www.linkedin.com/feed/', telegram: 'https://web.telegram.org/', bot: 'https://engagebot.example.com/dashboard', dark: 'http://marketplace.onion/' };
+    const urls = { linkedin: 'https://www.lockedin.com/feed/', telegram: 'https://web.telegram.org/', bot: 'https://engagebot.example.com/dashboard', dark: 'http://marketplace.onion/', bank: 'https://bank.firstnationalgrind.com/' };
     const url = document.getElementById('b-url');
     if (url) url.value = urls[appId] || '';
     // taskbar
@@ -94,6 +94,7 @@ const OS = {
     if (appId === 'telegram') Telegram.render();
     if (appId === 'bot') Bot.render();
     if (appId === 'dark') Dark.render();
+    if (appId === 'bank') Bank.render();
   },
 
   /* ---------- app icons (desktop + taskbar + tabs) ---------- */

@@ -12,7 +12,7 @@ const Bot = {
       body.innerHTML = `<div class="bot-locked">
         <div style="font-size:40px">🔒</div>
         <div class="bot-locked-title">Bot Service Locked</div>
-        <div class="bot-locked-sub">Get a DM from a "growth expert" on LinkedIn to unlock this.</div>
+        <div class="bot-locked-sub">Get a DM from a "growth expert" on LockedIn to unlock this.</div>
       </div>`;
       return;
     }

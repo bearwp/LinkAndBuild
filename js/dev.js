@@ -8,8 +8,8 @@
 const DevState = {
   isFull() {
     const p = new URLSearchParams(window.location.search).get('dev');
-    // default (no param) = full showcase; explicit 'full' = full showcase
-    return p === null || p === 'full';
+    // explicit 'full' = full showcase; default is a fresh game
+    return p === 'full';
   },
   isAll() {
     return new URLSearchParams(window.location.search).get('dev') === 'all';
@@ -19,7 +19,7 @@ const DevState = {
   applyAll() {
     const s = State.data;
     s.os.booted = true;
-    s.os.unlockedApps = ['linkedin', 'telegram', 'bot', 'dark'];
+    s.os.unlockedApps = ['linkedin', 'telegram', 'bot', 'dark', 'bank'];
     s.os.activeApp = 'linkedin';
     s.os.telegram.unlocked = true;
     s.os.bot.unlocked = true;
@@ -110,7 +110,7 @@ const DevState = {
 
     // --- OS: everything unlocked ---
     s.os.booted = true;
-    s.os.unlockedApps = ['linkedin', 'telegram', 'bot', 'dark'];
+    s.os.unlockedApps = ['linkedin', 'telegram', 'bot', 'dark', 'bank'];
     s.os.activeApp = 'linkedin';
     s.os.telegram.unlocked = true;
     s.os.telegram.joinedPods = ['pod1', 'pod2', 'pod3'];
@@ -164,7 +164,7 @@ const DevState = {
     const playerPosts = [
       { t: 'I\'m humbled to announce that after years of relentless effort, I\'ve achieved something I never thought possible. To everyone who doubted me: thank you for the fuel. To my mentors: this is for you.', tm: 'humbled', f: 'text', imp: 482000, like: 12400, com: 890, age: 2 },
       { t: 'In the symphony of business, resilience is the crescendo. Embrace the chaos, for within it lies the harmony of growth. 🎶', tm: 'aiquote', f: 'text', imp: 1200000, like: 31000, com: 2400, age: 5 },
-      { t: 'Unpopular opinion: most \'thought leadership\' on this app is just recycled LinkedIn posts with extra steps. Change my mind.', tm: 'hot', f: 'text', imp: 890000, like: 22000, com: 5100, age: 9 },
+      { t: 'Unpopular opinion: most \'thought leadership\' on this app is just recycled LockedIn posts with extra steps. Change my mind.', tm: 'hot', f: 'text', imp: 890000, like: 22000, com: 5100, age: 9 },
       { t: 'I\'m taking a mental health day today. Instead of emails, I\'ll be doing breathwork on a beach. Remember: you can\'t pour from an empty cup. 🌴', tm: 'yacht', f: 'text', imp: 650000, like: 15000, com: 1200, age: 14 },
       { t: '5am: gym. 6am: cold shower. 7am: 3 coffees. 8am: \'synergy call\'. 9am: post about how productive I am. 10am: nap. #dayinthelife', tm: 'daylife', f: 'text', imp: 230000, like: 6800, com: 900, age: 20 },
       { t: 'I asked ChatGPT to write this post about how AI is transforming thought leadership. The results were... paradigm-shifting. 🚀', tm: 'chatgpt', f: 'carousel', imp: 1500000, like: 42000, com: 3100, age: 26 },

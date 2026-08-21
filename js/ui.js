@@ -28,11 +28,11 @@ const UI = {
     const likesEl = $('g-likes');
     const gfolEl = $('g-followers');
     connEl.textContent = Engine.fmtTick(s.connections);
-    folEl.textContent = Engine.fmtTick(s.followers);
+    folEl.textContent = Engine.fmt(s.followers);
     impEl.textContent = Engine.fmtTick(s.impressions);
     ipsEl.textContent = Engine.fmtTick(Engine.totalIps()) + '/s';
     likesEl.textContent = Engine.fmtTick(s.likes);
-    gfolEl.textContent = Engine.fmtTick(s.followers);
+    gfolEl.textContent = Engine.fmt(s.followers);
     popIfChanged(connEl, connEl.textContent);
     popIfChanged(folEl, folEl.textContent);
     popIfChanged(impEl, impEl.textContent);
@@ -40,7 +40,7 @@ const UI = {
     popIfChanged(likesEl, likesEl.textContent);
     popIfChanged(gfolEl, gfolEl.textContent);
 
-    // influence bar (always climbing — you are the CEO of LinkedIn)
+    // influence bar (always climbing — you are the CEO of LockedIn)
     if (s.authenticity > 100) s.authenticity = 100;
     if (s.authenticity < 0) s.authenticity = 0;
     const a = Math.round(s.authenticity);
@@ -143,10 +143,14 @@ const UI = {
   renderFeed() {
     const feed = document.getElementById('feed');
     const s = State.data;
-    // All of the player's posts always appear; NPC posts fill the rest.
+    // Player posts appear first, but NPC posts always keep a reserved slice
+    // so the feed never collapses into only the player's own posts.
+    const MIN_NPC = 20;
     const yours = s.posts.filter(p => p.authorId === 'you');
     const npcs = s.posts.filter(p => p.authorId !== 'you');
-    const posts = yours.concat(npcs.slice(0, Math.max(0, 60 - yours.length)));
+    const yourCap = 60 - MIN_NPC;
+    const shownYours = yours.slice(0, yourCap);
+    const posts = shownYours.concat(npcs.slice(0, 60 - shownYours.length));
 
     // In-place update: only add/remove cards, never rebuild all.
     const existing = new Map();
@@ -358,6 +362,7 @@ const UI = {
         </div>
       </div>
       <div class="post-body">${this.escapeHtml(post.content)}</div>
+      ${post.reactionGif ? `<div class="post-gif"><img src="data:image/svg+xml;utf8,${encodeURIComponent(post.reactionGif.svg)}" alt="${post.reactionGif.label}" loading="lazy"></div>` : ''}
       ${post.image ? `<div class="post-image"><img src="${post.image}" alt="" loading="lazy"></div>` : ''}
       ${formatTag}${rarityTag}
       <div class="post-stats">
@@ -454,6 +459,68 @@ const UI = {
   openComposer() {
     this.showModal('composer-modal');
     document.getElementById('post-text').focus();
+  },
+
+  /* ---------- inline composer (AI writes the post, no modal) ---------- */
+  startInlinePost() {
+    const s = State.data;
+    const box = document.getElementById('inline-composer');
+    const textEl = document.getElementById('inline-text');
+    const sendBtn = document.getElementById('inline-send');
+    if (!box || this._typing) return;
+    // pick a template (bait) or free write
+    const t = Engine.pick(DATA.TEMPLATES);
+    const content = t.id === 'free'
+      ? Engine.pick(DATA.ARCHETYPES).posts[0]
+      : t.text;
+    this._inlineTemplate = t;
+    this._inlineContent = content;
+    this._typing = true;
+    box.classList.remove('hidden');
+    textEl.textContent = '';
+    sendBtn.disabled = true;
+    // type it out character by character
+    let i = 0;
+    const caret = document.createElement('span');
+    caret.className = 'typing-caret';
+    textEl.appendChild(caret);
+    const step = () => {
+      if (!this._typing) return;
+      i++;
+      const shown = content.slice(0, i);
+      textEl.textContent = shown;
+      textEl.appendChild(caret);
+      if (i < content.length) {
+        this._typeTimer = setTimeout(step, 18 + Math.random() * 40);
+      } else {
+        this._typing = false;
+        sendBtn.disabled = false;
+      }
+    };
+    step();
+  },
+
+  sendInlinePost() {
+    const s = State.data;
+    const box = document.getElementById('inline-composer');
+    const textEl = document.getElementById('inline-text');
+    const sendBtn = document.getElementById('inline-send');
+    if (!this._inlineContent || this._typing) return;
+    const opts = {
+      template: this._inlineTemplate ? this._inlineTemplate.id : 'free',
+      format: 'text',
+      emojis: 0,
+      tags: 0,
+      question: 0,
+    };
+    const post = Engine.publish(this._inlineContent, opts);
+    if (post) {
+      this._inlineContent = null;
+      this._inlineTemplate = null;
+      textEl.textContent = '';
+      box.classList.add('hidden');
+      sendBtn.disabled = true;
+    }
   },
 
   /* ---------- growth console ---------- */
@@ -565,6 +632,73 @@ const UI = {
   },
 
   /* ---------- analytics ---------- */
+  anGrowth() {
+    const a = State.data.analytics;
+    const h = a.history;
+    if (h.length < 2) return 0;
+    const first = h[0].impressions;
+    const last = h[h.length - 1].impressions;
+    if (first <= 0) return 0;
+    return ((last - first) / first) * 100;
+  },
+
+  anChartHtml() {
+    const a = State.data.analytics;
+    const hist = a.history.slice(-30);
+    if (!hist.length) return '<div class="an-chart-empty">Collecting data…</div>';
+    const maxImp = Math.max(1, ...hist.map(h => h.impressions));
+    const bars = hist.map(h => {
+      const impH = Math.max(2, (h.impressions / maxImp) * 100);
+      return `<div class="an-bar" style="height:${impH}px"></div>`;
+    }).join('');
+    // moving-average trend line
+    const n = hist.length;
+    const win = 5;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      let sum = 0, cnt = 0;
+      for (let j = Math.max(0, i - win + 1); j <= i; j++) { sum += hist[j].impressions; cnt++; }
+      const avg = sum / cnt;
+      const x = n > 1 ? (i / (n - 1)) * 100 : 50;
+      const y = 100 - (avg / maxImp) * 100;
+      pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+    }
+    const trend = `<svg class="an-trend" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts.join(' ')}" fill="none" stroke="#f9a825" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+    return `<div class="an-bars">${bars}</div>${trend}`;
+  },
+
+  anLive() {
+    const modal = document.getElementById('analytics-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+    const body = document.getElementById('analytics-body');
+    if (!body) return;
+    const s = State.data;
+    const a = s.analytics;
+    if (a.analyticsLevel < 1) return;
+    const best = a.bestPost;
+    const vals = {
+      totalImpressions: Engine.fmtTick(s.totalImpressions),
+      postsPublished: a.postsPublished,
+      totalLikes: Engine.fmtTick(a.totalLikes),
+      followers: Engine.fmt(s.followers),
+      ips: Engine.fmtTick(Engine.totalIps()),
+      bestPost: best ? Engine.fmt(best.stats.impressions) + ' imp' : '—',
+    };
+    body.querySelectorAll('[data-an-live]').forEach(el => {
+      const v = vals[el.dataset.anLive];
+      if (v !== undefined) el.textContent = v;
+    });
+    const g = this.anGrowth();
+    const ge = body.querySelector('.an-growth');
+    if (ge) {
+      ge.textContent = (g >= 0 ? '+' : '') + g.toFixed(1) + '% this minute';
+      ge.classList.toggle('up', g >= 0);
+      ge.classList.toggle('down', g < 0);
+    }
+    const chart = body.querySelector('#an-chart');
+    if (chart) chart.innerHTML = this.anChartHtml();
+  },
+
   renderAnalytics() {
     const s = State.data;
     const a = s.analytics;
@@ -586,36 +720,35 @@ const UI = {
       return;
     }
 
+    // live header
+    const growth = this.anGrowth();
+    const liveHeader = `
+      <div class="an-live">
+        <span class="an-live-dot"></span><span class="an-live-label">LIVE</span>
+        <span class="an-growth ${growth >= 0 ? 'up' : 'down'}">${growth >= 0 ? '+' : ''}${growth.toFixed(1)}% this minute</span>
+      </div>`;
+
     // stat grid
     const best = a.bestPost ? a.bestPost : null;
     const grid = `
       <div class="an-grid">
-        <div class="an-stat"><div class="an-label">Total Impressions</div><div class="an-value">${Engine.fmt(s.totalImpressions)}</div></div>
-        <div class="an-stat"><div class="an-label">Posts Published</div><div class="an-value">${a.postsPublished}</div></div>
-        <div class="an-stat"><div class="an-label">Likes Earned</div><div class="an-value">${Engine.fmt(a.totalLikes)}}</div></div>
-        <div class="an-stat"><div class="an-label">Followers</div><div class="an-value">${Engine.fmt(s.followers)}</div></div>
-        <div class="an-stat"><div class="an-label">Impressions/s</div><div class="an-value">${Engine.fmt(Engine.totalIps())}</div></div>
-        <div class="an-stat"><div class="an-label">Best Post</div><div class="an-value" style="font-size:14px">${best ? Engine.fmt(best.stats.impressions) + ' imp' : '—'}</div></div>
+        <div class="an-stat"><div class="an-label">Total Impressions</div><div class="an-value" data-an-live="totalImpressions">${Engine.fmt(s.totalImpressions)}</div></div>
+        <div class="an-stat"><div class="an-label">Posts Published</div><div class="an-value" data-an-live="postsPublished">${a.postsPublished}</div></div>
+        <div class="an-stat"><div class="an-label">Likes Earned</div><div class="an-value" data-an-live="totalLikes">${Engine.fmt(a.totalLikes)}</div></div>
+        <div class="an-stat"><div class="an-label">Followers</div><div class="an-value" data-an-live="followers">${Engine.fmt(s.followers)}</div></div>
+        <div class="an-stat"><div class="an-label">Impressions/s</div><div class="an-value" data-an-live="ips">${Engine.fmt(Engine.totalIps())}</div></div>
+        <div class="an-stat"><div class="an-label">Best Post</div><div class="an-value" style="font-size:14px" data-an-live="bestPost">${best ? Engine.fmt(best.stats.impressions) + ' imp' : '—'}</div></div>
       </div>`;
 
     // chart
     let chartHtml = '';
     if (owned >= 1) {
       const hist = a.history.slice(-30);
-      const maxImp = Math.max(1, ...hist.map(h => h.impressions));
-      const maxLike = Math.max(1, ...hist.map(h => h.likes));
-      const maxFol = Math.max(1, ...hist.map(h => h.followers));
-      const bars = hist.map(h => {
-        const impH = Math.max(2, (h.impressions / maxImp) * 100);
-        const likeH = Math.max(2, (h.likes / maxLike) * 100);
-        const folH = Math.max(2, (h.followers / maxFol) * 100);
-        return `<div class="an-bar" style="height:${impH}px"></div>`;
-      }).join('');
       chartHtml = `
         <div class="an-section">
         <div class="an-section-title">Impressions Over Time</div>
-        <div class="an-chart">${bars}</div>
-        <div style="font-size:11px;color:#999;margin-top:4px">${hist.length} samples · every 5s</div>
+        <div class="an-chart" id="an-chart">${this.anChartHtml()}</div>
+        <div style="font-size:11px;color:#999;margin-top:4px">${hist.length} samples · live</div>
         </div>`;
     }
 
@@ -670,7 +803,7 @@ const UI = {
       </div>`;
     }).join('')}</div></div>`;
 
-    body.innerHTML = grid + chartHtml + curvesHtml + insightsHtml + benchHtml + upgHtml;
+    body.innerHTML = liveHeader + grid + chartHtml + curvesHtml + insightsHtml + benchHtml + upgHtml;
 
     // bind upgrade buttons
     body.querySelectorAll('[data-an-upg]').forEach(b => {
@@ -750,6 +883,8 @@ const UI = {
   },
 
   /* ---------- side panel DMs (unified messaging) ---------- */
+  // Incremental render: reuse existing DOM nodes, only insert new items.
+  // Prevents the whole list from flashing/rebuilding on every incoming DM.
   renderDMs() {
     const s = State.data;
     const list = document.getElementById('dm-list');
@@ -758,62 +893,100 @@ const UI = {
     const hired = DATA.WORKERS.filter(w => Engine.workerCount(w.id) > 0);
     const dms = s.dms.slice(0, 8);
     if (count) count.textContent = hired.length + s.dms.length;
-    list.innerHTML = '';
 
-    // --- gameplay: your engagement team (always on top) ---
+    // Build the desired item list in order, each with a stable key.
+    const desired = [];
     if (hired.length > 0) {
-      const teamHead = document.createElement('div');
-      teamHead.className = 'dm-section-head';
-      teamHead.textContent = 'Your Team';
-      list.appendChild(teamHead);
-      for (const w of hired) {
-        const el = document.createElement('div');
-        el.className = 'dm-item dm-team';
-        el.innerHTML = `
-          <div class="dm-avatar" style="background:#0a66c2">${w.emoji}</div>
-          <div class="dm-body">
-            <div class="dm-name">${this.escapeHtml(w.name)} <span class="dm-role">${w.count > 1 ? '×' + w.count + ' · ' : ''}${this.escapeHtml(w.role)}</span></div>
-            <div class="dm-text">${this.escapeHtml(this._lastWorkerText(w.id))}</div>
-          </div>`;
-        el.addEventListener('click', () => {
-          this._activeWorker = w.id;
-          this.showModal('messaging-modal');
-          this.renderMessaging();
-        });
-        list.appendChild(el);
-      }
+      desired.push({ key: '__team-head', head: 'Your Team' });
+      for (const w of hired) desired.push({ key: 'team-' + w.id, worker: w });
     }
-
-    // --- flavor: incoming opportunities ---
     if (dms.length > 0) {
-      const inboxHead = document.createElement('div');
-      inboxHead.className = 'dm-section-head';
-      inboxHead.textContent = 'Inbox';
-      list.appendChild(inboxHead);
-      for (const dm of dms) {
-        const el = document.createElement('div');
-        el.className = 'dm-item' + (dm.read ? '' : ' unread');
-        const time = Math.floor((Date.now() - dm.time) / 60000);
-        const timeStr = time < 1 ? 'now' : time < 60 ? time + 'm' : Math.floor(time / 60) + 'h';
-        el.innerHTML = `
-          <div class="dm-avatar" style="background:${dm.color}">${dm.emoji}</div>
-          <div class="dm-body">
-            <div class="dm-name">${this.escapeHtml(dm.name)} <span class="dm-role">${this.escapeHtml(dm.role)}</span></div>
-            <div class="dm-text">${this.escapeHtml(dm.text)}</div>
-            <div class="dm-time">${timeStr} ago</div>
-          </div>`;
-        el.addEventListener('click', () => {
-          dm.read = true;
-          this.renderDMs();
-          Juice.toast('You replied: "Let\'s talk." The opportunity is yours.');
-        });
-        list.appendChild(el);
-      }
+      desired.push({ key: '__inbox-head', head: 'Inbox' });
+      for (const dm of dms) desired.push({ key: 'dm-' + dm.id, dm });
     }
 
-    if (hired.length === 0 && dms.length === 0) {
-      list.innerHTML = '<div class="dm-empty">No messages yet. Post something and they\'ll come.</div>';
+    // Empty state
+    if (desired.length === 0) {
+      if (!list.querySelector('.dm-empty')) {
+        list.innerHTML = '<div class="dm-empty">No messages yet. Post something and they\'ll come.</div>';
+      }
+      return;
     }
+
+    // Index existing nodes by key
+    const existing = new Map();
+    list.querySelectorAll('[data-dm-key]').forEach(el => existing.set(el.dataset.dmKey, el));
+
+    // Reconcile: walk desired order, reusing or creating nodes.
+    const seen = new Set();
+    let prev = null;
+    for (const item of desired) {
+      seen.add(item.key);
+      let el = existing.get(item.key);
+      if (el) {
+        // move to correct position if needed
+        if (prev && prev.nextSibling !== el) {
+          list.insertBefore(el, prev.nextSibling);
+        } else if (!prev && list.firstChild !== el) {
+          list.insertBefore(el, list.firstChild);
+        }
+      } else {
+        el = this._buildDMNode(item);
+        if (prev) list.insertBefore(el, prev.nextSibling);
+        else list.insertBefore(el, list.firstChild);
+      }
+      prev = el;
+    }
+
+    // Remove nodes no longer present
+    for (const [key, el] of existing) {
+      if (!seen.has(key)) el.remove();
+    }
+  },
+
+  _buildDMNode(item) {
+    const el = document.createElement('div');
+    if (item.head) {
+      el.className = 'dm-section-head';
+      el.dataset.dmKey = item.key;
+      el.textContent = item.head;
+      return el;
+    }
+    if (item.worker) {
+      const w = item.worker;
+      el.className = 'dm-item dm-team';
+      el.dataset.dmKey = item.key;
+      el.innerHTML = `
+        <div class="dm-avatar" style="background:#0a66c2">${w.emoji}</div>
+        <div class="dm-body">
+          <div class="dm-name">${this.escapeHtml(w.name)} <span class="dm-role">${w.count > 1 ? '×' + w.count + ' · ' : ''}${this.escapeHtml(w.role)}</span></div>
+          <div class="dm-text">${this.escapeHtml(this._lastWorkerText(w.id))}</div>
+        </div>`;
+      el.addEventListener('click', () => {
+        this._activeWorker = w.id;
+        this.showModal('messaging-modal');
+        this.renderMessaging();
+      });
+      return el;
+    }
+    const dm = item.dm;
+    el.className = 'dm-item' + (dm.read ? '' : ' unread');
+    el.dataset.dmKey = item.key;
+    const time = Math.floor((Date.now() - dm.time) / 60000);
+    const timeStr = time < 1 ? 'now' : time < 60 ? time + 'm' : Math.floor(time / 60) + 'h';
+    el.innerHTML = `
+      <div class="dm-avatar" style="background:${dm.color}">${dm.emoji}</div>
+      <div class="dm-body">
+        <div class="dm-name">${this.escapeHtml(dm.name)} <span class="dm-role">${this.escapeHtml(dm.role)}</span></div>
+        <div class="dm-text">${this.escapeHtml(dm.text)}</div>
+        <div class="dm-time">${timeStr} ago</div>
+      </div>`;
+    el.addEventListener('click', () => {
+      dm.read = true;
+      this.renderDMs();
+      Juice.toast('You replied: "Let\'s talk." The opportunity is yours.');
+    });
+    return el;
   },
 
   _lastWorkerText(id) {
@@ -822,6 +995,36 @@ const UI = {
     if (msgs.length === 0) return 'Ready to work.';
     const last = msgs[msgs.length - 1];
     return (last.from === 'me' ? 'You: ' : '') + last.text;
+  },
+
+  /* ---------- network view ---------- */
+  renderNetwork() {
+    const s = State.data;
+    const list = document.getElementById('network-list');
+    if (!list) return;
+    list.innerHTML = '';
+    for (const p of DATA.NETWORK_PEOPLE) {
+      const connected = s.network.includes(p.id);
+      const el = document.createElement('div');
+      el.className = 'network-item';
+      el.innerHTML = `
+        <div class="network-avatar" style="background:${p.color}">${p.emoji}</div>
+        <div class="network-body">
+          <div class="network-name">${this.escapeHtml(p.name)}</div>
+          <div class="network-role">${this.escapeHtml(p.role)}</div>
+        </div>
+        <button class="btn btn-primary network-btn" data-net="${p.id}" ${connected ? 'disabled' : ''}>${connected ? 'Connected' : 'Connect'}</button>`;
+      const btn = el.querySelector('[data-net]');
+      if (btn && !connected) btn.addEventListener('click', () => Engine.connectPerson(p.id));
+      list.appendChild(el);
+    }
+  },
+
+  /* ---------- jobs view ---------- */
+  renderJobs() {
+    const el = document.getElementById('jobs-empty');
+    if (!el) return;
+    el.textContent = '';
   },
 
   /* ---------- recommended people ---------- */
@@ -982,14 +1185,30 @@ const UI = {
   switchTab(tab) {
     const items = document.querySelectorAll('.nav-item');
     items.forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
+    // show/hide center-column views
+    const feed = document.getElementById('feed');
+    const feedEnd = document.getElementById('feed-end');
+    const composer = document.getElementById('composer');
+    const networkView = document.getElementById('network-view');
+    const jobsView = document.getElementById('jobs-view');
+    const show = (el, on) => { if (el) el.classList.toggle('hidden', !on); };
+    const isFeed = tab === 'feed';
+    show(feed, isFeed);
+    show(feedEnd, isFeed);
+    show(composer, isFeed);
+    show(networkView, tab === 'network');
+    show(jobsView, tab === 'jobs');
+
     if (tab === 'bell') {
       this.showModal('bell-modal');
       this.renderNotifs();
     } else if (tab === 'me') {
       // profile view = a little dopamine
       Juice.toast('Your profile looks great. Nobody else has seen it.');
+    } else if (tab === 'network') {
+      this.renderNetwork();
     } else if (tab === 'jobs') {
-      Juice.toast('No jobs for you. The algorithm demands content.');
+      this.renderJobs();
     } else if (tab === 'messaging') {
       this.showModal('messaging-modal');
       this.renderMessaging();

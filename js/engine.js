@@ -31,7 +31,9 @@ const Engine = {
     if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
     if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
     if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
-    return Math.floor(n).toString();
+    if (n >= 100) return Math.floor(n).toString();
+    if (n >= 10) return n.toFixed(1);
+    return n.toFixed(2);
   },
 
   /* ---------- generator math ---------- */
@@ -145,6 +147,7 @@ const Engine = {
       authorEmoji: arch.emoji,
       authorColor: arch.color,
       image: Math.random() < 0.35 ? this.randomImage() : null,
+      reactionGif: Math.random() < 0.3 ? this.pick(DATA.REACTION_GIFS) : null,
       comments: [],
       influence: arch.influence,
     };
@@ -211,12 +214,16 @@ const Engine = {
       if (Math.random() < commentChance && post.comments.length < 30) {
         post.stats.comments += 1;
         const c = this.pick(DATA.COMMENTERS);
+        // NPC posts draw comments from their own archetype's comment pool,
+        // so comments read differently from the post body.
+        const arch = post.isNPC ? DATA.ARCHETYPES.find(a => a.id === post.authorId) : null;
+        const text = arch && arch.comments.length ? this.pick(arch.comments) : this.pick(c.phrases);
         post.comments.push({
           author: c.name,
           role: c.role,
           emoji: c.emoji,
           color: c.color,
-          text: this.pick(c.phrases),
+          text: text,
           time: Date.now(),
         });
       }
@@ -347,7 +354,7 @@ const Engine = {
     const a = s.analytics;
     const now = Date.now();
     const lastSample = a._lastSample || 0;
-    if (now - lastSample > 5000) {
+    if (now - lastSample > 1000) {
       a._lastSample = now;
       a.history.push({
         t: now,
@@ -356,7 +363,7 @@ const Engine = {
         followers: s.followers,
         ips: this.totalIps(),
       });
-      if (a.history.length > 200) a.history.shift();
+      if (a.history.length > 300) a.history.shift();
     }
   },
 
@@ -365,18 +372,20 @@ const Engine = {
     const s = State.data;
     const dtSec = dt / 1000;
     const ips = this.totalIps();
-    s.impressions += ips * dtSec;
-    s.totalImpressions += ips * dtSec;
+    // baseline organic reach so numbers always climb, even with zero generators
+    const reach = Math.max(ips, 0.5);
+    s.impressions += reach * dtSec;
+    s.totalImpressions += reach * dtSec;
     // likes trickle
-    const likes = ips * dtSec * 0.05;
+    const likes = reach * dtSec * 0.5;
     s.likes += likes;
     // followers grow with automation
-    const followerGain = ips * dtSec * 0.001;
+    const followerGain = reach * dtSec * 0.05;
     s.followers += followerGain;
     // connections trickle in too (every number on screen should climb)
-    s.connections += ips * dtSec * 0.0004;
+    s.connections += reach * dtSec * 0.02;
     // influence accrues slowly from reach (the real "score")
-    s.influence += ips * dtSec * 0.002;
+    s.influence += reach * dtSec * 0.1;
     // influence climbs with automation (you are thriving)
     for (const g of DATA.GENERATORS) {
       const n = s.generators[g.id] || 0;
@@ -449,8 +458,8 @@ const Engine = {
     const s = State.data;
     const now = Date.now();
     // DMs stream in faster as you grow — the more influence, the more opportunities
-    const base = 4000;
-    const interval = Math.max(1200, base - s.followers * 2 - s.connections * 1.5);
+    const base = 1500;
+    const interval = Math.max(500, base - s.followers * 2 - s.connections * 1.5);
     if (now - this.lastDM > interval) {
       this.lastDM = now;
       const sender = this.pick(DATA.DM_SENDERS);
@@ -465,7 +474,7 @@ const Engine = {
         read: false,
       };
       s.dms.unshift(dm);
-      if (s.dms.length > 40) s.dms.pop();
+      if (s.dms.length > 200) s.dms.pop();
       UI.renderDMs();
       Juice.ding();
     }
@@ -516,15 +525,15 @@ const Engine = {
     const s = State.data;
     const MAX = 60;
     if (s.posts.length <= MAX) return;
-    // keep all player posts, drop oldest NPC posts beyond the cap
+    // keep a reserved slice of NPC posts so the feed never collapses into
+    // only the player's own posts, even after publishing a lot.
+    const MIN_NPC = 20;
     const yours = s.posts.filter(p => p.authorId === 'you');
     const npcs = s.posts.filter(p => p.authorId !== 'you');
-    const keep = MAX - yours.length;
-    if (keep < 0) {
-      s.posts = yours.slice(0, MAX);
-    } else {
-      s.posts = yours.concat(npcs.slice(0, keep));
-    }
+    const yourCap = MAX - MIN_NPC;
+    const keepYours = yours.slice(0, yourCap);
+    const keepNpcs = npcs.slice(0, MAX - keepYours.length);
+    s.posts = keepYours.concat(keepNpcs);
   },
 
   /* ---------- detection (reframed: the algorithm adores you) ---------- */
@@ -586,7 +595,7 @@ const Engine = {
       this.lastFourthWall = now;
       const post = this.makeNPCPost();
       post.content = this.pick(DATA.FOURTHWALL);
-      post.authorName = 'LinkedIn';
+      post.authorName = 'LockedIn';
       post.authorRole = 'The Algorithm';
       post.authorEmoji = '👁️';
       post.authorColor = '#111';
@@ -643,6 +652,8 @@ const Engine = {
       for (const post of State.data.posts) {
         if (post.status === 'live') UI.updatePostCard(post);
       }
+      // live-update analytics dashboard while open
+      UI.anLive();
     }, 16);
   },
 
@@ -714,6 +725,18 @@ const Engine = {
     Juice.pop();
     Juice.toast('Followed! Your network just got a little bigger.');
     UI.renderRecommended();
+    UI.refresh();
+  },
+
+  connectPerson(id) {
+    const s = State.data;
+    if (s.network.includes(id)) return;
+    s.network.push(id);
+    s.connections += 1;
+    s.authenticity = Math.min(100, s.authenticity + 1);
+    Juice.pop();
+    Juice.toast('Connected! They want to Link & Build with you.');
+    UI.renderNetwork();
     UI.refresh();
   },
 
