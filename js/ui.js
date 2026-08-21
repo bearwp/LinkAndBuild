@@ -67,6 +67,20 @@ const UI = {
     $('profile-headline').textContent = s.headline;
     $('cm-name').textContent = s.name;
     $('cm-headline').textContent = s.headline;
+    // avatar image (profile, nav, composer)
+    if (s.avatar) {
+      const setAvatar = (id) => {
+        const el = document.getElementById(id);
+        if (el && el.dataset.avatar !== s.avatar) {
+          el.dataset.avatar = s.avatar;
+          el.innerHTML = `<img src="${s.avatar}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+        }
+      };
+      setAvatar('profile-avatar');
+      setAvatar('nav-avatar');
+      setAvatar('composer-avatar');
+      setAvatar('cm-avatar');
+    }
     if (s.verified) {
       $('profile-name').innerHTML = s.name + ' <span style="color:#0a66c2">✔</span>';
     }
@@ -289,7 +303,7 @@ const UI = {
     const youTag = isYou ? '<span class="you-tag">• You</span>' : '';
 
     const formatTag = post.format !== 'text'
-      ? `<div class="post-format-tag ${post.format === 'carousel' ? 'risky' : ''}">${post.format === 'carousel' ? '📑 Carousel' : post.format === 'poll' ? '📊 Poll' : '🎥 Video'}</div>`
+      ? `<div class="post-format-tag ${post.format === 'carousel' ? 'risky' : ''}">${post.format === 'carousel' ? '📑 Carousel' : post.format === 'poll' ? '📊 Poll' : post.format === 'photo' ? '🖼️ Photo' : '🎥 Video'}</div>`
       : '';
 
     const rarityTag = post.rarity !== 'common'
@@ -333,6 +347,7 @@ const UI = {
         </div>
       </div>
       <div class="post-body">${this.escapeHtml(post.content)}</div>
+      ${post.image ? `<div class="post-image"><img src="${post.image}" alt="" loading="lazy"></div>` : ''}
       ${formatTag}${rarityTag}
       <div class="post-stats">
         <span><b class="st-imp">${Engine.fmt(stats.impressions)}</b> impressions</span>
@@ -405,18 +420,6 @@ const UI = {
   /* ---------- composer ---------- */
   fillTemplateSelect() {
     const sel = document.getElementById('opt-template');
-    sel.innerHTML = '';
-    for (const t of DATA.TEMPLATES) {
-      const opt = document.createElement('option');
-      opt.value = t.id;
-      opt.textContent = t.name + (t.id === 'free' ? '' : ' (bait)');
-      sel.appendChild(opt);
-    }
-  },
-
-  fillInlineTemplateSelect() {
-    const sel = document.getElementById('inline-opt-template');
-    if (!sel) return;
     sel.innerHTML = '';
     for (const t of DATA.TEMPLATES) {
       const opt = document.createElement('option');

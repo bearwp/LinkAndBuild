@@ -29,7 +29,6 @@
   // juice + ui init
   Juice.init();
   UI.fillTemplateSelect();
-  UI.fillInlineTemplateSelect();
   UI.updatePreview();
   UI.renderFeed();
   UI.renderGrowth();
@@ -107,49 +106,19 @@
     UI.showModal('growth-modal');
   });
   document.querySelectorAll('.ca-btn:not(.ca-options)').forEach(b => {
-    b.addEventListener('click', () => UI.openComposer());
+    b.addEventListener('click', () => {
+      const fmt = b.dataset.format;
+      if (fmt) {
+        const sel = document.getElementById('opt-format');
+        if (sel) sel.value = fmt;
+        UI.updatePreview();
+      }
+      UI.openComposer();
+    });
   });
 
-  // inline composer — options hidden behind a dropdown toggle
-  const inlineText = $('inline-post-text');
-  const inlineOpts = $('inline-options');
-  const toggleOpts = $('toggle-options');
-  inlineText.addEventListener('focus', () => {
-    inlineText.rows = 4;
-  });
-  inlineText.addEventListener('blur', () => {
-    if (!inlineText.value.trim()) inlineText.rows = 1;
-  });
-  toggleOpts.addEventListener('click', () => {
-    inlineOpts.classList.toggle('open');
-    toggleOpts.textContent = inlineOpts.classList.contains('open') ? '⚙️ Options ▴' : '⚙️ Options ▾';
-  });
-  $('inline-publish-btn').addEventListener('click', () => {
-    const text = inlineText.value;
-    const opts = {
-      template: $('inline-opt-template').value,
-      format: $('inline-opt-format').value,
-      emojis: parseInt($('inline-opt-emojis').value, 10),
-      tags: parseInt($('inline-opt-tags').value, 10),
-      question: parseInt($('inline-opt-question').value, 10),
-    };
-    const post = Engine.publish(text, opts);
-    if (post) {
-      inlineText.value = '';
-      inlineText.rows = 1;
-      inlineOpts.classList.remove('open');
-      setTimeout(() => {
-        if (post.rarity === 'legendary') {
-          Juice.milestone('🔥 LEGENDARY POST', 'It\'s going viral', 'viral');
-          Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 80);
-        } else if (post.rarity === 'epic') {
-          Juice.milestone('✨ EPIC POST', 'The algorithm likes you', '');
-        } else if (post.rarity === 'rare') {
-          Juice.milestone('💎 RARE POST', 'Decent reach', '');
-        }
-      }, 1200);
-    }
-  });
+  // inline composer — minimal "Start a post" block opens the full composer modal
+  $('composer-open').addEventListener('click', () => UI.openComposer());
 
   // composer options
   $('opt-template').addEventListener('change', () => UI.updatePreview());

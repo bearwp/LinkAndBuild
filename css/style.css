@@ -59,14 +59,14 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .composer { padding: 12px 16px; }
 .composer-highlight { animation: composerPulse 1.5s ease 3; }
 @keyframes composerPulse { 0%, 100% { box-shadow: 0 0 0 0 #0a66c2; } 50% { box-shadow: 0 0 0 6px rgba(10,102,194,0.35); } }
-.composer-top { display: flex; align-items: flex-start; gap: 12px; }
+.composer-top { display: flex; align-items: center; gap: 12px; cursor: pointer; }
 .composer-input { flex: 1; text-align: left; border: 1px solid #e0dfdc; border-radius: 8px; padding: 10px 12px; color: #666; font-size: 14px; background: #fff; resize: none; font-family: inherit; line-height: 1.4; min-height: 40px; }
 .composer-input:focus { outline: none; border-color: #0a66c2; }
 .composer-input::placeholder { color: #999; }
 .inline-options { display: none; margin-top: 10px; border-top: 1px solid #e0dfdc; padding-top: 10px; }
 .inline-options.open { display: flex; }
-.composer-actions { display: flex; gap: 8px; margin-top: 12px; }
-.ca-btn { flex: 1; padding: 8px; border-radius: 4px; color: #666; font-size: 13px; font-weight: 600; }
+.composer-actions { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+.ca-btn { padding: 8px 12px; border-radius: 4px; color: #666; font-size: 13px; font-weight: 600; }
 .ca-btn:hover { background: #f3f2ef; }
 
 /* ============ Feed ============ */
@@ -90,6 +90,8 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .post-author .you-tag { color: #0a66c2; font-size: 11px; margin-left: 4px; }
 .post-meta { font-size: 12px; color: #666; }
 .post-body { margin-top: 8px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+.post-image { margin-top: 8px; border-radius: 8px; overflow: hidden; }
+.post-image img { display: block; width: 100%; max-height: 320px; object-fit: cover; }
 .post-format-tag { display: inline-block; margin-top: 8px; background: #eef3f8; color: #0a66c2; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
 .post-format-tag.risky { background: #fdecea; color: #d11124; }
 .post-stats { margin-top: 10px; font-size: 12px; color: #666; display: flex; gap: 14px; }

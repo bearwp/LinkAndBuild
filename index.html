@@ -136,61 +136,9 @@
     <main class="center">
       <!-- composer -->
       <div class="card composer" id="composer">
-        <div class="composer-top">
+        <div class="composer-top" id="composer-open">
           <div class="avatar" id="composer-avatar">Y</div>
-          <textarea class="composer-input" id="inline-post-text" placeholder="Start a post" rows="1"></textarea>
-        </div>
-        <div class="composer-options inline-options" id="inline-options">
-          <div class="opt-row">
-            <span class="opt-label">Template</span>
-            <select id="inline-opt-template"></select>
-          </div>
-          <div class="opt-row">
-            <span class="opt-label">Format</span>
-            <select id="inline-opt-format">
-              <option value="text">Text</option>
-              <option value="carousel">Carousel</option>
-              <option value="poll">Poll</option>
-              <option value="video">Video</option>
-            </select>
-          </div>
-          <div class="opt-row">
-            <span class="opt-label">Emojis</span>
-            <select id="inline-opt-emojis">
-              <option value="0">None</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-          <div class="opt-row">
-            <span class="opt-label">Tag people</span>
-            <select id="inline-opt-tags">
-              <option value="0">None</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-          <div class="opt-row">
-            <span class="opt-label">End with a question</span>
-            <select id="inline-opt-question">
-              <option value="0">No</option>
-              <option value="1">Yes</option>
-            </select>
-          </div>
-        </div>
-        <div class="composer-actions">
-          <button class="ca-btn" data-format="photo">🖼️ Photo</button>
-          <button class="ca-btn" data-format="video">🎥 Video</button>
-          <button class="ca-btn" data-format="poll">📊 Poll</button>
-          <button class="ca-btn" data-format="carousel">📑 Carousel</button>
-          <button class="ca-btn ca-options" id="toggle-options">⚙️ Options ▾</button>
-          <button class="btn btn-primary" id="inline-publish-btn" style="margin-left:auto">Post</button>
+          <div class="composer-input" id="inline-post-text">Start a post</div>
         </div>
       </div>
 
@@ -243,7 +191,7 @@
         <button class="modal-close" data-close="composer-modal">✕</button>
       </div>
       <div class="composer-user">
-        <div class="avatar">Y</div>
+        <div class="avatar" id="cm-avatar">Y</div>
         <div>
           <b id="cm-name">You</b>
           <div class="cm-headline" id="cm-headline">Just here for the game.</div>
@@ -259,6 +207,7 @@
           <span class="opt-label">Format</span>
           <select id="opt-format">
             <option value="text">Text</option>
+            <option value="photo">Photo</option>
             <option value="carousel">Carousel</option>
             <option value="poll">Poll</option>
             <option value="video">Video</option>

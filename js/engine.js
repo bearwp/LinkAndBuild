@@ -81,7 +81,7 @@ const Engine = {
       (1 + (opts.emojis || 0) * 0.08) *
       (1 + (opts.tags || 0) * 0.1) *
       (opts.question ? 1.2 : 1) *
-      (opts.format === 'carousel' ? 1.3 : opts.format === 'poll' ? 1.1 : opts.format === 'video' ? 1.2 : 1);
+      (opts.format === 'carousel' ? 1.3 : opts.format === 'poll' ? 1.1 : opts.format === 'video' ? 1.2 : opts.format === 'photo' ? 1.15 : 1);
     const rarity = this.rollRarity(potential);
 
     const base = 50 + s.followers * 1.5 + s.connections * 0.5;
@@ -112,6 +112,7 @@ const Engine = {
       authorRole: s.headline,
       authorEmoji: '🧑‍💻',
       authorColor: '#0a66c2',
+      image: opts.format === 'photo' ? this.randomImage() : null,
       comments: [],
     };
     return post;
@@ -141,9 +142,30 @@ const Engine = {
       authorRole: arch.role,
       authorEmoji: arch.emoji,
       authorColor: arch.color,
+      image: Math.random() < 0.35 ? this.randomImage() : null,
       comments: [],
       influence: arch.influence,
     };
+  },
+
+  // deterministic-ish placeholder image for posts (no network needed)
+  randomImage() {
+    const palettes = [
+      ['#0a66c2', '#7fb8e8'], ['#5c6bc0', '#9fa8da'], ['#26a69a', '#80cbc4'],
+      ['#ef5350', '#ef9a9a'], ['#ec4070', '#f48fb1'], ['#ffb300', '#ffd54f'],
+      ['#7e57c2', '#b39ddb'], ['#00897b', '#4db6ac'], ['#3f51b5', '#7986cb'],
+    ];
+    const [a, b] = palettes[Math.floor(Math.random() * palettes.length)];
+    const shapes = [
+      `<circle cx="50" cy="50" r="34" fill="#fff" opacity="0.9"/>`,
+      `<rect x="22" y="22" width="56" height="56" rx="12" fill="#fff" opacity="0.9"/>`,
+      `<path d="M50 16 L84 84 L16 84 Z" fill="#fff" opacity="0.9"/>`,
+      `<circle cx="34" cy="40" r="16" fill="#fff" opacity="0.9"/><circle cx="66" cy="60" r="20" fill="#fff" opacity="0.7"/>`,
+      `<rect x="20" y="40" width="60" height="20" rx="10" fill="#fff" opacity="0.9"/>`,
+    ];
+    const shape = shapes[Math.floor(Math.random() * shapes.length)];
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="100" height="100" fill="url(#g)"/>${shape}</svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
   },
 
   pickWeighted(arr, weightFn) {
