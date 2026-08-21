@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkedIn</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- ===== BOOT SCREEN ===== -->
+<div id="boot" class="boot hidden">
+  <div class="boot-logo">🖥️</div>
+  <div class="boot-text" id="boot-text">Starting WorkOS...</div>
+  <div class="boot-bar"><div class="boot-fill" id="boot-fill"></div></div>
+</div>
+
+<!-- ===== OS DESKTOP ===== -->
+<div id="desktop" class="desktop hidden">
+  <div class="desktop-wallpaper">
+    <div class="desktop-icons">
+      <div class="d-icon" data-app="linkedin"><div class="d-ico">in</div><span>LinkedIn</span></div>
+      <div class="d-icon" data-app="telegram"><div class="d-ico">✈️</div><span>Telegram</span></div>
+      <div class="d-icon" data-app="bot"><div class="d-ico">🤖</div><span>Bot Service</span></div>
+      <div class="d-icon" data-app="dark"><div class="d-ico">🕶️</div><span>Dark Web</span></div>
+      <div class="d-icon" data-app="files"><div class="d-ico">📁</div><span>Files</span></div>
+      <div class="d-icon" data-app="recycle"><div class="d-ico">🗑️</div><span>Recycle Bin</span></div>
+    </div>
+    <div class="desktop-note" id="desktop-note">WorkOS 1.0 — For professional productivity</div>
+  </div>
+  <div class="taskbar">
+    <button class="task-start" id="task-start">🪟 Start</button>
+    <div class="task-apps" id="task-apps">
+      <button class="task-app active" data-app="linkedin">in</button>
+      <button class="task-app" data-app="telegram">✈️</button>
+      <button class="task-app" data-app="bot">🤖</button>
+      <button class="task-app" data-app="dark">🕶️</button>
+    </div>
+    <div class="task-clock" id="task-clock">12:00 PM</div>
+  </div>
+</div>
+
+<!-- ===== BROWSER ===== -->
+<div id="browser" class="browser hidden">
+  <div class="browser-chrome">
+    <div class="browser-tabs" id="browser-tabs">
+      <button class="b-tab active" data-app="linkedin"><span class="b-fav">in</span> LinkedIn</button>
+      <button class="b-tab" data-app="telegram"><span class="b-fav">✈️</span> Telegram</button>
+      <button class="b-tab" data-app="bot"><span class="b-fav">🤖</span> Bot Service</button>
+      <button class="b-tab" data-app="dark"><span class="b-fav">🕶️</span> Dark Web</button>
+    </div>
+    <div class="browser-addr">
+      <button class="b-nav">←</button><button class="b-nav">→</button><button class="b-nav">↻</button>
+      <input class="b-url" id="b-url" value="https://www.linkedin.com/feed/">
+    </div>
+  </div>
+  <div class="browser-body">
+    <div class="app-view active" data-app="linkedin">
+      <div id="app">
+  <!-- ===== TOP NAV ===== -->
+  <header class="topnav">
+    <div class="topnav-inner">
+      <div class="brand">
+        <span class="logo">in</span>
+        <span class="brand-name">LinkedIn</span>
+      </div>
+      <div class="nav-search">
+        <input type="text" placeholder="Search" aria-label="Search">
+      </div>
+      <nav class="nav-icons">
+        <button class="nav-item" data-tab="feed">
+          <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-item" data-tab="network">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span>My Network</span>
+        </button>
+        <button class="nav-item" data-tab="jobs">
+          <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
+          <span>Jobs</span>
+        </button>
+        <button class="nav-item" data-tab="messaging">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+          <span>Messaging</span>
+          <span class="nav-badge" id="nav-message-badge">3</span>
+        </button>
+        <button class="nav-item" data-tab="bell">
+          <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+          <span>Notifications</span>
+          <span class="nav-badge bell-badge" id="bell-badge">0</span>
+        </button>
+        <div class="nav-item nav-me" data-tab="me">
+          <div class="avatar" id="nav-avatar">Y</div>
+          <span>Me</span>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===== MAIN LAYOUT ===== -->
+  <div class="layout">
+    <!-- LEFT RAIL -->
+    <aside class="left-rail">
+      <div class="card profile-card">
+        <div class="profile-banner"></div>
+        <div class="profile-avatar" id="profile-avatar">Y</div>
+        <div class="profile-name" id="profile-name">You</div>
+        <div class="profile-headline" id="profile-headline">Just here for the game.</div>
+        <div class="profile-stats">
+          <div class="stat-row"><span>Connections</span><b id="stat-connections">0</b></div>
+          <div class="stat-row"><span>Followers</span><b id="stat-followers">0</b></div>
+          <div class="stat-row"><span>Impressions</span><b id="stat-impressions">0</b></div>
+        </div>
+      </div>
+      <div class="card menu-card">
+        <div class="menu-item" id="menu-analytics"><span>📈</span> Analytics</div>
+        <div class="menu-item" id="menu-premium"><span>⭐</span> Premium <span class="premium-tag">Try free</span></div>
+        <div class="menu-item"><span>⚙️</span> Settings &amp; Privacy</div>
+      </div>
+      <div class="card authenticity-card">
+        <div class="auth-header">
+          <span>Authenticity</span>
+          <b id="auth-value">100%</b>
+        </div>
+        <div class="auth-bar"><div class="auth-fill" id="auth-fill"></div></div>
+        <div class="auth-note" id="auth-note">Organic. Keep it real.</div>
+      </div>
+      <div class="card productivity-card">
+        <div class="prod-title">⏱️ Hours Saved</div>
+        <div class="prod-big" id="prod-hours">0.0</div>
+        <div class="prod-sub" id="prod-headline">"I did it all by hand."</div>
+      </div>
+    </aside>
+
+    <!-- CENTER COLUMN -->
+    <main class="center">
+      <!-- composer -->
+      <div class="card composer" id="composer">
+        <div class="composer-top">
+          <div class="avatar" id="composer-avatar">Y</div>
+          <textarea class="composer-input" id="inline-post-text" placeholder="Start a post" rows="1"></textarea>
+        </div>
+        <div class="composer-options inline-options" id="inline-options">
+          <div class="opt-row">
+            <span class="opt-label">Template</span>
+            <select id="inline-opt-template"></select>
+          </div>
+          <div class="opt-row">
+            <span class="opt-label">Format</span>
+            <select id="inline-opt-format">
+              <option value="text">Text</option>
+              <option value="carousel">Carousel</option>
+              <option value="poll">Poll</option>
+              <option value="video">Video</option>
+            </select>
+          </div>
+          <div class="opt-row">
+            <span class="opt-label">Emojis</span>
+            <select id="inline-opt-emojis">
+              <option value="0">None</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          <div class="opt-row">
+            <span class="opt-label">Tag people</span>
+            <select id="inline-opt-tags">
+              <option value="0">None</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+          <div class="opt-row">
+            <span class="opt-label">End with a question</span>
+            <select id="inline-opt-question">
+              <option value="0">No</option>
+              <option value="1">Yes</option>
+            </select>
+          </div>
+        </div>
+        <div class="composer-actions">
+          <button class="ca-btn" data-format="photo">🖼️ Photo</button>
+          <button class="ca-btn" data-format="video">🎥 Video</button>
+          <button class="ca-btn" data-format="poll">📊 Poll</button>
+          <button class="ca-btn" data-format="carousel">📑 Carousel</button>
+          <button class="ca-btn ca-options" id="toggle-options">⚙️ Options ▾</button>
+          <button class="btn btn-primary" id="inline-publish-btn" style="margin-left:auto">Post</button>
+        </div>
+      </div>
+
+      <!-- feed -->
+      <div id="feed" class="feed"></div>
+      <div class="feed-end" id="feed-end">You're all caught up. Keep scrolling anyway.</div>
+    </main>
+
+    <!-- RIGHT RAIL -->
+    <aside class="right-rail">
+      <div class="card growth-card">
+        <div class="growth-title">🚀 Growth Console</div>
+        <div class="growth-stats">
+          <div class="g-stat"><span>Impressions/s</span><b id="g-ips">0</b></div>
+          <div class="g-stat"><span>Likes</span><b id="g-likes">0</b></div>
+          <div class="g-stat"><span>Followers</span><b id="g-followers">0</b></div>
+        </div>
+        <button class="btn btn-primary" id="open-growth">Manage Growth</button>
+      </div>
+      <div class="card next-card">
+        <div class="next-title" id="next-title">Next Unlock</div>
+        <div class="next-bar"><div class="next-fill" id="next-fill"></div></div>
+        <div class="next-sub" id="next-sub">Earn more impressions to unlock</div>
+      </div>
+      <div class="card ads-card">
+        <div class="ad-title">Sponsored</div>
+        <div class="ad-body">
+          <div class="ad-emoji">💼</div>
+          <div><b>Executive Presence™</b><br><span class="ad-sub">Become a thought leader. 97% of leaders agree.</span></div>
+        </div>
+        <div class="ad-body">
+          <div class="ad-emoji">🤖</div>
+          <div><b>Automate Your Brand</b><br><span class="ad-sub">AI writes. You retire. Try free.</span></div>
+        </div>
+      </div>
+      <div class="card footer-card">
+        <div class="footer-links">About · Accessibility · Help Center</div>
+        <div class="footer-links">Privacy &amp; Terms · Ad Choices</div>
+        <div class="footer-copy">LinkedIn Corporation © 2026</div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ===== MODALS ===== -->
+  <!-- Composer -->
+  <div class="modal-overlay hidden" id="composer-modal">
+    <div class="modal composer-modal">
+      <div class="modal-head">
+        <span class="modal-title">Create a post</span>
+        <button class="modal-close" data-close="composer-modal">✕</button>
+      </div>
+      <div class="composer-user">
+        <div class="avatar">Y</div>
+        <div>
+          <b id="cm-name">You</b>
+          <div class="cm-headline" id="cm-headline">Just here for the game.</div>
+        </div>
+      </div>
+      <textarea id="post-text" placeholder="What do you want to talk about?"></textarea>
+      <div class="composer-options">
+        <div class="opt-row">
+          <span class="opt-label">Template</span>
+          <select id="opt-template"></select>
+        </div>
+        <div class="opt-row">
+          <span class="opt-label">Format</span>
+          <select id="opt-format">
+            <option value="text">Text</option>
+            <option value="carousel">Carousel</option>
+            <option value="poll">Poll</option>
+            <option value="video">Video</option>
+          </select>
+        </div>
+        <div class="opt-row">
+          <span class="opt-label">Emojis</span>
+          <select id="opt-emojis">
+            <option value="0">None</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div class="opt-row">
+          <span class="opt-label">Tag people</span>
+          <select id="opt-tags">
+            <option value="0">None</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div class="opt-row">
+          <span class="opt-label">End with a question</span>
+          <select id="opt-question">
+            <option value="0">No</option>
+            <option value="1">Yes</option>
+          </select>
+        </div>
+      </div>
+      <div class="composer-footer">
+        <span class="post-preview" id="post-preview"></span>
+        <button class="btn btn-primary" id="publish-btn">Post</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Growth console -->
+  <div class="modal-overlay hidden" id="growth-modal">
+    <div class="modal growth-modal">
+      <div class="modal-head">
+        <span class="modal-title">🚀 Growth Console</span>
+        <button class="modal-close" data-close="growth-modal">✕</button>
+      </div>
+      <div class="growth-tabs">
+        <button class="gtab active" data-gtab="generators">Automation</button>
+        <button class="gtab" data-gtab="upgrades">Upgrades</button>
+        <button class="gtab" data-gtab="outsource">Outsource</button>
+      </div>
+      <div class="growth-pane" id="g-pane-generators"></div>
+      <div class="growth-pane hidden" id="g-pane-upgrades"></div>
+      <div class="growth-pane hidden" id="g-pane-outsource"></div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="modal-overlay hidden" id="bell-modal">
+    <div class="modal bell-modal">
+      <div class="modal-head">
+        <span class="modal-title">Notifications</span>
+        <button class="modal-close" data-close="bell-modal">✕</button>
+      </div>
+      <div id="notif-list" class="notif-list"></div>
+    </div>
+  </div>
+
+  <!-- Messaging -->
+  <div class="modal-overlay hidden" id="messaging-modal">
+    <div class="modal messaging-modal">
+      <div class="modal-head">
+        <span class="modal-title">Messaging</span>
+        <button class="modal-close" data-close="messaging-modal">✕</button>
+      </div>
+      <div class="msg-body">
+        <div class="msg-list" id="msg-list"></div>
+        <div class="msg-chat" id="msg-chat">
+          <div class="msg-chat-empty" id="msg-chat-empty">Select a worker to start chatting. They're very responsive.</div>
+          <div class="msg-thread" id="msg-thread"></div>
+          <div class="msg-commands" id="msg-commands"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Analytics -->
+  <div class="modal-overlay hidden" id="analytics-modal">
+    <div class="modal analytics-modal">
+      <div class="modal-head">
+        <span class="modal-title">📊 Analytics</span>
+        <button class="modal-close" data-close="analytics-modal">✕</button>
+      </div>
+      <div class="analytics-body" id="analytics-body"></div>
+    </div>
+  </div>
+
+  <!-- Premium upsell -->
+  <div class="modal-overlay hidden" id="premium-modal">
+    <div class="modal premium-modal">
+      <div class="modal-head">
+        <span class="modal-title">LinkedIn Premium</span>
+        <button class="modal-close" data-close="premium-modal">✕</button>
+      </div>
+      <div class="premium-body">
+        <div class="premium-hero">⭐ Unlock <b>Infinite Influence</b></div>
+        <p class="premium-copy">Premium members get 10x impressions, a verified badge, and the ability to DM anyone.</p>
+        <div class="premium-benefits">
+          <div>✅ 10x impressions</div>
+          <div>✅ Verified badge</div>
+          <div>✅ "InMail" anyone</div>
+          <div>✅ Skip the queue</div>
+        </div>
+        <button class="btn btn-premium" id="buy-premium">Get Premium — Free Trial</button>
+        <div class="premium-note">*Trial never ends. You will never cancel. This is your life now.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flag warning -->
+  <div class="modal-overlay hidden" id="flag-modal">
+    <div class="modal flag-modal">
+      <div class="flag-icon">⚠️</div>
+      <div class="flag-title">Account flagged for inauthentic behavior</div>
+      <div class="flag-copy">Our systems have detected suspicious engagement patterns on your account. Continued inauthentic activity may result in a <b>shadowban</b> or <b>account removal</b>.</div>
+      <button class="btn btn-danger" id="flag-ack">I understand</button>
+    </div>
+  </div>
+
+  <!-- Shadowban overlay -->
+  <div class="shadowban-overlay hidden" id="shadowban-overlay">
+    <div class="shadowban-box">
+      <div class="shadowban-title">Your reach has been limited</div>
+      <div class="shadowban-copy">Your content is no longer being shown to non-connections. Impressions have been throttled. Post authentic content to recover.</div>
+      <div class="shadowban-tip">💡 Post by hand. Engage genuinely. Take a break.</div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+</div>
+    </div><!-- /app-view linkedin -->
+
+    <!-- ===== TELEGRAM APP ===== -->
+    <div class="app-view" data-app="telegram">
+      <div class="tg-app">
+        <div class="tg-sidebar">
+          <div class="tg-title">✈️ Telegram</div>
+          <div class="tg-search"><input placeholder="Search chats"></div>
+          <div class="tg-chats" id="tg-chats"></div>
+        </div>
+        <div class="tg-main">
+          <div class="tg-chat-head" id="tg-chat-head">Select a chat</div>
+          <div class="tg-messages" id="tg-messages"></div>
+          <div class="tg-input">
+            <input id="tg-text" placeholder="Message" disabled>
+            <button id="tg-send" disabled>➤</button>
+          </div>
+        </div>
+      </div>
+    </div><!-- /app-view telegram -->
+
+    <!-- ===== BOT SERVICE APP ===== -->
+    <div class="app-view" data-app="bot">
+      <div class="bot-app">
+        <div class="bot-header">
+          <div class="bot-logo">🤖</div>
+          <div>
+            <div class="bot-name">EngageBot™</div>
+            <div class="bot-tag">Automate your engagement. Trusted by 0 real people.</div>
+          </div>
+        </div>
+        <div class="bot-body" id="bot-body">
+          <div class="bot-locked" id="bot-locked">
+            <div style="font-size:40px">🔒</div>
+            <div class="bot-locked-title">Bot Service Locked</div>
+            <div class="bot-locked-sub">Get a DM from a "growth expert" on LinkedIn to unlock this.</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /app-view bot -->
+
+    <!-- ===== DARK WEB APP ===== -->
+    <div class="app-view" data-app="dark">
+      <div class="dark-app">
+        <div class="dark-header">
+          <div class="dark-logo">🕶️</div>
+          <div class="dark-title">The Marketplace</div>
+          <div class="dark-sub">you are in a place. do not tell anyone.</div>
+        </div>
+        <div class="dark-body" id="dark-body">
+          <div class="dark-locked" id="dark-locked">
+            <div style="font-size:40px">🔒</div>
+            <div class="dark-locked-title">Access Restricted</div>
+            <div class="dark-locked-sub">A mysterious DM with a strange link will unlock this. Probably.</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /app-view dark -->
+  </div><!-- /browser-body -->
+</div><!-- /browser -->
+
+<script src="js/data.js"></script>
+<script src="js/state.js"></script>
+<script src="js/juice.js"></script>
+<script src="js/dev.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/os.js"></script>
+<script src="js/telegram.js"></script>
+<script src="js/bot.js"></script>
+<script src="js/dark.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

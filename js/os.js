@@ -1,0 +1,125 @@
+/* ============================================================
+   LINK & BUILD — OS Shell
+   Boot sequence, desktop, browser tabs, taskbar, app switching,
+   and the DM-driven unlock flow.
+   ============================================================ */
+
+const OS = {
+  booted: false,
+
+  init() {
+    const s = State.data;
+    // if the player has already posted (existing save), unlock telegram
+    if (s.analytics.postsPublished > 0 && !s.os.telegram.unlocked) {
+      s.os.telegram.unlocked = true;
+      this.unlockApp('telegram');
+    }
+    if (s.os.booted) {
+      this.showBrowser();
+    } else {
+      this.runBoot();
+    }
+    this.updateClock();
+    setInterval(() => this.updateClock(), 1000);
+  },
+
+  runBoot() {
+    const boot = document.getElementById('boot');
+    const fill = document.getElementById('boot-fill');
+    const text = document.getElementById('boot-text');
+    boot.classList.remove('hidden');
+    const steps = [
+      'Starting WorkOS 1.0...',
+      'Loading professional modules...',
+      'Optimizing synergy...',
+      'Booting LinkedIn...',
+      'Welcome back. The algorithm missed you.',
+    ];
+    let i = 0;
+    const tick = setInterval(() => {
+      if (i < steps.length) {
+        text.textContent = steps[i];
+        fill.style.width = ((i + 1) / steps.length) * 100 + '%';
+        i++;
+      } else {
+        clearInterval(tick);
+        boot.classList.add('hidden');
+        State.data.os.booted = true;
+        this.showBrowser();
+        State.save();
+        Juice.milestone('WORKOS', 'Professional productivity, at your fingertips.', '');
+      }
+    }, 500);
+  },
+
+  showBrowser() {
+    document.getElementById('desktop').classList.add('hidden');
+    document.getElementById('browser').classList.remove('hidden');
+    this.syncAppIcons();
+    this.switchApp(State.data.os.activeApp || 'linkedin');
+  },
+
+  showDesktop() {
+    document.getElementById('browser').classList.add('hidden');
+    document.getElementById('desktop').classList.remove('hidden');
+    this.syncAppIcons();
+  },
+
+  /* ---------- app switching ---------- */
+  switchApp(appId) {
+    const s = State.data;
+    if (!s.os.unlockedApps.includes(appId)) return;
+    s.os.activeApp = appId;
+    // tabs
+    document.querySelectorAll('.b-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.app === appId);
+    });
+    // views
+    document.querySelectorAll('.app-view').forEach(v => {
+      v.classList.toggle('active', v.dataset.app === appId);
+    });
+    // url bar
+    const urls = { linkedin: 'https://www.linkedin.com/feed/', telegram: 'https://web.telegram.org/', bot: 'https://engagebot.example.com/dashboard', dark: 'http://marketplace.onion/' };
+    const url = document.getElementById('b-url');
+    if (url) url.value = urls[appId] || '';
+    // taskbar
+    document.querySelectorAll('.task-app').forEach(t => {
+      t.classList.toggle('active', t.dataset.app === appId);
+    });
+    // app-specific render
+    if (appId === 'telegram') Telegram.render();
+    if (appId === 'bot') Bot.render();
+    if (appId === 'dark') Dark.render();
+  },
+
+  /* ---------- app icons (desktop + taskbar + tabs) ---------- */
+  syncAppIcons() {
+    const s = State.data;
+    const unlocked = s.os.unlockedApps;
+    document.querySelectorAll('.d-icon, .task-app, .b-tab').forEach(el => {
+      const app = el.dataset.app;
+      if (!app) return;
+      const isUnlocked = unlocked.includes(app);
+      el.classList.toggle('locked', !isUnlocked);
+    });
+  },
+
+  /* ---------- unlock flow ---------- */
+  unlockApp(appId) {
+    const s = State.data;
+    if (s.os.unlockedApps.includes(appId)) return;
+    s.os.unlockedApps.push(appId);
+    this.syncAppIcons();
+    const names = { telegram: 'Telegram', bot: 'Bot Service', dark: 'The Marketplace' };
+    Juice.milestone('🔓 UNLOCKED: ' + names[appId] || appId, 'A new tool for your empire', '');
+    Juice.chime();
+    Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 40);
+    State.save();
+  },
+
+  /* ---------- clock ---------- */
+  updateClock() {
+    const el = document.getElementById('task-clock');
+    if (el) el.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  },
+};
