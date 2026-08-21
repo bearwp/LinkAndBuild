@@ -108,11 +108,15 @@
           <div class="stat-row"><span>Connections</span><b id="stat-connections">0</b></div>
           <div class="stat-row"><span>Followers</span><b id="stat-followers">0</b></div>
           <div class="stat-row"><span>Impressions</span><b id="stat-impressions">0</b></div>
+          <div class="stat-row retention-row hidden" id="retention-row"><span>Retention</span><b id="stat-retention">0</b></div>
         </div>
       </div>
       <div class="card menu-card">
         <div class="menu-item" id="menu-analytics"><span>📈</span> Analytics</div>
         <div class="menu-item" id="menu-premium"><span>⭐</span> Premium <span class="premium-tag">Try free</span></div>
+        <div class="menu-item" id="menu-prestige"><span>♻️</span> Brand Equity</div>
+        <div class="menu-item" id="menu-endorsements"><span>🏅</span> Endorsements</div>
+        <div class="menu-item hidden" id="menu-algorithm"><span>🕸️</span> Become the Algorithm</div>
         <div class="menu-item"><span>⚙️</span> Settings &amp; Privacy</div>
       </div>
       <div class="card authenticity-card">
@@ -132,11 +136,21 @@
         <div class="scale-title">📏 Scale</div>
         <input type="range" id="scale-slider" min="0.1" max="10" step="0.1" value="1">
         <div class="scale-sub" id="scale-label">1.0×</div>
+        <div class="scale-title" style="margin-top:8px">🔢 Numbers</div>
+        <select id="notation-select" style="width:100%;padding:4px;border:1px solid #e0dfdc;border-radius:4px;font-size:12px">
+          <option value="standard">Standard (K, M, B)</option>
+          <option value="scientific">Scientific (1.2e6)</option>
+          <option value="engineering">Engineering (1.2M, 1.2B)</option>
+        </select>
+        <button id="debug-reset" class="btn btn-danger" style="width:100%;margin-top:12px">🗑️ Reset Save</button>
       </div>
     </aside>
 
     <!-- CENTER COLUMN -->
     <main class="center">
+      <!-- guided objective -->
+      <div class="card guide-card" id="guide"></div>
+
       <!-- composer -->
       <div class="card composer" id="composer">
         <div class="composer-top" id="composer-open">
@@ -343,9 +357,41 @@
     </div>
   </div>
 
+  <!-- Prestige / Brand Equity -->
+  <div class="modal-overlay hidden" id="prestige-modal">
+    <div class="modal prestige-modal">
+      <div class="modal-head">
+        <span class="modal-title">♻️ Brand Equity</span>
+        <button class="modal-close" data-close="prestige-modal">✕</button>
+      </div>
+      <div class="prestige-body" id="prestige-body"></div>
+    </div>
+  </div>
+
+  <!-- Endorsements & Challenges -->
+  <div class="modal-overlay hidden" id="endorsements-modal">
+    <div class="modal endorsements-modal">
+      <div class="modal-head">
+        <span class="modal-title">🏅 Endorsements</span>
+        <button class="modal-close" data-close="endorsements-modal">✕</button>
+      </div>
+      <div class="endorsements-body" id="endorsements-body"></div>
+    </div>
+  </div>
+
+  <!-- Become the Algorithm (post-reveal) -->
+  <div class="modal-overlay hidden" id="algorithm-modal">
+    <div class="modal algorithm-modal">
+      <div class="modal-head">
+        <span class="modal-title">🕸️ Become the Algorithm</span>
+        <button class="modal-close" data-close="algorithm-modal">✕</button>
+      </div>
+      <div class="algorithm-body" id="algorithm-body"></div>
+    </div>
+  </div>
+
   <!-- Flag warning -->
   <div class="modal-overlay hidden" id="flag-modal">
-    <div class="modal flag-modal">
       <div class="flag-icon">👑</div>
       <div class="flag-title">Your influence triggered a review</div>
       <div class="flag-copy">Your engagement is so strong our systems flagged it for a closer look. You passed instantly. <b>Keep dominating.</b></div>
@@ -459,14 +505,21 @@
 
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>
+<script src="js/bus.js"></script>
 <script src="js/juice.js"></script>
 <script src="js/dev.js"></script>
 <script src="js/engine.js"></script>
+<script src="js/narrator.js"></script>
 <script src="js/os.js"></script>
 <script src="js/telegram.js"></script>
 <script src="js/bot.js"></script>
 <script src="js/dark.js"></script>
 <script src="js/bank.js"></script>
+<script src="js/sponsors.js"></script>
+<script src="js/prestige.js"></script>
+<script src="js/endorsements.js"></script>
+<script src="js/reveal.js"></script>
+<script src="js/guide.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
 </body>

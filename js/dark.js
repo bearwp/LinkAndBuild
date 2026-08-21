@@ -52,6 +52,7 @@ const Dark = {
     s.authenticity = Math.max(0, s.authenticity + Math.abs(l.auth));
     Juice.chime();
     Juice.toast('Transaction complete. Your influence just grew.');
+    Bus.emit('dark:bought', { id });
     if (s.authenticity < 30) {
       Juice.warn();
       Engine.addNotif('warning', 'The algorithm is impressed by your growth.', 0, '⚠️');

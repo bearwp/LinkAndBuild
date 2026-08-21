@@ -21,24 +21,112 @@ const Engine = {
   pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; },
   // global scale multiplier (0.1x – 10x) applied to all numbers and growth
   scale() { return State.data.scale || 1; },
-  fmt(n) {
-    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-    if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+
+  // clout: the single number sponsors care about. Followers plus reach.
+  // It is inflated by the scale slider like everything else — which is the
+  // joke. The bank balance is the only number that isn't.
+  clout() {
+    const s = State.data;
+    return s.followers + s.impressions / 1000 + s.connections / 10;
+  },
+
+  // number notation: 'standard' (K/M/B), 'scientific' (1.23e6),
+  // 'engineering' (1.23M, 1.23B, 1.23T, ...). Every number on screen
+  // goes through fmt/fmtTick so the toggle is global.
+  notation() { return State.data.notation || 'standard'; },
+
+  _fmtCore(n, decimals) {
+    const mode = this.notation();
+    if (mode === 'scientific') {
+      if (n === 0) return '0';
+      const exp = Math.floor(Math.log10(Math.abs(n)));
+      const mant = n / Math.pow(10, exp);
+      return mant.toFixed(decimals) + 'e' + exp;
+    }
+    if (mode === 'engineering') {
+      const SUFFIXES = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+      if (n < 1000) return Math.floor(n).toString();
+      let exp = Math.floor(Math.log10(Math.abs(n)));
+      let group = Math.floor(exp / 3);
+      if (group >= SUFFIXES.length) {
+        // beyond the named suffixes, fall back to scientific
+        return (n / Math.pow(10, group * 3)).toFixed(decimals) + 'e' + (group * 3);
+      }
+      return (n / Math.pow(10, group * 3)).toFixed(decimals) + SUFFIXES[group];
+    }
+    // standard
+    if (n >= 1e9) return (n / 1e9).toFixed(decimals) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(decimals) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(decimals) + 'K';
     return Math.floor(n).toString();
+  },
+
+  fmt(n) {
+    return this._fmtCore(n, 1);
   },
 
   // fmt that ticks visibly every frame (more decimals)
   fmtTick(n) {
-    if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';
-    if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
-    if (n >= 1e3) return (n / 1e3).toFixed(2) + 'K';
-    return Math.floor(n).toString();
+    return this._fmtCore(n, 2);
   },
 
   /* ---------- generator math ---------- */
   genDef(id) { return DATA.GENERATORS.find(g => g.id === id); },
   genCount(id) { return State.data.generators[id] || 0; },
+
+  /* ---------- cost / production curves ---------- */
+  // Every purchasable thing has a cost curve { base, growth } and a
+  // production curve { base, perUnit }. These two helpers are the single
+  // source of truth for balance math, so tuning a number means editing DATA,
+  // not hunting through the engine.
+  //
+  // costOf(def, owned)  -> cost to buy the (owned+1)th unit
+  //   = floor(base * growth^owned)
+  // prodOf(def, owned)  -> total production/sec from `owned` units
+  //   = base*owned + perUnit*owned*(owned-1)/2   (flat when perUnit=0)
+  costOf(def, owned) {
+    const c = def && def.cost;
+    if (c && typeof c === 'object') {
+      return Math.floor(c.base * Math.pow(c.growth || 1, owned || 0));
+    }
+    return Math.floor(c || 0); // legacy scalar cost
+  },
+
+  prodOf(def, owned) {
+    const p = def && def.prod;
+    const n = owned || 0;
+    if (p && typeof p === 'object') {
+      return p.base * n + (p.perUnit || 0) * n * (n - 1) / 2;
+    }
+    return (p || 0) * n; // legacy scalar prod
+  },
+
+  /* ---------- generic upgrade effects ---------- */
+  // Upgrades carry a machine-readable `key` + `value`. These two helpers sum
+  // every owned upgrade's effect so the engine never hardcodes a check per
+  // upgrade. `upgradeMult(key)` returns a multiplier (1 + sum of values);
+  // `upgradeFlat(key)` returns the raw summed value (for head-start bonuses).
+  upgradeMult(key) {
+    const s = State.data;
+    let mult = 1;
+    for (const u of DATA.UPGRADES) {
+      if (u.key !== key) continue;
+      const owned = s.upgrades[u.id] || 0;
+      if (owned > 0) mult += u.value * owned;
+    }
+    return mult;
+  },
+
+  upgradeFlat(key) {
+    const s = State.data;
+    let total = 0;
+    for (const u of DATA.UPGRADES) {
+      if (u.key !== key) continue;
+      const owned = s.upgrades[u.id] || 0;
+      total += u.value * owned;
+    }
+    return total;
+  },
 
   // cached impressions-per-second; recomputed once per simulation tick
   _ipsCache: 0,
@@ -50,13 +138,10 @@ const Engine = {
     let ips = 0;
     for (const g of DATA.GENERATORS) {
       const n = s.generators[g.id] || 0;
-      if (n > 0) ips += g.prod * n;
+      if (n > 0) ips += this.prodOf(g, n);
     }
-    // upgrades multiplier
-    let mult = 1;
-    if (s.upgrades['synergy']) mult *= 1.1;
-    if (s.upgrades['humble']) mult *= 1.15;
-    ips *= mult;
+    // upgrades multiplier (generic: sums every owned gen_mult upgrade)
+    ips *= this.upgradeMult('gen_mult');
     // premium
     if (s.premium) ips *= 1.5;
     // shadowban throttle
@@ -67,6 +152,10 @@ const Engine = {
     ips += Telegram.podIps();
     // bot service add on top
     ips += Bot.botIps();
+    // prestige: permanent reach multiplier (brand equity)
+    ips *= Prestige.multiplier('reach');
+    // challenge rewards: permanent reach multiplier
+    ips *= 1 + Challenges.reward('reach');
     // global scale
     this._ipsCache = ips * this.scale();
     this._ipsDirty = false;
@@ -95,7 +184,7 @@ const Engine = {
       (opts.format === 'carousel' ? 1.3 : opts.format === 'poll' ? 1.1 : opts.format === 'video' ? 1.2 : opts.format === 'photo' ? 1.15 : 1);
     const rarity = this.rollRarity(potential);
 
-    const base = (50 + s.followers * 1.5 + s.connections * 0.5) * this.scale();
+    const base = (50 + s.followers * 1.5 + s.connections * 0.5) * this.scale() * this.upgradeMult('post_mult') * (1 + Challenges.reward('postMult'));
     const viral = rarity === 'legendary' ? 6 : rarity === 'epic' ? 3.5 : rarity === 'rare' ? 2 : rarity === 'uncommon' ? 1.4 : 1;
     const decay = 0.9; // per hour
     const authCost = (template ? template.auth : 0) + (opts.emojis || 0) * -0.5 + (opts.tags || 0) * -0.8 + (opts.question ? -1 : 0) + (opts.format === 'carousel' ? -2 : 0);
@@ -197,6 +286,10 @@ const Engine = {
     const ageH = (Date.now() - post.publishedAt) / 3600000;
     const spike = Math.pow(post.decay, ageH); // 1 at t=0, decays
     let rate = post.base * post.viral * spike * 1.5; // impressions per second
+    // viral posts get the viral_mult upgrade bonus
+    if (post.rarity === 'legendary' || post.rarity === 'epic') {
+      rate *= this.upgradeMult('viral_mult');
+    }
     if (post.authorId === 'you' && s.shadowbanned) rate *= 0.15;
     return rate * this.scale();
   },
@@ -209,12 +302,19 @@ const Engine = {
       const rate = this.postRate(post, s);
       const imp = rate * dtSec;
       post.stats.impressions += imp;
-      s.impressions += imp;
-      s.totalImpressions += imp;
+      // Only the player's own posts feed the global counters. NPC posts are
+      // world texture — they tick their own numbers on their own cards, but
+      // they don't make *your* impressions/likes climb. Every number on your
+      // profile is traceable to something you did.
+      const yours = post.authorId === 'you';
+      if (yours) {
+        s.impressions += imp;
+        s.totalImpressions += imp;
+      }
       // likes/comments trickle proportional to impressions
       const likeRate = imp * 0.04;
       post.stats.likes += likeRate;
-      s.likes += likeRate;
+      if (yours) s.likes += likeRate;
       // reposts trickle in too
       post.stats.shares += imp * 0.008;
       // spawn real comments fast
@@ -248,7 +348,7 @@ const Engine = {
     let ips = 0;
     for (const w of DATA.WORKERS) {
       const n = this.workerCount(w.id);
-      if (n > 0) ips += w.prod * n * (1 + this.workerIntensity(w.id) * 0.5);
+      if (n > 0) ips += this.prodOf(w, n) * (1 + this.workerIntensity(w.id) * 0.5);
     }
     return ips;
   },
@@ -258,7 +358,7 @@ const Engine = {
     const w = this.workerDef(id);
     if (!w) return;
     const owned = this.workerCount(id);
-    const cost = Math.floor(w.cost * Math.pow(1.3, owned));
+    const cost = this.costOf(w, owned);
     if (s.impressions < cost) {
       Juice.toast('Not enough impressions to pay ' + w.name + '.');
       return;
@@ -271,9 +371,7 @@ const Engine = {
     s.workerChats[id].push({ from: 'them', text: 'Hello boss! I am ' + w.name + '. I will work very hard for you. 🙏', time: Date.now() });
     this.addNotif('connection', w.name + ' joined your engagement team', 0, w.emoji);
     Juice.chime();
-    UI.renderGrowth();
-    UI.renderDMs();
-    UI.refresh();
+    Bus.emit('worker:hired', { id });
   },
 
   setIntensity(id, val) {
@@ -283,7 +381,7 @@ const Engine = {
     const w = this.workerDef(id);
     const msgs = ['Chill mode. Slow and natural.', 'Normal pace. Steady engagement.', 'High gear. Lots of activity.', 'MAXIMUM OVERDRIVE. The algorithm will notice.'];
     if (s.workerChats[id]) s.workerChats[id].push({ from: 'them', text: msgs[val] + ' (' + w.name + ')', time: Date.now() });
-    UI.renderGrowth();
+    Bus.emit('worker:intensity', { id });
   },
 
   fireWorker(id) {
@@ -295,9 +393,7 @@ const Engine = {
     if (s.workerChats[id]) s.workerChats[id].push({ from: 'them', text: 'No no please! I have family! I will work harder! 😭', time: Date.now() });
     this.addNotif('warning', 'You fired ' + w.name + '. They will remember this.', 0, '🚫');
     Juice.warn();
-    UI.renderGrowth();
-    UI.renderDMs();
-    UI.refresh();
+    Bus.emit('worker:fired', { id });
   },
 
   sendWorkerCommand(id, cmdId) {
@@ -315,12 +411,10 @@ const Engine = {
       if (cmdId === 'follow') { s.followers += 1 * this.workerCount(id) * this.scale(); }
       if (cmdId === 'pay') { s.authenticity = Math.min(100, s.authenticity + 2); }
       if (cmdId === 'fire') { this.fireWorker(id); }
-      UI.renderChat();
-      UI.renderDMs();
+      Bus.emit('worker:command', { id });
       Juice.pop();
     }, 700);
-    UI.renderChat();
-    UI.renderDMs();
+    Bus.emit('worker:command', { id });
     Juice.pop();
   },
 
@@ -380,24 +474,28 @@ const Engine = {
     const s = State.data;
     const dtSec = dt / 1000;
     const ips = this.totalIps();
-    // baseline organic reach so numbers always climb, even with zero generators
-    const reach = Math.max(ips, 0.5 * this.scale()) * 1000;
+    // Manual-first: the feed is quiet until you buy automation. Reach comes
+    // only from generators/workers/bot — zero automation means zero passive
+    // growth. Numbers climb because *you* did something, not because the
+    // game plays itself.
+    const reach = ips * 1000;
     s.impressions += reach * dtSec;
     s.totalImpressions += reach * dtSec;
     // likes trickle
-    const likes = reach * dtSec * 0.5;
+    const likes = reach * dtSec * 0.5 * this.upgradeMult('like_mult');
     s.likes += likes;
-    // followers grow with automation
-    const followerGain = reach * dtSec * 0.05;
+    // followers grow with automation (prestige follower magnet multiplies)
+    const followerGain = reach * dtSec * 0.05 * Prestige.multiplier('followers') * this.upgradeMult('follower_mult') * (1 + Challenges.reward('followers'));
     s.followers += followerGain;
     // connections trickle in too (every number on screen should climb)
     s.connections += reach * dtSec * 0.02;
     // influence accrues slowly from reach (the real "score")
     s.influence += reach * dtSec * 0.1;
     // influence climbs with automation (you are thriving)
+    const authDamp = Math.max(0, 1 - this.upgradeFlat('auth_less'));
     for (const g of DATA.GENERATORS) {
       const n = s.generators[g.id] || 0;
-      if (n > 0) s.authenticity += Math.abs(g.auth) * n * dtSec;
+      if (n > 0) s.authenticity += Math.abs(g.auth) * n * dtSec * authDamp;
     }
     if (s.authenticity < 0) s.authenticity = 0;
     if (s.authenticity > 100) s.authenticity = 100;
@@ -422,7 +520,7 @@ const Engine = {
     });
     if (s.notifications.length > 60) s.notifications.pop();
     s.notifCount++;
-    UI.updateBell();
+    Bus.emit('notif:added');
     Juice.bellPop();
     Juice.ding();
   },
@@ -430,7 +528,12 @@ const Engine = {
   tickNotifications(dt) {
     const s = State.data;
     const now = Date.now();
-    const rate = s.premium ? 1.6 : 1;
+    // quiet until the player has delegated (era 2): no ambient notifications
+    if (this.era() < 2) return;
+    const src = this.sources();
+    // reactions come from your engagement ring: pods + the bot. More of
+    // either = more likes/comments/views landing on your posts.
+    const rate = Math.max(1, src.pods + src.bot * 3) * (s.premium ? 1.5 : 1);
     // profile views (golden cookie-ish)
     if (now - this.lastView > Math.max(500, 2000 / rate / this.scale()) && !s.shadowbanned) {
       this.lastView = now;
@@ -465,9 +568,11 @@ const Engine = {
   tickDMs(dt) {
     const s = State.data;
     const now = Date.now();
-    // DMs stream in faster as you grow — the more influence, the more opportunities
-    const base = 1500;
-    const interval = Math.max(500, (base - s.followers * 2 - s.connections * 1.5) / this.scale());
+    // quiet until the player has delegated (era 2): no ambient DM spam
+    if (this.era() < 2) return;
+    // inbound spam scales with your outreach army: every worker you hire draws
+    // "opportunities" back into your inbox.
+    const interval = Math.max(500, 1500 / Math.max(1, this.sources().workers) / this.scale());
     if (now - this.lastDM > interval) {
       this.lastDM = now;
       const sender = this.pick(DATA.DM_SENDERS);
@@ -483,7 +588,7 @@ const Engine = {
       };
       s.dms.unshift(dm);
       if (s.dms.length > 200) s.dms.pop();
-      UI.renderDMs();
+      Bus.emit('dm:received');
       Juice.ding();
     }
   },
@@ -507,8 +612,7 @@ const Engine = {
       post.authorName = 'You (AI)';
       post.authorEmoji = '🤖';
       s.posts.unshift(post);
-      UI.renderFeedDebounced();
-      UI.updatePostCard(post);
+      Bus.emit('post:autoposted', post);
       Juice.toast('🤖 AI Factory published a post for you');
     }
   },
@@ -518,14 +622,60 @@ const Engine = {
   tickStream(dt) {
     const s = State.data;
     const now = Date.now();
-    const interval = Math.max(250, 800 / this.scale()); // a new post every 0.8s (bounded by trimPosts)
+    // The feed fills itself only after you've delegated (era 2), and the pace
+    // scales with how many content generators you own — each one is a fake
+    // account flooding your timeline.
+    if (this.era() < 2) return;
+    const interval = this.feedInterval();
     if (now - this.lastStreamPost > interval) {
       this.lastStreamPost = now;
       const post = this.makeNPCPost();
       s.posts.unshift(post);
       this.trimPosts();
-      UI.renderFeedDebounced();
+      Bus.emit('post:streamed');
     }
+  },
+
+  /* ---------- the delegation axis (single source of truth) ---------- */
+  // How much of "you" has been handed to the machine. Every ambient system —
+  // feed churn, DMs, notifications, the narrator's register, the reveal —
+  // reads this one number. Nothing hardcodes a stage; everything is a
+  // projection of how automated you are.
+  automation() {
+    const s = State.data;
+    const gens = Object.values(s.generators).reduce((a, b) => a + b, 0);
+    const workers = Object.keys(s.workers).reduce((a, k) => a + (s.workers[k].count || 0), 0);
+    return gens + workers + (s.os.bot.created ? 1 : 0);
+  },
+
+  // coarse era: 0 cold, 1 posting, 2 delegated, 3 industrial
+  era() {
+    const s = State.data;
+    const a = this.automation();
+    if (a >= 8 || s.sponsors.active.length >= 1) return 3;
+    if (a >= 1) return 2;
+    if (s.analytics.postsPublished >= 1) return 1;
+    return 0;
+  },
+
+  // The factory: every automation unit feeds a specific downstream number.
+  // Not one vague "churn" multiplier — each source is named and traceable:
+  //   generators -> the feed (fake accounts flooding your timeline)
+  //   workers    -> inbound DMs (your outreach army draws spam back to you)
+  //   pods + bot -> notifications (your engagement ring reacts to your posts)
+  sources() {
+    const s = State.data;
+    const gens = Object.values(s.generators).reduce((a, b) => a + b, 0);
+    const workers = Object.keys(s.workers).reduce((a, k) => a + (s.workers[k].count || 0), 0);
+    const pods = s.os.telegram.joinedPods.length;
+    const bot = s.os.bot.created ? 1 : 0;
+    return { gens, workers, pods, bot };
+  },
+
+  // one NPC post every 12s, divided by how many content generators you own.
+  // More generators = a faster, noisier feed.
+  feedInterval() {
+    return Math.max(800, 12000 / Math.max(1, this.sources().gens));
   },
 
   // keep the post array bounded so the tick loops stay cheap
@@ -551,7 +701,7 @@ const Engine = {
       // you're so big the algorithm had to throttle you — but you always bounce back
       if (s.authenticity >= 60) {
         s.shadowbanned = false;
-        UI.hideShadowban();
+        Bus.emit('detection:restored');
         this.addNotif('warning', 'Your reach is back to full power. The algorithm missed you.', 0, '✅');
         Juice.milestone('REACH RESTORED', 'The algorithm missed you', '');
         Juice.chime();
@@ -563,15 +713,23 @@ const Engine = {
       s.flagShown = true;
       this.addNotif('warning', 'Your account is so influential it triggered a review. You passed instantly.', 0, '⚠️');
       Juice.warn();
-      UI.showFlag();
+      Bus.emit('detection:flag');
     }
     if (s.authenticity <= 0 && !s.shadowbanned) {
       s.shadowbanned = true;
       this.addNotif('warning', 'You broke the algorithm. It had to throttle you out of respect.', 0, '🕶️');
       Juice.warn();
-      UI.showShadowban();
+      Bus.emit('detection:shadowban');
       Juice.milestone('🕶️ TOO POWERFUL', 'The algorithm had to slow you down', '');
     }
+  },
+
+  /* ---------- challenge auth floor ---------- */
+  // permanent authenticity floor from completed challenges (never below N%).
+  enforceAuthFloor() {
+    const s = State.data;
+    const floor = Challenges.authFloor();
+    if (floor > 0 && s.authenticity < floor) s.authenticity = floor;
   },
 
   /* ---------- milestones ---------- */
@@ -584,6 +742,7 @@ const Engine = {
       Juice.milestone(big, sub, cls);
       Juice.chime();
       Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 50);
+      Bus.emit('milestone:reached', { id });
     };
     if (s.followers >= 100 && !seen['f100']) fire('f100', '100 FOLLOWERS', 'People are watching you now', '');
     if (s.followers >= 1000 && !seen['f1000']) fire('f1000', '1,000 FOLLOWERS', 'Thought leader status: unlocked', '');
@@ -599,6 +758,7 @@ const Engine = {
   tickFourthWall(dt) {
     const s = State.data;
     const now = Date.now();
+    if (this.era() < 1) return;
     if (now - this.lastFourthWall > Math.max(15000, 45000 / this.scale())) {
       this.lastFourthWall = now;
       const post = this.makeNPCPost();
@@ -609,7 +769,7 @@ const Engine = {
       post.authorColor = '#111';
       post.fourthWall = true;
       s.posts.unshift(post);
-      UI.renderFeedDebounced();
+      Bus.emit('fourthwall:posted');
     }
   },
 
@@ -638,13 +798,20 @@ const Engine = {
       this.tickWorkers(dtMs);
       Telegram.tick(dtMs);
       Bot.tick(dtMs);
+      Sponsors.tick();
+      Endorsements.maybeSkill();
+      Endorsements.maybeOneRealPerson();
+      Challenges.tick();
+      Reveal.tick();
       this.tickNotifications(dtMs);
       this.tickDMs(dtMs);
       this.tickAnalytics(dtMs);
       this.tickAutoPost(dtMs);
       this.tickStream(dtMs);
       this.tickDetection(dtMs);
+      this.enforceAuthFloor();
       this.checkMilestones();
+      Bus.emit('state:changed');
     }, this.tick);
 
     // UI refresh at 60fps for that casino feel, but only while the tab is
@@ -675,6 +842,11 @@ const Engine = {
     s.effort += 1;
     s.analytics.postsPublished++;
     s.analytics.totalLikes += post.stats.likes;
+    // challenge tracking: count posts, and posts with no engagement bait
+    if (s.challenges.stats) {
+      s.challenges.stats.posts++;
+      if (!opts.emojis && !opts.tags && !opts.question) s.challenges.stats.silentPosts++;
+    }
     // track best post
     if (!s.analytics.bestPost || post.stats.impressions > s.analytics.bestPost.stats.impressions) {
       s.analytics.bestPost = post;
@@ -700,8 +872,7 @@ const Engine = {
     }
     // influence from manual posting (always climbs)
     s.authenticity = Math.max(0, Math.min(100, s.authenticity + Math.abs(post.authCost) * 0.5 + 1));
-    UI.renderFeed();
-    UI.updatePostCard(post);
+    Bus.emit('post:published', post);
     Juice.pop();
     Juice.toast('Posted! Watching the numbers climb...');
     return post;
@@ -715,10 +886,10 @@ const Engine = {
     State.data.effort += 0.2;
     if (post.isNPC) {
       // clicking on NPC posts is the "click power" — small impression reward
-      State.data.impressions += (1 + Math.floor(State.data.followers / 200)) * this.scale();
+      State.data.impressions += (1 + Math.floor(State.data.followers / 200)) * this.scale() * this.upgradeMult('click_mult');
     }
     Juice.like();
-    UI.updatePostCard(post);
+    Bus.emit('post:liked', post);
   },
 
   followPerson(id) {
@@ -730,8 +901,7 @@ const Engine = {
     s.authenticity = Math.min(100, s.authenticity + 1);
     Juice.pop();
     Juice.toast('Followed! Your network just got a little bigger.');
-    UI.renderRecommended();
-    UI.refresh();
+    Bus.emit('person:followed');
   },
 
   connectPerson(id) {
@@ -742,8 +912,7 @@ const Engine = {
     s.authenticity = Math.min(100, s.authenticity + 1);
     Juice.pop();
     Juice.toast('Connected! They want to Link & Build with you.');
-    UI.renderNetwork();
-    UI.refresh();
+    Bus.emit('person:connected');
   },
 
   commentOn(post, phrase) {
@@ -756,14 +925,15 @@ const Engine = {
     s.authenticity = Math.max(0, Math.min(100, s.authenticity + Math.abs(c.auth)));
     s.effort += 0.3;
     Juice.pop();
-    UI.updatePostCard(post);
+    Bus.emit('post:commented', post);
   },
 
   buyGenerator(id) {
     const s = State.data;
     const g = this.genDef(id);
     if (!g) return;
-    const cost = g.cost * Math.pow(1.15, this.genCount(id));
+    const owned = this.genCount(id);
+    const cost = this.costOf(g, owned);
     if (s.impressions < cost) {
       Juice.toast('Not enough impressions. Keep scrolling.');
       return;
@@ -773,8 +943,7 @@ const Engine = {
     s.hoursSaved += 1;
     this.addNotif('follower', 'You acquired: ' + g.name, 0, g.icon);
     Juice.chime();
-    UI.renderGrowth();
-    UI.refresh();
+    Bus.emit('generator:bought', { id });
   },
 
   buyUpgrade(id) {
@@ -783,7 +952,7 @@ const Engine = {
     if (!u) return;
     const owned = s.upgrades[id] || 0;
     if (owned >= u.max) return;
-    const cost = u.cost * Math.pow(1.5, owned);
+    const cost = this.costOf(u, owned);
     if (s.impressions < cost) {
       Juice.toast('Not enough impressions.');
       return;
@@ -791,23 +960,47 @@ const Engine = {
     s.impressions -= cost;
     s.upgrades[id] = owned + 1;
     Juice.chime();
-    UI.renderGrowth();
-    UI.refresh();
+    Bus.emit('upgrade:bought', { id });
   },
 
   buyPremium() {
     const s = State.data;
     s.premium = true;
     s.verified = true;
-    UI.hideModal('premium-modal');
+    Bus.emit('premium:bought');
     Juice.milestone('⭐ PREMIUM MEMBER', 'You have arrived. The algorithm is yours now.', '');
     Juice.chime();
     Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 60);
-    UI.refresh();
   },
 
   /* ---------- offline progress ---------- */
+  // Simulate production for the time the tab was closed. Capped so a
+  // month-long absence doesn't instantly trivialize the game, and so the
+  // "welcome back" beat lands as a gut-punch rather than a jackpot.
   applyOffline() {
-    // no-op: persistence removed
+    const s = State.data;
+    const now = Date.now();
+    const last = s.lastSeen || s.createdAt || now;
+    const elapsed = now - last;
+    if (elapsed <= 0) return 0;
+
+    const CAP_MS = 8 * 3600000; // 8 hours max
+    const dtMs = Math.min(elapsed, CAP_MS);
+    const dtSec = dtMs / 1000;
+
+    // run the same production math as a live tick, but in one lump
+    const ips = this.totalIps();
+    // no free reach: offline progress only pays out what your automation earns
+    const reach = ips * 1000;
+    const gained = reach * dtSec;
+    s.impressions += gained;
+    s.totalImpressions += gained;
+    s.likes += gained * 0.5;
+    s.followers += gained * 0.05;
+    s.connections += gained * 0.02;
+    s.influence += gained * 0.1;
+
+    s.lastSeen = now;
+    return dtSec;
   },
 };

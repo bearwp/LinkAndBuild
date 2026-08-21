@@ -171,6 +171,17 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .next-fill { height: 100%; background: linear-gradient(90deg, #0a66c2, #7fb8e8); border-radius: 3px; transition: width 0.3s ease; }
 .next-sub { font-size: 11px; color: #666; margin-top: 6px; }
 
+/* guided objective banner (always-visible next step) */
+.guide-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-left: 3px solid #0a66c2; }
+.guide-icon { font-size: 22px; line-height: 1; flex: 0 0 auto; }
+.guide-body { flex: 1; min-width: 0; }
+.guide-title { font-weight: 700; font-size: 14px; }
+.guide-hint { font-size: 12px; color: #666; margin-top: 2px; }
+.guide-bar { height: 5px; background: #e0dfdc; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.guide-fill { height: 100%; background: linear-gradient(90deg, #0a66c2, #7fb8e8); border-radius: 3px; transition: width 0.4s ease; }
+.guide-card.guide-done { border-left-color: #b8860b; }
+.guide-card.guide-done .guide-title { color: #b8860b; }
+
 .btn { border-radius: 999px; padding: 8px 16px; font-size: 14px; font-weight: 600; }
 .btn-primary { background: #0a66c2; color: #fff; }
 .btn-primary:hover { background: #004182; }
@@ -562,4 +573,87 @@ body.has-alphamail .browser { right: 300px; }
 .bank-tx-amt { font-size: 13px; font-weight: 700; }
 .bank-tx-amt.pos { color: #2e7d32; }
 .bank-tx-amt.neg { color: #d11124; }
+.bank-sponsors { background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; margin-top: 12px; padding: 16px; }
+.bank-sponsor { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #f3f2ef; }
+.bank-spend { background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; margin-top: 12px; padding: 16px; }
+.bank-tx-sub { font-size: 11px; color: #999; margin-bottom: 8px; }
+.bank-spend-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #f3f2ef; }
+.bank-buy { font-size: 12px; padding: 4px 10px; }
 .bank-footer { text-align: center; font-size: 11px; color: #999; margin-top: 12px; }
+
+/* ---------- Prestige / Brand Equity ---------- */
+.prestige-modal { max-width: 560px; }
+.prestige-body { max-height: 70vh; overflow-y: auto; }
+.prestige-app { display: flex; flex-direction: column; gap: 14px; }
+.prestige-head { text-align: center; }
+.prestige-title { font-size: 18px; font-weight: 700; }
+.prestige-sub { font-size: 12px; color: #999; margin-top: 2px; }
+.prestige-stats { display: flex; gap: 10px; }
+.prestige-stat { flex: 1; background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; padding: 12px; text-align: center; }
+.prestige-stat-num { font-size: 22px; font-weight: 800; color: #0a66c2; }
+.prestige-stat-label { font-size: 11px; color: #999; margin-top: 2px; }
+.prestige-tree { background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; padding: 16px; }
+.prestige-tree-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.prestige-node { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #f3f2ef; }
+.prestige-node-icon { font-size: 20px; }
+.prestige-node-info { flex: 1; }
+.prestige-node-name { font-size: 13px; font-weight: 600; }
+.prestige-node-lvl { font-size: 11px; color: #999; font-weight: 400; }
+.prestige-node-desc { font-size: 11px; color: #999; }
+.prestige-buy { font-size: 12px; padding: 4px 10px; }
+.prestige-layers { background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; padding: 16px; }
+.prestige-layer { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; border-top: 1px solid #f3f2ef; }
+.prestige-layer.active { color: #0a66c2; font-weight: 600; }
+.prestige-layer-num { width: 20px; height: 20px; border-radius: 50%; background: #f3f2ef; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.prestige-layer.active .prestige-layer-num { background: #0a66c2; color: #fff; }
+.prestige-layer-name { font-weight: 600; }
+.prestige-layer-reset { color: #999; flex: 1; }
+.prestige-layer-unlock { color: #999; }
+.prestige-delete { background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; padding: 16px; }
+.prestige-delete-title { font-size: 13px; font-weight: 700; color: #d11124; }
+.prestige-delete-copy { font-size: 12px; color: #666; margin: 6px 0 12px; }
+
+/* ---------- Endorsements & Challenges ---------- */
+.endorsements-modal { max-width: 560px; }
+.endorsements-body { max-height: 70vh; overflow-y: auto; padding: 16px; }
+.end-section { background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+.end-section-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+.end-sub { font-size: 11px; color: #999; margin-bottom: 12px; }
+.end-count { font-size: 11px; font-weight: 600; color: #0a66c2; margin-left: 4px; }
+.end-challenge { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid #f3f2ef; }
+.end-challenge.active { background: #f0f7ff; border-radius: 8px; padding: 10px; margin: 4px 0; border: 1px solid #0a66c2; }
+.end-challenge.done { opacity: 0.6; }
+.end-challenge-icon { font-size: 20px; }
+.end-challenge-info { flex: 1; }
+.end-challenge-name { font-size: 13px; font-weight: 700; }
+.end-tag { font-size: 10px; font-weight: 700; color: #fff; background: #0a66c2; border-radius: 4px; padding: 1px 5px; margin-left: 4px; }
+.end-challenge-desc { font-size: 11px; color: #666; }
+.end-challenge-reward { font-size: 11px; color: #2e7d32; font-weight: 600; }
+.end-ach { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid #f3f2ef; }
+.end-ach.locked { opacity: 0.5; }
+.end-ach-icon { font-size: 22px; }
+.end-ach-info { flex: 1; }
+.end-ach-name { font-size: 13px; font-weight: 700; }
+.end-ach-desc { font-size: 11px; color: #666; }
+.end-skill { padding: 8px 0; border-top: 1px solid #f3f2ef; }
+.end-skill-info { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.end-skill-name { font-size: 13px; font-weight: 600; }
+.end-skill-count { font-size: 11px; color: #0a66c2; font-weight: 700; }
+.end-skill-latest { font-size: 11px; color: #999; }
+.end-skill-bar { height: 6px; background: #f3f2ef; border-radius: 3px; overflow: hidden; }
+.end-skill-fill { height: 100%; background: linear-gradient(90deg, #7fb8e8, #0a66c2); border-radius: 3px; transition: width 0.4s ease; }
+
+/* ---------- Reveal & Endgame ---------- */
+.retention-row b { color: #b8860b; }
+.algorithm-modal { max-width: 560px; }
+.algorithm-body { max-height: 70vh; overflow-y: auto; padding: 16px; }
+.alg-section { background: #fff; border: 1px solid #e0dfdc; border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+.alg-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.alg-copy { font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 12px; }
+.alg-offer { background: #111; color: #e0dfdc; border-radius: 10px; padding: 16px; }
+.alg-offer-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.alg-offer-copy { font-size: 12px; color: #b3b3b3; line-height: 1.5; margin-bottom: 12px; }
+.post-card.scare { border-left: 3px solid #555; }
+.post-card.scare .post-author { color: #444; }
+
+

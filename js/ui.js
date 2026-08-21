@@ -33,6 +33,19 @@ const UI = {
     ipsEl.textContent = Engine.fmtTick(Engine.totalIps()) + '/s';
     likesEl.textContent = Engine.fmtTick(s.likes);
     gfolEl.textContent = Engine.fmt(s.followers);
+    // retention (post-reveal): only shown after the reveal lands
+    const retRow = $('retention-row');
+    if (retRow) {
+      if (s.reveal && s.reveal.revealed) {
+        retRow.classList.remove('hidden');
+        $('stat-retention').textContent = Engine.fmtTick(s.retention);
+      } else {
+        retRow.classList.add('hidden');
+      }
+    }
+    // "Become the Algorithm" menu appears after the reveal
+    const algoMenu = $('menu-algorithm');
+    if (algoMenu) algoMenu.classList.toggle('hidden', !(s.reveal && s.reveal.revealed));
     popIfChanged(connEl, connEl.textContent);
     popIfChanged(folEl, folEl.textContent);
     popIfChanged(impEl, impEl.textContent);
@@ -102,20 +115,22 @@ const UI = {
     // find the cheapest affordable-ish next purchase (generator or upgrade or worker)
     let next = null;
     for (const g of DATA.GENERATORS) {
+      if ((g.layer || 1) > s.prestige.layer) continue;
       if (Engine.genCount(g.id) === 0) {
-        const cost = g.cost;
+        const cost = Engine.costOf(g, 0);
         if (!next || cost < next.cost) next = { name: g.name, cost, icon: g.icon, kind: 'generator' };
       }
     }
     for (const w of DATA.WORKERS) {
       if (Engine.workerCount(w.id) === 0) {
-        const cost = w.cost;
+        const cost = Engine.costOf(w, 0);
         if (!next || cost < next.cost) next = { name: w.name, cost, icon: w.emoji, kind: 'worker' };
       }
     }
     for (const u of DATA.UPGRADES) {
+      if ((u.layer || 1) > s.prestige.layer) continue;
       if (!s.upgrades[u.id]) {
-        const cost = u.cost;
+        const cost = Engine.costOf(u, 0);
         if (!next || cost < next.cost) next = { name: u.name, cost, icon: u.icon, kind: 'upgrade' };
       }
     }
@@ -337,7 +352,7 @@ const UI = {
   postCard(post) {
     const s = State.data;
     const card = document.createElement('div');
-    card.className = 'post-card' + (post.fourthWall ? ' fourthwall' : '');
+    card.className = 'post-card' + (post.fourthWall ? ' fourthwall' : '') + (post.scare ? ' scare' : '');
     card.dataset.postId = post.id;
     this._cards.set(post.id, card);
     if (post.rarity === 'legendary') card.classList.add('viral-flash');
@@ -573,8 +588,9 @@ const UI = {
     // generators
     paneG.innerHTML = '';
     for (const g of DATA.GENERATORS) {
+      if ((g.layer || 1) > s.prestige.layer) continue;
       const owned = s.generators[g.id] || 0;
-      const cost = Math.floor(g.cost * Math.pow(1.15, owned));
+      const cost = Engine.costOf(g, owned);
       const affordable = s.impressions >= cost;
       const item = document.createElement('div');
       item.className = 'g-item' + (owned > 0 ? ' owned' : '');
@@ -583,7 +599,7 @@ const UI = {
         <div class="g-item-info">
           <div class="g-item-name">${g.name} <span style="color:#999;font-size:11px">${owned > 0 ? '×' + owned : ''}</span></div>
           <div class="g-item-desc">${g.desc}</div>
-          <div class="g-item-stats">+${g.prod} imp/s · +${Math.abs(g.auth)} influence/s · ${g.flavor}</div>
+          <div class="g-item-stats">+${Engine.fmt(Engine.prodOf(g, 1))} imp/s · +${Math.abs(g.auth)} influence/s · ${g.flavor}</div>
         </div>
         <button class="btn btn-primary g-item-btn" data-gen="${g.id}" ${affordable ? '' : 'disabled'}>
           ${owned > 0 ? 'Upgrade' : 'Acquire'} · ${Engine.fmt(cost)}
@@ -596,9 +612,10 @@ const UI = {
     // upgrades
     paneU.innerHTML = '';
     for (const u of DATA.UPGRADES) {
+      if ((u.layer || 1) > s.prestige.layer) continue;
       const owned = s.upgrades[u.id] || 0;
       const done = owned >= u.max;
-      const cost = Math.floor(u.cost * Math.pow(1.5, owned));
+      const cost = Engine.costOf(u, owned);
       const affordable = s.impressions >= cost;
       const item = document.createElement('div');
       item.className = 'g-item' + (done ? ' owned' : '');
@@ -621,7 +638,7 @@ const UI = {
     paneO.innerHTML = '';
     for (const w of DATA.WORKERS) {
       const owned = Engine.workerCount(w.id);
-      const cost = Math.floor(w.cost * Math.pow(1.3, owned));
+      const cost = Engine.costOf(w, owned);
       const affordable = s.impressions >= cost;
       const item = document.createElement('div');
       item.className = 'g-item' + (owned > 0 ? ' owned' : '');
@@ -630,7 +647,7 @@ const UI = {
         <div class="g-item-info">
           <div class="g-item-name">${w.name} <span style="color:#999;font-size:11px">${owned > 0 ? '×' + owned : ''}</span></div>
           <div class="g-item-desc">${w.role} · ${w.country}</div>
-          <div class="g-item-stats">+${w.prod} imp/s · +${Math.abs(w.auth)} influence/s · "${w.bio}"</div>
+          <div class="g-item-stats">+${Engine.fmt(Engine.prodOf(w, 1))} imp/s · +${Math.abs(w.auth)} influence/s · "${w.bio}"</div>
           ${owned > 0 ? this.intensityControl(w.id) : ''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
@@ -838,14 +855,14 @@ const UI = {
     // upgrades section
     const upgHtml = `<div class="an-section"><div class="an-section-title">Analytics Upgrades</div><div class="an-upgrades">${DATA.ANALYTICS_UPGRADES.map(u => {
       const o = owned >= u.tier;
-      const affordable = s.impressions >= u.cost;
+      const affordable = s.impressions >= Engine.costOf(u, 0);
       return `<div class="an-upg ${o ? 'owned' : ''}">
         <div style="font-size:24px">${u.icon}</div>
         <div class="an-upg-info">
           <div class="an-upg-name">${u.name}</div>
           <div class="an-upg-desc">${u.desc}</div>
         </div>
-        <button class="btn btn-primary" data-an-upg="${u.id}" ${o || !affordable ? 'disabled' : ''}>${o ? 'Owned' : Engine.fmt(u.cost)}</button>
+        <button class="btn btn-primary" data-an-upg="${u.id}" ${o || !affordable ? 'disabled' : ''}>${o ? 'Owned' : Engine.fmt(Engine.costOf(u, 0))}</button>
       </div>`;
     }).join('')}</div></div>`;
 
@@ -862,11 +879,11 @@ const UI = {
     const u = DATA.ANALYTICS_UPGRADES.find(x => x.id === id);
     if (!u) return;
     if (s.analytics.analyticsLevel >= u.tier) return;
-    if (s.impressions < u.cost) {
+    if (s.impressions < Engine.costOf(u, 0)) {
       Juice.toast('Not enough impressions.');
       return;
     }
-    s.impressions -= u.cost;
+    s.impressions -= Engine.costOf(u, 0);
     s.analytics.analyticsLevel = u.tier;
     Juice.chime();
     this.renderAnalytics();
@@ -1217,6 +1234,122 @@ const UI = {
       el.querySelector('.ad-emoji').textContent = a.emoji;
       el.querySelector('b').textContent = a.title;
       el.querySelector('.ad-sub').textContent = a.sub;
+    });
+  },
+
+  /* ---------- endorsements & challenges ---------- */
+  renderEndorsements() {
+    const body = document.getElementById('endorsements-body');
+    if (!body) return;
+    const s = State.data;
+
+    // ---- challenges (active + completed) ----
+    const active = Challenges.active();
+    const challengesHtml = `
+      <div class="end-section">
+        <div class="end-section-title">Challenges</div>
+        <div class="end-sub">Rule-changing modifiers. Selected at the start of a run. Each one pays a permanent reward.</div>
+        ${
+          active
+            ? `<div class="end-challenge active">
+                 <div class="end-challenge-icon">${active.icon}</div>
+                 <div class="end-challenge-info">
+                   <div class="end-challenge-name">${active.name} <span class="end-tag">ACTIVE</span></div>
+                   <div class="end-challenge-desc">${active.desc}</div>
+                 </div>
+               </div>`
+            : `<button class="btn btn-primary" id="end-select-challenge">🎲 Select a Challenge</button>`
+        }
+        ${DATA.CHALLENGES.map(c => {
+          const done = s.challenges.completed[c.id];
+          return `<div class="end-challenge ${done ? 'done' : ''}">
+            <div class="end-challenge-icon">${done ? '✅' : c.icon}</div>
+            <div class="end-challenge-info">
+              <div class="end-challenge-name">${c.name}</div>
+              <div class="end-challenge-desc">${c.desc}</div>
+              <div class="end-challenge-reward">${c.rewardDesc}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    // ---- achievements (rendered as endorsements) ----
+    const earnedIds = s.achievements.earned;
+    const visible = DATA.ACHIEVEMENTS.filter(a => !a.secret || earnedIds.includes(a.id));
+    const earnedCount = earnedIds.length;
+    const total = DATA.ACHIEVEMENTS.length;
+    const achievementsHtml = `
+      <div class="end-section">
+        <div class="end-section-title">Endorsements <span class="end-count">${earnedCount}/${total}</span></div>
+        <div class="end-sub">A permanent record of every time you chose to debase yourself. Endorsed by people you've never met.</div>
+        ${visible.map(a => {
+          const earned = earnedIds.includes(a.id);
+          return `<div class="end-ach ${earned ? 'earned' : 'locked'}">
+            <div class="end-ach-icon">${earned ? a.icon : '🔒'}</div>
+            <div class="end-ach-info">
+              <div class="end-ach-name">${earned ? a.name : (a.secret ? '???' : a.name)}</div>
+              <div class="end-ach-desc">${earned ? a.desc : (a.secret ? 'Hidden. Keep playing.' : a.desc)}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    // ---- skill endorsements ----
+    const skillIds = Object.keys(s.achievements.endorsements);
+    const skillsHtml = `
+      <div class="end-section">
+        <div class="end-section-title">Skills</div>
+        <div class="end-sub">Endorsed by your connections. All of them bots. All of them vouching for skills you don't have.</div>
+        ${DATA.SKILLS.map(sk => {
+          const list = s.achievements.endorsements[sk.id] || [];
+          const count = list.length;
+          const latest = list[list.length - 1];
+          return `<div class="end-skill ${count ? 'earned' : ''}">
+            <div class="end-skill-info">
+              <div class="end-skill-name">${sk.label} <span class="end-skill-count">${count}</span></div>
+              ${latest ? `<div class="end-skill-latest">${latest.emoji} ${latest.name} · ${latest.role}</div>` : ''}
+            </div>
+            <div class="end-skill-bar"><div class="end-skill-fill" style="width:${Math.min(100, count * 15)}%"></div></div>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    body.innerHTML = challengesHtml + achievementsHtml + skillsHtml;
+
+    const sel = document.getElementById('end-select-challenge');
+    if (sel) sel.addEventListener('click', () => {
+      Challenges.select();
+      this.renderEndorsements();
+    });
+  },
+
+  /* ---------- become the algorithm (post-reveal) ---------- */
+  renderAlgorithm() {
+    const body = document.getElementById('algorithm-body');
+    if (!body) return;
+    const s = State.data;
+    const isAlgo = s.reveal && s.reveal.algorithm;
+    body.innerHTML = `
+      <div class="alg-section">
+        <div class="alg-title">🕸️ The Other Side of the Empty Room</div>
+        <div class="alg-copy">You've seen the truth. Every account you ever engaged with was a bot. The likes, the comments, the validation — manufactured. The only real thing in the entire game was your need to be seen.</div>
+        <div class="alg-copy">You can keep posting. The number still goes up. The bots still like it. The sponsors still pay. The only thing that changed is that you now <i>know</i>.</div>
+      </div>
+      <div class="alg-offer">
+        <div class="alg-offer-title">Become the Algorithm</div>
+        <div class="alg-offer-copy">Or you can take the job. Become the thing that farmed you. Farm other players now. The narrator reports to you. It always did. Retention is the number now — and it only ever goes up.</div>
+        ${isAlgo
+          ? `<div class="alg-copy" style="color:#0a66c2;font-weight:700">✓ You are the algorithm. The narrator reports to you. Retention accrues faster.</div>`
+          : `<button class="btn btn-primary" id="alg-become">🕸️ Become the Algorithm</button>`}
+      </div>
+      <div class="alg-section">
+        <div class="alg-title">The Ending That Isn't</div>
+        <div class="alg-copy">There was never a secret identity. There was never anyone else. The room was empty the whole time, and you were performing for it. And still, somehow, the rent is due.</div>
+      </div>`;
+    const btn = document.getElementById('alg-become');
+    if (btn) btn.addEventListener('click', () => {
+      Reveal.becomeAlgorithm();
+      this.renderAlgorithm();
     });
   },
 

@@ -45,15 +45,15 @@ const Bot = {
         <div class="bot-configs">
           ${configs.map(c => {
             const owned = b.activity.some(a => a.type === 'acquire' && a.config === c.id);
-            const affordable = State.data.impressions >= c.cost;
+            const affordable = State.data.impressions >= Engine.costOf(c, 0);
             return `<div class="bot-config ${owned ? 'owned' : ''}">
               <div class="bot-config-icon">${c.icon}</div>
               <div class="bot-config-info">
                 <div class="bot-config-name">${c.name}</div>
                 <div class="bot-config-desc">${c.desc}</div>
-                <div class="bot-config-stats">+${c.prod} imp/s · ${c.auth} auth/s</div>
+                <div class="bot-config-stats">+${Engine.fmt(Engine.prodOf(c, 1))} imp/s · ${c.auth} auth/s</div>
               </div>
-              <button class="btn btn-primary" data-bot-config="${c.id}" ${owned || !affordable ? 'disabled' : ''}>${owned ? 'Owned' : Engine.fmt(c.cost)}</button>
+              <button class="btn btn-primary" data-bot-config="${c.id}" ${owned || !affordable ? 'disabled' : ''}>${owned ? 'Owned' : Engine.fmt(Engine.costOf(c, 0))}</button>
             </div>`;
           }).join('')}
         </div>
@@ -83,6 +83,7 @@ const Bot = {
     s.os.bot.activity.push({ type: 'create', text: 'Bot ' + name + ' created.', time: Date.now(), icon: '🤖' });
     Juice.chime();
     Juice.milestone('🤖 BOT CREATED', name + ' is online. It will do your engagement.', '');
+    Bus.emit('bot:created', { name });
     this.render();
   },
 
@@ -91,11 +92,11 @@ const Bot = {
     const c = DATA.BOT_CONFIGS.find(x => x.id === id);
     if (!c) return;
     if (s.os.bot.activity.some(a => a.type === 'acquire' && a.config === id)) return;
-    if (s.impressions < c.cost) {
+    if (s.impressions < Engine.costOf(c, 0)) {
       Juice.toast('Not enough impressions.');
       return;
     }
-    s.impressions -= c.cost;
+    s.impressions -= Engine.costOf(c, 0);
     s.os.bot.activity.push({ type: 'acquire', config: id, text: c.name + ' acquired.', time: Date.now(), icon: c.icon });
     Juice.chime();
     this.render();
@@ -119,7 +120,7 @@ const Bot = {
     for (const a of s.os.bot.activity) {
       if (a.type === 'acquire') {
         const c = DATA.BOT_CONFIGS.find(x => x.id === a.config);
-        if (c) ips += c.prod;
+        if (c) ips += Engine.prodOf(c, 1);
       }
     }
     return ips;

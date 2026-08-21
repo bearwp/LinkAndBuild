@@ -17,6 +17,7 @@ function defaultState() {
     hoursSaved: 0,
     effort: 0,
     scale: 1,               // global number/growth multiplier (0.1x – 10x)
+    notation: 'standard',   // 'standard' | 'scientific' | 'engineering'
     premium: false,
     verified: false,
     shadowbanned: false,
@@ -35,7 +36,48 @@ function defaultState() {
     network: [],             // ids of network people the player connected with
     milestonesSeen: {},      // id -> true
     fourthWallShown: false,
+    narrator: {              // the algorithm's voice over everything
+      register: 'coach',     // 'coach' | 'pm' | 'auditor'
+      revealed: false,       // dead-internet reveal has landed
+      scareStage: 0,         // 0 | 1 | 2 | 3 (glitch -> address -> confession)
+    },
+    reveal: {                // the dead-internet reveal + post-reveal game
+      progress: 0,           // hidden counter (0..1) that drives scare escalation
+      revealed: false,       // the thesis has landed
+      postedAfter: false,    // kept posting after the reveal
+      algorithm: false,      // chose to "become the algorithm"
+    },
+    retention: 0,            // post-reveal number: other players you are farming
+    sponsors: {              // the money loop: clout -> cash -> clout
+      active: [],            // sponsor ids currently paying out
+      lastPayout: 0,         // timestamp of the last scheduled payout
+      revealed: [],          // sponsor ids whose reveal has landed
+    },
+    prestige: {              // the reset: brand equity as the permanent currency
+      brandEquity: 0,        // permanent currency, carries across every run
+      resets: 0,             // how many times you've deleted your account
+      layer: 1,              // 1 Persona | 2 Brand | 3 Platform | 4 Algorithm
+      upgrades: {},          // id -> level owned (permanent)
+      totalEarned: 0,        // lifetime brand equity (for the stats screen)
+    },
+    achievements: {          // endorsements — permanent records, survive prestige
+      earned: [],            // achievement ids unlocked (ever)
+      endorsements: {},      // skillId -> [ { name, role, emoji, color, time } ]
+      oneRealPersonSeen: false,
+    },
+    challenges: {            // roguelite modifiers selected at the start of a run
+      active: null,          // { id, startedAt } — the current run's challenge
+      completed: {},         // id -> true (earned reward, permanent)
+      stats: {               // per-challenge tracking, reset each run
+        posts: 0,            // posts published this run
+        silentPosts: 0,      // posts with no emojis/tags/question
+        boughtDark: false,   // bought from the marketplace this run
+        survivedShadowban: false,
+      },
+    },
     createdAt: Date.now(),
+    lastSeen: Date.now(),
+    version: State.VERSION,
     viralPosts: 0,
     totalImpressions: 0,
     analytics: {
@@ -64,17 +106,89 @@ function defaultState() {
 
 const State = {
   data: null,
+  VERSION: 1,
+  KEY: 'lockedin.save.v1',
+
+  /* ---------- persistence ---------- */
+  save() {
+    if (!this.data) return;
+    // Never persist a dev/showcase state. It's a preview, not a save.
+    if (this.data.dev === true) return;
+    this.data.lastSeen = Date.now();
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify(this.data));
+    } catch (e) {
+      // storage full or unavailable — the game keeps running, it just won't persist
+      console.warn('[State] save failed', e);
+    }
+  },
 
   load() {
+    let raw = null;
+    try { raw = localStorage.getItem(this.KEY); } catch (e) { raw = null; }
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        // Dev/showcase states are never a real save. If a dev session got
+        // autosaved, discard it so the player always boots into a ghost town.
+        if (parsed.dev === true) {
+          console.warn('[State] discarding dev showcase save');
+          this.data = defaultState();
+          return false;
+        }
+        this.data = this.migrate(parsed);
+        return true;
+      } catch (e) {
+        console.warn('[State] corrupt save, starting fresh', e);
+      }
+    }
     this.data = defaultState();
     return false;
   },
 
-  save() {
-    // no-op: persistence removed
+  /* ---------- versioned migration ---------- */
+  // Each migration bumps a save from version N to N+1. Add new steps here
+  // as the state shape evolves; never mutate old saves in place destructively.
+  migrate(save) {
+    let v = save.version || 0;
+
+    // v0 -> v1: add lastSeen + version fields (pre-persistence saves)
+    if (v < 1) {
+      save.version = 1;
+      save.lastSeen = save.lastSeen || save.createdAt || Date.now();
+      v = 1;
+    }
+
+    // future migrations go here:
+    // if (v < 2) { ...; v = 2; }
+
+    // merge with defaults so any newly-added fields are present
+    const base = defaultState();
+    const merged = Object.assign({}, base, save);
+    // deep-merge nested objects that defaults define (os, analytics)
+    for (const key of ['os', 'analytics']) {
+      if (save[key] && typeof save[key] === 'object') {
+        merged[key] = Object.assign({}, base[key], save[key]);
+      }
+    }
+    merged.os = Object.assign({}, base.os, save.os || {});
+    merged.os.telegram = Object.assign({}, base.os.telegram, (save.os && save.os.telegram) || {});
+    merged.os.bot = Object.assign({}, base.os.bot, (save.os && save.os.bot) || {});
+    merged.os.dark = Object.assign({}, base.os.dark, (save.os && save.os.dark) || {});
+    merged.os.bank = Object.assign({}, base.os.bank, (save.os && save.os.bank) || {});
+    merged.narrator = Object.assign({}, base.narrator, save.narrator || {});
+    merged.reveal = Object.assign({}, base.reveal, save.reveal || {});
+    merged.sponsors = Object.assign({}, base.sponsors, save.sponsors || {});
+    merged.prestige = Object.assign({}, base.prestige, save.prestige || {});
+    merged.achievements = Object.assign({}, base.achievements, save.achievements || {});
+    merged.challenges = Object.assign({}, base.challenges, save.challenges || {});
+    merged.challenges.stats = Object.assign({}, base.challenges.stats, (save.challenges && save.challenges.stats) || {});
+    merged.version = this.VERSION;
+    return merged;
   },
 
   reset() {
     this.data = defaultState();
+    try { localStorage.removeItem(this.KEY); } catch (e) {}
   },
 };

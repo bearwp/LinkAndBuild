@@ -114,6 +114,7 @@ const OS = {
     Juice.milestone('🔓 UNLOCKED: ' + names[appId] || appId, 'A new tool for your empire', '');
     Juice.chime();
     Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 40);
+    Bus.emit('app:unlocked', { app: appId });
   },
 
   /* ---------- clock ---------- */

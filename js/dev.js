@@ -14,10 +14,22 @@ const DevState = {
   isAll() {
     return new URLSearchParams(window.location.search).get('dev') === 'all';
   },
+  isReset() {
+    return new URLSearchParams(window.location.search).get('dev') === 'reset';
+  },
+
+  // Wipe the save entirely and start a fresh game. Debug-only: wipes
+  // prestige, achievements, endorsements, challenges — everything.
+  resetProgress() {
+    State.reset();
+    State.save();
+    window.location.reload();
+  },
 
   // Unlock everything from the start, but keep it a fresh playable game.
   applyAll() {
     const s = State.data;
+    s.dev = true; // showcase state: never persisted to the real save
     s.os.booted = true;
     s.os.unlockedApps = ['linkedin', 'telegram', 'bot', 'dark', 'bank'];
     s.os.activeApp = 'linkedin';
@@ -29,6 +41,7 @@ const DevState = {
 
   applyFull() {
     const s = State.data;
+    s.dev = true; // showcase state: never persisted to the real save
 
     // --- player profile ---
     s.name = 'Thought Leader';

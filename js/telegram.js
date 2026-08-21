@@ -57,7 +57,7 @@ const Telegram = {
         </div>
         ${joined
           ? `<button class="btn tg-c-btn" style="border:1px solid #2aabee;color:#2aabee;font-size:12px;padding:4px 10px">Open</button>`
-          : `<button class="btn btn-primary tg-c-btn" data-join="${pod.id}" style="font-size:12px;padding:4px 10px">Join · ${Engine.fmt(pod.cost)}</button>`}
+          : `<button class="btn btn-primary tg-c-btn" data-join="${pod.id}" style="font-size:12px;padding:4px 10px">Join · ${Engine.fmt(Engine.costOf(pod, 0))}</button>`}
       `;
       const joinBtn = el.querySelector('[data-join]');
       if (joinBtn) joinBtn.addEventListener('click', () => this.joinPod(pod.id));
@@ -75,11 +75,11 @@ const Telegram = {
     const pod = DATA.PODS.find(p => p.id === id);
     if (!pod) return;
     if (s.os.telegram.joinedPods.includes(id)) return;
-    if (s.impressions < pod.cost) {
+    if (s.impressions < Engine.costOf(pod, 0)) {
       Juice.toast('Not enough impressions to join ' + pod.name + '.');
       return;
     }
-    s.impressions -= pod.cost;
+    s.impressions -= Engine.costOf(pod, 0);
     s.os.telegram.joinedPods.push(id);
     // welcome messages
     const msgs = [
@@ -91,6 +91,7 @@ const Telegram = {
     this.render();
     Juice.chime();
     Juice.toast('Joined ' + pod.name + '. The pod will boost you.');
+    Bus.emit('pod:joined', { id });
 
     // after joining a pod, the expert DMs about the bot service
     if (!s.os.bot.unlocked) {
@@ -189,7 +190,7 @@ const Telegram = {
       ];
       s.os.telegram.messages.push({ from: 'them', text: replies[Math.floor(Math.random() * replies.length)], time: Date.now(), podId: pod.id });
       // pod boost: impressions
-      const boost = (10 + pod.prod * 5) * Engine.scale();
+      const boost = (10 + Engine.prodOf(pod, 1) * 5) * Engine.scale();
       s.impressions += boost;
       s.likes += 2 * Engine.scale();
       this.renderMessages();
@@ -204,7 +205,7 @@ const Telegram = {
     let ips = 0;
     for (const id of s.os.telegram.joinedPods) {
       const pod = DATA.PODS.find(p => p.id === id);
-      if (pod) ips += pod.prod;
+      if (pod) ips += Engine.prodOf(pod, 1);
     }
     return ips;
   },
