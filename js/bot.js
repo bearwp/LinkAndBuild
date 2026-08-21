@@ -129,7 +129,7 @@ const Bot = {
     const s = State.data;
     if (!s.os.bot.unlocked || !s.os.bot.created) return;
     const dtSec = dt / 1000;
-    const ips = this.botIps();
+    const ips = this.botIps() * Engine.scale();
     s.impressions += ips * dtSec;
     s.totalImpressions += ips * dtSec;
     // influence climbs with your bot army
@@ -142,7 +142,7 @@ const Bot = {
     if (s.authenticity < 0) s.authenticity = 0;
     if (s.authenticity > 100) s.authenticity = 100;
     // occasional activity log entries
-    if (ips > 0 && Math.random() < dtSec * 0.15) {
+    if (ips > 0 && Math.random() < dtSec * 0.15 * Engine.scale()) {
       const entries = [
         'Liked 12 posts.',
         'Commented "Great post!" on 8 posts.',

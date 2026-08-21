@@ -24,7 +24,6 @@ const DevState = {
     s.os.telegram.unlocked = true;
     s.os.bot.unlocked = true;
     s.os.dark.unlocked = true;
-    State.save();
     return s;
   },
 
@@ -242,7 +241,6 @@ const DevState = {
       });
     });
 
-    State.save();
     return s;
   },
 };

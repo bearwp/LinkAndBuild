@@ -42,7 +42,6 @@ const OS = {
         boot.classList.add('hidden');
         State.data.os.booted = true;
         this.showBrowser();
-        State.save();
         Juice.milestone('WORKOS', 'Professional productivity, at your fingertips.', '');
       }
     }, 500);
@@ -115,7 +114,6 @@ const OS = {
     Juice.milestone('🔓 UNLOCKED: ' + names[appId] || appId, 'A new tool for your empire', '');
     Juice.chime();
     Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 40);
-    State.save();
   },
 
   /* ---------- clock ---------- */

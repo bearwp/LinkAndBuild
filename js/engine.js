@@ -6,7 +6,6 @@
 const Engine = {
   tick: 100,
   lastTick: 0,
-  lastSave: 0,
   lastNotif: 0,
   lastFollower: 0,
   lastView: 0,
@@ -19,6 +18,8 @@ const Engine = {
   /* ---------- helpers ---------- */
   rnd(a, b) { return a + Math.random() * (b - a); },
   pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; },
+  // global scale multiplier (0.1x – 10x) applied to all numbers and growth
+  scale() { return State.data.scale || 1; },
   fmt(n) {
     if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
     if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
@@ -60,7 +61,8 @@ const Engine = {
     ips += Telegram.podIps();
     // bot service add on top
     ips += Bot.botIps();
-    return ips;
+    // global scale
+    return ips * this.scale();
   },
 
   /* ---------- post generation ---------- */
@@ -85,7 +87,7 @@ const Engine = {
       (opts.format === 'carousel' ? 1.3 : opts.format === 'poll' ? 1.1 : opts.format === 'video' ? 1.2 : opts.format === 'photo' ? 1.15 : 1);
     const rarity = this.rollRarity(potential);
 
-    const base = 50 + s.followers * 1.5 + s.connections * 0.5;
+    const base = (50 + s.followers * 1.5 + s.connections * 0.5) * this.scale();
     const viral = rarity === 'legendary' ? 6 : rarity === 'epic' ? 3.5 : rarity === 'rare' ? 2 : rarity === 'uncommon' ? 1.4 : 1;
     const decay = 0.9; // per hour
     const authCost = (template ? template.auth : 0) + (opts.emojis || 0) * -0.5 + (opts.tags || 0) * -0.8 + (opts.question ? -1 : 0) + (opts.format === 'carousel' ? -2 : 0);
@@ -188,7 +190,7 @@ const Engine = {
     const spike = Math.pow(post.decay, ageH); // 1 at t=0, decays
     let rate = post.base * post.viral * spike * 1.5; // impressions per second
     if (post.authorId === 'you' && s.shadowbanned) rate *= 0.15;
-    return rate;
+    return rate * this.scale();
   },
 
   tickPosts(dt) {
@@ -300,9 +302,9 @@ const Engine = {
     setTimeout(() => {
       s.workerChats[id].push({ from: 'them', text: cmd.reply, time: Date.now() });
       // command effects
-      if (cmdId === 'like') { s.likes += 5 * this.workerCount(id); s.impressions += 20 * this.workerCount(id); }
-      if (cmdId === 'comment') { s.impressions += 30 * this.workerCount(id); }
-      if (cmdId === 'follow') { s.followers += 1 * this.workerCount(id); }
+      if (cmdId === 'like') { s.likes += 5 * this.workerCount(id) * this.scale(); s.impressions += 20 * this.workerCount(id) * this.scale(); }
+      if (cmdId === 'comment') { s.impressions += 30 * this.workerCount(id) * this.scale(); }
+      if (cmdId === 'follow') { s.followers += 1 * this.workerCount(id) * this.scale(); }
       if (cmdId === 'pay') { s.authenticity = Math.min(100, s.authenticity + 2); }
       if (cmdId === 'fire') { this.fireWorker(id); }
       UI.renderChat();
@@ -318,7 +320,7 @@ const Engine = {
   tickWorkers(dt) {
     const s = State.data;
     const dtSec = dt / 1000;
-    const ips = this.workerIps();
+    const ips = this.workerIps() * this.scale();
     s.impressions += ips * dtSec;
     s.totalImpressions += ips * dtSec;
     s.likes += ips * dtSec * 0.04;
@@ -330,7 +332,7 @@ const Engine = {
     if (s.authenticity < 0) s.authenticity = 0;
     if (s.authenticity > 100) s.authenticity = 100;
     // workers occasionally comment on your posts (visible in feed)
-    if (Math.random() < dtSec * 0.3) {
+    if (Math.random() < dtSec * 0.3 * this.scale()) {
       const active = DATA.WORKERS.filter(w => this.workerCount(w.id) > 0);
       if (active.length) {
         const w = active[Math.floor(Math.random() * active.length)];
@@ -371,7 +373,7 @@ const Engine = {
     const dtSec = dt / 1000;
     const ips = this.totalIps();
     // baseline organic reach so numbers always climb, even with zero generators
-    const reach = Math.max(ips, 0.5) * 1000;
+    const reach = Math.max(ips, 0.5 * this.scale()) * 1000;
     s.impressions += reach * dtSec;
     s.totalImpressions += reach * dtSec;
     // likes trickle
@@ -422,14 +424,14 @@ const Engine = {
     const now = Date.now();
     const rate = s.premium ? 1.6 : 1;
     // profile views (golden cookie-ish)
-    if (now - this.lastView > (2000 / rate) && !s.shadowbanned) {
+    if (now - this.lastView > (2000 / rate / this.scale()) && !s.shadowbanned) {
       this.lastView = now;
-      const reward = Math.floor(this.rnd(5, 20) * (1 + s.followers / 500));
+      const reward = Math.floor(this.rnd(5, 20) * (1 + s.followers / 500) * this.scale());
       s.impressions += reward;
       this.addNotif('view', this.pick(DATA.NOTIFS.view), reward, '👀');
     }
     // generic notifications
-    if (now - this.lastNotif > (1500 / rate)) {
+    if (now - this.lastNotif > (1500 / rate / this.scale())) {
       this.lastNotif = now;
       const roll = Math.random();
       if (roll < 0.3) {
@@ -444,7 +446,7 @@ const Engine = {
       }
     }
     // recruiter DM (rare, big moment)
-    if (now - this.lastRecruiter > 12000 && s.followers > 20) {
+    if (now - this.lastRecruiter > 12000 / this.scale() && s.followers > 20) {
       this.lastRecruiter = now;
       this.addNotif('recruiter', this.pick(DATA.NOTIFS.recruiter), Math.floor(this.rnd(50, 150)), '🚨');
       Juice.milestone('🚨 RECRUITER DM', 'You\'ve made it. They want you.', 'viral');
@@ -457,7 +459,7 @@ const Engine = {
     const now = Date.now();
     // DMs stream in faster as you grow — the more influence, the more opportunities
     const base = 1500;
-    const interval = Math.max(500, base - s.followers * 2 - s.connections * 1.5);
+    const interval = Math.max(500, base - s.followers * 2 - s.connections * 1.5) / this.scale();
     if (now - this.lastDM > interval) {
       this.lastDM = now;
       const sender = this.pick(DATA.DM_SENDERS);
@@ -483,7 +485,7 @@ const Engine = {
     const s = State.data;
     if (!s.generators['aifactory']) return;
     const now = Date.now();
-    const interval = 10000; // every 10s the factory posts
+    const interval = 10000 / this.scale(); // every 10s the factory posts
     if (now - this.lastAutoPost > interval) {
       this.lastAutoPost = now;
       const post = this.makePost(this.pick(DATA.TEMPLATES.filter(t => t.id !== 'free')).text, {
@@ -508,7 +510,7 @@ const Engine = {
   tickStream(dt) {
     const s = State.data;
     const now = Date.now();
-    const interval = 800; // a new post every 0.8s (bounded by trimPosts)
+    const interval = 800 / this.scale(); // a new post every 0.8s (bounded by trimPosts)
     if (now - this.lastStreamPost > interval) {
       this.lastStreamPost = now;
       const post = this.makeNPCPost();
@@ -589,7 +591,7 @@ const Engine = {
   tickFourthWall(dt) {
     const s = State.data;
     const now = Date.now();
-    if (now - this.lastFourthWall > 45000) {
+    if (now - this.lastFourthWall > 45000 / this.scale()) {
       this.lastFourthWall = now;
       const post = this.makeNPCPost();
       post.content = this.pick(DATA.FOURTHWALL);
@@ -608,7 +610,6 @@ const Engine = {
     if (this.started) return;
     this.started = true;
     this.lastTick = performance.now();
-    this.lastSave = Date.now();
     this.lastNotif = Date.now() - 6000;
     this.lastView = Date.now() - 8000;
     this.lastRecruiter = Date.now() - 40000;
@@ -635,12 +636,6 @@ const Engine = {
       this.tickStream(dtMs);
       this.tickDetection(dtMs);
       this.checkMilestones();
-
-      // autosave every 10s
-      if (Date.now() - this.lastSave > 10000) {
-        this.lastSave = Date.now();
-        State.save();
-      }
     }, this.tick);
 
     // UI refresh at 60fps for that casino feel
@@ -707,7 +702,7 @@ const Engine = {
     State.data.effort += 0.2;
     if (post.isNPC) {
       // clicking on NPC posts is the "click power" — small impression reward
-      State.data.impressions += 1 + Math.floor(State.data.followers / 200);
+      State.data.impressions += (1 + Math.floor(State.data.followers / 200)) * this.scale();
     }
     Juice.like();
     UI.updatePostCard(post);
@@ -743,8 +738,8 @@ const Engine = {
     const c = DATA.COMMENTS.find(x => x.text === phrase);
     post.comments.push({ author: 'You', text: phrase, time: Date.now() });
     post.stats.comments += 1;
-    s.likes += c.likes;
-    s.impressions += c.likes * 2;
+    s.likes += c.likes * this.scale();
+    s.impressions += c.likes * 2 * this.scale();
     s.authenticity = Math.max(0, Math.min(100, s.authenticity + Math.abs(c.auth)));
     s.effort += 0.3;
     Juice.pop();
@@ -800,20 +795,6 @@ const Engine = {
 
   /* ---------- offline progress ---------- */
   applyOffline() {
-    const s = State.data;
-    const now = Date.now();
-    const away = Math.max(0, (now - s.lastSaved) / 1000);
-    if (away < 20) return;
-    const ips = this.totalIps();
-    const gained = ips * away * 0.8; // 80% efficiency offline
-    if (gained > 10) {
-      s.impressions += gained;
-      s.totalImpressions += gained;
-      s.followers += gained * 0.0005;
-      setTimeout(() => {
-        Juice.milestone('WHILE YOU WERE AWAY', '+' + this.fmt(gained) + ' impressions', '');
-        Juice.chime();
-      }, 800);
-    }
+    // no-op: persistence removed
   },
 };

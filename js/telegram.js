@@ -91,7 +91,6 @@ const Telegram = {
     this.render();
     Juice.chime();
     Juice.toast('Joined ' + pod.name + '. The pod will boost you.');
-    State.save();
 
     // after joining a pod, the expert DMs about the bot service
     if (!s.os.bot.unlocked) {
@@ -190,9 +189,9 @@ const Telegram = {
       ];
       s.os.telegram.messages.push({ from: 'them', text: replies[Math.floor(Math.random() * replies.length)], time: Date.now(), podId: pod.id });
       // pod boost: impressions
-      const boost = 10 + pod.prod * 5;
+      const boost = (10 + pod.prod * 5) * Engine.scale();
       s.impressions += boost;
-      s.likes += 2;
+      s.likes += 2 * Engine.scale();
       this.renderMessages();
       Juice.pop();
       Juice.particles(window.innerWidth / 2, 200, '+' + Engine.fmt(boost) + ' imp', '#2aabee');
@@ -215,7 +214,7 @@ const Telegram = {
     const os = s.os.telegram;
     if (!os.unlocked) return;
     const dtSec = dt / 1000;
-    const ips = this.podIps();
+    const ips = this.podIps() * Engine.scale();
     s.impressions += ips * dtSec;
     s.totalImpressions += ips * dtSec;
     // influence climbs with your pods
@@ -226,7 +225,7 @@ const Telegram = {
     if (s.authenticity < 0) s.authenticity = 0;
     if (s.authenticity > 100) s.authenticity = 100;
     // occasional pod chat messages
-    if (os.joinedPods.length && Math.random() < dtSec * 0.2) {
+    if (os.joinedPods.length && Math.random() < dtSec * 0.2 * Engine.scale()) {
       const pod = DATA.PODS.find(p => p.id === os.joinedPods[Math.floor(Math.random() * os.joinedPods.length)]);
       if (pod) {
         os.messages.push({ from: 'them', text: pod.messages[Math.floor(Math.random() * pod.messages.length)], time: Date.now(), podId: pod.id });

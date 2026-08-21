@@ -16,6 +16,7 @@ function defaultState() {
     authenticity: 100,
     hoursSaved: 0,
     effort: 0,
+    scale: 1,               // global number/growth multiplier (0.1x – 10x)
     premium: false,
     verified: false,
     shadowbanned: false,
@@ -34,7 +35,6 @@ function defaultState() {
     network: [],             // ids of network people the player connected with
     milestonesSeen: {},      // id -> true
     fourthWallShown: false,
-    lastSaved: Date.now(),
     createdAt: Date.now(),
     viralPosts: 0,
     totalImpressions: 0,
@@ -71,7 +71,7 @@ const State = {
   },
 
   save() {
-    this.data.lastSaved = Date.now();
+    // no-op: persistence removed
   },
 
   reset() {

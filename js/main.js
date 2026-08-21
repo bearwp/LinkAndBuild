@@ -4,12 +4,21 @@
    ============================================================ */
 
 (function boot() {
-  // load state
-  const hadSave = State.load();
+  // init state
+  State.load();
 
-  // Always load a full late-game state
-  DevState.applyFull();
-  document.body.classList.add('dev-mode');
+  // unlock all services
+  DevState.applyAll();
+
+  // scale slider
+  const scaleSlider = document.getElementById('scale-slider');
+  const scaleLabel = document.getElementById('scale-label');
+  scaleSlider.value = State.data.scale;
+  scaleLabel.textContent = State.data.scale.toFixed(1) + '×';
+  scaleSlider.addEventListener('input', () => {
+    State.data.scale = parseFloat(scaleSlider.value);
+    scaleLabel.textContent = State.data.scale.toFixed(1) + '×';
+  });
 
   // seed initial feed
   if (State.data.posts.length === 0) {
@@ -207,14 +216,12 @@
   Engine.start();
 
   // first-time welcome
-  if (!hadSave) {
-    setTimeout(() => {
-      Juice.milestone('WELCOME TO LOCKEDIN', 'The game. Post something.', '');
-      Juice.chime();
-      // highlight the composer
-      const composer = document.getElementById('composer');
-      composer.classList.add('composer-highlight');
-      setTimeout(() => composer.classList.remove('composer-highlight'), 4000);
-    }, 1200);
-  }
+  setTimeout(() => {
+    Juice.milestone('WELCOME TO LOCKEDIN', 'The game. Post something.', '');
+    Juice.chime();
+    // highlight the composer
+    const composer = document.getElementById('composer');
+    composer.classList.add('composer-highlight');
+    setTimeout(() => composer.classList.remove('composer-highlight'), 4000);
+  }, 1200);
 })();

@@ -47,8 +47,8 @@ const Dark = {
       return;
     }
     s.impressions -= l.cost;
-    s.impressions += l.reward;
-    s.likes += l.reward * 0.3;
+    s.impressions += l.reward * Engine.scale();
+    s.likes += l.reward * 0.3 * Engine.scale();
     s.authenticity = Math.max(0, s.authenticity + Math.abs(l.auth));
     Juice.chime();
     Juice.toast('Transaction complete. Your influence just grew.');
