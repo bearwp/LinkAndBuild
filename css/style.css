@@ -72,6 +72,13 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 /* ============ Feed ============ */
 .feed { display: flex; flex-direction: column; gap: 12px; }
 .post-card { background: #fff; border-radius: 8px; border: 1px solid #e0dfdc; padding: 12px 16px; animation: postIn 0.3s ease; }
+/* tier styling: high-influence members glow, low-influence members look muted */
+.post-card.tier-top { border-left: 3px solid #e2a33b; background: linear-gradient(180deg, #fffdf5, #fff); }
+.post-card.tier-mid { border-left: 3px solid #0a66c2; }
+.post-card.tier-low { opacity: 0.82; }
+.post-card.tier-low .post-body { color: #888; }
+.post-card.tier-low .post-author { color: #666; }
+.tier-badge { display: inline-block; margin-left: 6px; background: #e2a33b; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; vertical-align: middle; }
 .post-card-first { border-left: 3px solid #0a66c2; }
 .pc-new { animation: pcIn 0.3s ease; }
 .post-comments { margin-top: 8px; border-top: 1px solid #f3f2ef; padding-top: 8px; display: flex; flex-direction: column; gap: 8px; }
@@ -144,6 +151,60 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .footer-card { padding: 12px 16px; }
 .footer-links { font-size: 11px; color: #666; margin-bottom: 4px; }
 .footer-copy { font-size: 11px; color: #999; margin-top: 8px; }
+
+/* ============ Side panel DMs ============ */
+.dm-card { padding: 12px 0; }
+.dm-header { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; padding: 0 16px 8px; }
+.dm-count { background: #d11124; color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px; }
+.dm-list { max-height: 360px; overflow-y: auto; }
+.dm-section-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #999; padding: 8px 16px 4px; }
+.dm-item { display: flex; gap: 8px; padding: 8px 16px; cursor: pointer; border-top: 1px solid #f3f2ef; animation: dmIn 0.3s ease; }
+.dm-item.dm-team { border-left: 3px solid #0a66c2; }
+.dm-item:hover { background: #f3f2ef; }
+.dm-item.unread { background: #eef3f8; }
+.dm-item.unread:hover { background: #e2ecf5; }
+.dm-avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; flex-shrink: 0; }
+.dm-body { flex: 1; min-width: 0; }
+.dm-name { font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.85); }
+.dm-role { font-size: 10px; font-weight: 400; color: #666; }
+.dm-text { font-size: 12px; color: rgba(0,0,0,0.7); line-height: 1.35; margin-top: 1px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.dm-time { font-size: 10px; color: #999; margin-top: 2px; }
+.dm-empty { padding: 12px 16px; font-size: 12px; color: #666; }
+@keyframes dmIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ============ Recommended people ============ */
+.rec-card { padding: 12px 0; }
+.rec-title { font-size: 13px; font-weight: 700; padding: 0 16px 8px; }
+.rec-list { max-height: 320px; overflow-y: auto; }
+.rec-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-top: 1px solid #f3f2ef; }
+.rec-item:hover { background: #f3f2ef; }
+.rec-avatar { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; flex-shrink: 0; }
+.rec-body { flex: 1; min-width: 0; }
+.rec-name { font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.85); }
+.rec-role { font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rec-followers { font-size: 10px; color: #999; }
+.rec-btn { flex-shrink: 0; border: 1px solid #0a66c2; color: #0a66c2; background: #fff; border-radius: 16px; padding: 4px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.rec-btn:hover { background: #eef3f8; }
+.rec-btn.following { border-color: #999; color: #666; background: #f3f2ef; }
+
+/* ============ Desktop Calendar ============ */
+.cal-card { padding: 12px 14px; }
+.dcal-header { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; }
+.dcal-date { font-size: 11px; font-weight: 400; color: #666; }
+.dcal-sub { font-size: 11px; color: #666; margin: 2px 0 8px; }
+.dcal-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
+.dcal-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; background: #f3f2ef; animation: dmIn 0.3s ease; }
+.dcal-item.done { opacity: 0.55; }
+.dcal-icon { font-size: 18px; }
+.dcal-body { flex: 1; min-width: 0; }
+.dcal-name { font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.85); }
+.dcal-type { font-size: 11px; color: #666; }
+.dcal-check { color: #2e7d32; font-weight: 700; }
+.dcal-done { width: 22px; height: 22px; border-radius: 50%; border: 1px solid #0a66c2; color: #0a66c2; font-size: 12px; display: grid; place-items: center; background: #fff; }
+.dcal-done:hover { background: #0a66c2; color: #fff; }
+.dcal-empty { font-size: 12px; color: #666; padding: 4px 0; }
+.dcal-btn { width: 100%; margin-top: 10px; background: #0a66c2; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.dcal-btn:hover { background: #0a4f8f; }
 
 /* ============ Modals ============ */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 300; display: grid; place-items: center; padding: 16px; }
@@ -331,6 +392,7 @@ body { overflow: hidden; }
 
 /* browser */
 .browser { position: fixed; inset: 0; z-index: 950; display: flex; flex-direction: column; background: #fff; }
+body.has-alphamail .browser { right: 300px; }
 .browser-chrome { background: #2b2b2b; padding: 6px 8px 0; }
 .browser-tabs { display: flex; gap: 4px; overflow-x: auto; }
 .b-tab { background: #3a3a3a; color: #bbb; border: none; border-radius: 6px 6px 0 0; padding: 6px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
@@ -343,6 +405,17 @@ body { overflow: hidden; }
 .browser-body { flex: 1; overflow-y: auto; position: relative; }
 .app-view { display: none; height: 100%; overflow-y: auto; }
 .app-view.active { display: block; }
+
+/* ============ ALPHAMAIL (side software) ============ */
+.alphamail { position: fixed; top: 0; right: 0; bottom: 0; width: 300px; z-index: 960; background: #f3f2ef; border-left: 1px solid #d0cfcc; display: flex; flex-direction: column; box-shadow: -4px 0 16px rgba(0,0,0,0.12); }
+.am-titlebar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: #e8e6e2; border-bottom: 1px solid #d0cfcc; }
+.am-dot { width: 11px; height: 11px; border-radius: 50%; }
+.am-dot-r { background: #ff5f57; }
+.am-dot-y { background: #febc2e; }
+.am-dot-g { background: #28c840; }
+.am-title { margin-left: 6px; font-size: 12px; font-weight: 700; color: #444; }
+.am-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
+.am-divider { height: 1px; background: #d0cfcc; margin: 14px 0; }
 
 /* ============ TELEGRAM APP ============ */
 .tg-app { display: flex; height: 100%; background: #fff; }

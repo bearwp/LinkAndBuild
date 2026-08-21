@@ -40,16 +40,18 @@ const UI = {
     popIfChanged(likesEl, likesEl.textContent);
     popIfChanged(gfolEl, gfolEl.textContent);
 
-    // authenticity bar
+    // influence bar (always climbing — you are the CEO of LinkedIn)
     if (s.authenticity > 100) s.authenticity = 100;
     if (s.authenticity < 0) s.authenticity = 0;
     const a = Math.round(s.authenticity);
     $('auth-value').textContent = a + '%';
     const fill = $('auth-fill');
     fill.style.width = a + '%';
-    if (a > 50) { fill.style.background = 'linear-gradient(90deg,#2e7d32,#8bc34a)'; $('auth-note').textContent = 'Organic. Keep it real.'; }
-    else if (a > 30) { fill.style.background = 'linear-gradient(90deg,#f9a825,#ffd54f)'; $('auth-note').textContent = 'Suspicious activity detected...'; }
-    else { fill.style.background = 'linear-gradient(90deg,#d32f2f,#ff7043)'; $('auth-note').textContent = 'The algorithm is watching you.'; }
+    fill.style.background = 'linear-gradient(90deg,#b8860b,#ffd700)';
+    if (a >= 90) $('auth-note').textContent = 'Top 1% of creators. The algorithm is obsessed with you.';
+    else if (a >= 60) $('auth-note').textContent = 'Thought leader. Recruiters are circling.';
+    else if (a >= 30) $('auth-note').textContent = 'Rising fast. Your network is noticing.';
+    else $('auth-note').textContent = 'Building momentum. The algorithm already likes you.';
 
     // hours saved + productivity headline
     $('prod-hours').textContent = s.hoursSaved.toFixed(1);
@@ -222,7 +224,7 @@ const UI = {
     if (post.comments && post.comments.length) {
       const box = card._commentBox || (card._commentBox = card.querySelector('.post-comments'));
       const rendered = post._renderedComments || 0;
-      if (post.comments.length > rendered) {
+      if (box && post.comments.length > rendered) {
         // append new comments with real avatar format
         for (let i = rendered; i < post.comments.length; i++) {
           const c = post.comments[i];
@@ -296,6 +298,15 @@ const UI = {
     this._cards.set(post.id, card);
     if (post.rarity === 'legendary') card.classList.add('viral-flash');
 
+    // tier styling: high-influence members get a gold "Top Voice" treatment,
+    // low-influence members get a muted, low-engagement look.
+    const inf = post.influence || 0;
+    let tierClass = 'tier-low';
+    let tierBadge = '';
+    if (inf >= 1000) { tierClass = 'tier-top'; tierBadge = '<span class="tier-badge">👑 Top Voice</span>'; }
+    else if (inf >= 500) { tierClass = 'tier-mid'; tierBadge = '<span class="tier-badge">⭐ Rising</span>'; }
+    card.classList.add(tierClass);
+
     const age = Math.floor((Date.now() - post.publishedAt) / 60000);
     const ageStr = age < 1 ? 'just now' : age < 60 ? age + 'm' : Math.floor(age / 60) + 'h';
 
@@ -342,7 +353,7 @@ const UI = {
       <div class="post-head">
         <div class="avatar" style="background:${post.authorColor}">${post.authorEmoji}</div>
         <div>
-          <div class="post-author">${post.authorName}${youTag}</div>
+          <div class="post-author">${post.authorName}${youTag}${tierBadge}</div>
           <div class="post-meta">${post.authorRole} · ${ageStr}</div>
         </div>
       </div>
@@ -434,7 +445,7 @@ const UI = {
     const t = DATA.TEMPLATES.find(x => x.id === sel.value);
     const el = document.getElementById('post-preview');
     if (t && t.id !== 'free') {
-      el.textContent = 'Template: ' + t.name + ' · potential ×' + t.potential + ' · authenticity ' + (t.auth > 0 ? '+' : '') + t.auth;
+      el.textContent = 'Template: ' + t.name + ' · potential ×' + t.potential + ' · influence +' + Math.abs(t.auth);
     } else {
       el.textContent = 'Free write: authentic, lower potential.';
     }
@@ -465,7 +476,7 @@ const UI = {
         <div class="g-item-info">
           <div class="g-item-name">${g.name} <span style="color:#999;font-size:11px">${owned > 0 ? '×' + owned : ''}</span></div>
           <div class="g-item-desc">${g.desc}</div>
-          <div class="g-item-stats">+${g.prod} imp/s · ${g.auth} auth/s · ${g.flavor}</div>
+          <div class="g-item-stats">+${g.prod} imp/s · +${Math.abs(g.auth)} influence/s · ${g.flavor}</div>
         </div>
         <button class="btn btn-primary g-item-btn" data-gen="${g.id}" ${affordable ? '' : 'disabled'}>
           ${owned > 0 ? 'Upgrade' : 'Acquire'} · ${Engine.fmt(cost)}
@@ -512,7 +523,7 @@ const UI = {
         <div class="g-item-info">
           <div class="g-item-name">${w.name} <span style="color:#999;font-size:11px">${owned > 0 ? '×' + owned : ''}</span></div>
           <div class="g-item-desc">${w.role} · ${w.country}</div>
-          <div class="g-item-stats">+${w.prod} imp/s · ${w.auth} auth/s · "${w.bio}"</div>
+          <div class="g-item-stats">+${w.prod} imp/s · +${Math.abs(w.auth)} influence/s · "${w.bio}"</div>
           ${owned > 0 ? this.intensityControl(w.id) : ''}
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
@@ -641,7 +652,7 @@ const UI = {
       benchHtml = `<div class="an-section"><div class="an-section-title">Benchmarks</div>
         <div class="an-bench">You: <b>${Engine.fmt(you)}</b> followers</div>
         <div class="an-bench">${arch.name}: <b>${Engine.fmt(arch.influence)}</b> influence</div>
-        <div class="an-bench" style="color:#d11124">You are ${you >= arch.influence ? 'ahead of' : 'losing to'} ${arch.name}. Post more.</div>
+        <div class="an-bench" style="color:#2e7d32">You are ${you >= arch.influence ? 'crushing' : 'closing in on'} ${arch.name}. Keep going.</div>
       </div>`;
     }
 
@@ -736,6 +747,172 @@ const UI = {
       btn.addEventListener('click', () => Engine.sendWorkerCommand(w.id, c.id));
       commands.appendChild(btn);
     }
+  },
+
+  /* ---------- side panel DMs (unified messaging) ---------- */
+  renderDMs() {
+    const s = State.data;
+    const list = document.getElementById('dm-list');
+    const count = document.getElementById('dm-count');
+    if (!list) return;
+    const hired = DATA.WORKERS.filter(w => Engine.workerCount(w.id) > 0);
+    const dms = s.dms.slice(0, 8);
+    if (count) count.textContent = hired.length + s.dms.length;
+    list.innerHTML = '';
+
+    // --- gameplay: your engagement team (always on top) ---
+    if (hired.length > 0) {
+      const teamHead = document.createElement('div');
+      teamHead.className = 'dm-section-head';
+      teamHead.textContent = 'Your Team';
+      list.appendChild(teamHead);
+      for (const w of hired) {
+        const el = document.createElement('div');
+        el.className = 'dm-item dm-team';
+        el.innerHTML = `
+          <div class="dm-avatar" style="background:#0a66c2">${w.emoji}</div>
+          <div class="dm-body">
+            <div class="dm-name">${this.escapeHtml(w.name)} <span class="dm-role">${w.count > 1 ? '×' + w.count + ' · ' : ''}${this.escapeHtml(w.role)}</span></div>
+            <div class="dm-text">${this.escapeHtml(this._lastWorkerText(w.id))}</div>
+          </div>`;
+        el.addEventListener('click', () => {
+          this._activeWorker = w.id;
+          this.showModal('messaging-modal');
+          this.renderMessaging();
+        });
+        list.appendChild(el);
+      }
+    }
+
+    // --- flavor: incoming opportunities ---
+    if (dms.length > 0) {
+      const inboxHead = document.createElement('div');
+      inboxHead.className = 'dm-section-head';
+      inboxHead.textContent = 'Inbox';
+      list.appendChild(inboxHead);
+      for (const dm of dms) {
+        const el = document.createElement('div');
+        el.className = 'dm-item' + (dm.read ? '' : ' unread');
+        const time = Math.floor((Date.now() - dm.time) / 60000);
+        const timeStr = time < 1 ? 'now' : time < 60 ? time + 'm' : Math.floor(time / 60) + 'h';
+        el.innerHTML = `
+          <div class="dm-avatar" style="background:${dm.color}">${dm.emoji}</div>
+          <div class="dm-body">
+            <div class="dm-name">${this.escapeHtml(dm.name)} <span class="dm-role">${this.escapeHtml(dm.role)}</span></div>
+            <div class="dm-text">${this.escapeHtml(dm.text)}</div>
+            <div class="dm-time">${timeStr} ago</div>
+          </div>`;
+        el.addEventListener('click', () => {
+          dm.read = true;
+          this.renderDMs();
+          Juice.toast('You replied: "Let\'s talk." The opportunity is yours.');
+        });
+        list.appendChild(el);
+      }
+    }
+
+    if (hired.length === 0 && dms.length === 0) {
+      list.innerHTML = '<div class="dm-empty">No messages yet. Post something and they\'ll come.</div>';
+    }
+  },
+
+  _lastWorkerText(id) {
+    const s = State.data;
+    const msgs = s.workerChats[id] || [];
+    if (msgs.length === 0) return 'Ready to work.';
+    const last = msgs[msgs.length - 1];
+    return (last.from === 'me' ? 'You: ' : '') + last.text;
+  },
+
+  /* ---------- recommended people ---------- */
+  renderRecommended() {
+    const s = State.data;
+    const list = document.getElementById('rec-list');
+    if (!list) return;
+    list.innerHTML = '';
+    for (const p of DATA.RECOMMENDED) {
+      const followed = s.followed.includes(p.id);
+      const el = document.createElement('div');
+      el.className = 'rec-item';
+      el.innerHTML = `
+        <div class="rec-avatar" style="background:${p.color}">${p.emoji}</div>
+        <div class="rec-body">
+          <div class="rec-name">${this.escapeHtml(p.name)}</div>
+          <div class="rec-role">${this.escapeHtml(p.role)}</div>
+          <div class="rec-followers">${p.followers} followers</div>
+        </div>
+        <button class="rec-btn ${followed ? 'following' : ''}" data-rec="${p.id}">${followed ? 'Following' : '+ Follow'}</button>`;
+      el.querySelector('[data-rec]').addEventListener('click', () => Engine.followPerson(p.id));
+      list.appendChild(el);
+    }
+  },
+
+  /* ---------- calendar ---------- */
+  renderCalendar() {
+    const s = State.data;
+    const list = document.getElementById('dcal-list');
+    const dateEl = document.getElementById('dcal-date');
+    if (!list) return;
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    list.innerHTML = '';
+    if (s.calendar.length === 0) {
+      list.innerHTML = '<div class="dcal-empty">No coffees booked. Your network is waiting.</div>';
+      return;
+    }
+    for (const ev of s.calendar) {
+      const el = document.createElement('div');
+      el.className = 'dcal-item' + (ev.done ? ' done' : '');
+      el.innerHTML = `
+        <div class="dcal-icon">${ev.icon}</div>
+        <div class="dcal-body">
+          <div class="dcal-name">${this.escapeHtml(ev.person)}</div>
+          <div class="dcal-type">${this.escapeHtml(ev.label)} · ${ev.time}</div>
+        </div>
+        ${ev.done ? '<div class="dcal-check">✓</div>' : `<button class="dcal-done" data-cal="${ev.id}">✓</button>`}`;
+      const doneBtn = el.querySelector('[data-cal]');
+      if (doneBtn) doneBtn.addEventListener('click', () => this.completeCalendar(ev.id));
+      list.appendChild(el);
+    }
+  },
+
+  completeCalendar(id) {
+    const s = State.data;
+    const ev = s.calendar.find(x => x.id === id);
+    if (!ev || ev.done) return;
+    ev.done = true;
+    // the coffee pays off: impressions + influence
+    s.impressions += ev.reward * 10;
+    s.connections += 1;
+    s.authenticity = Math.min(100, s.authenticity + ev.auth);
+    Juice.chime();
+    Juice.toast('☕ Coffee done! +' + Engine.fmt(ev.reward * 10) + ' impressions, +1 connection.');
+    this.renderCalendar();
+    this.refresh();
+  },
+
+  scheduleCoffee() {
+    const s = State.data;
+    const type = Engine.pick(DATA.CAL_TYPES);
+    const person = Engine.pick(DATA.CAL_PEOPLE);
+    const hour = 9 + Math.floor(Math.random() * 9); // 9am–5pm
+    const min = Math.random() < 0.5 ? '00' : '30';
+    const ev = {
+      id: 'cal' + Date.now() + Math.floor(Math.random() * 9999),
+      person: person,
+      label: type.label,
+      icon: type.icon,
+      reward: type.reward,
+      auth: type.auth,
+      time: hour + ':' + min,
+      done: false,
+    };
+    s.calendar.unshift(ev);
+    if (s.calendar.length > 12) s.calendar.pop();
+    Juice.chime();
+    Juice.toast('☕ Booked a ' + type.label + ' with ' + person + '.');
+    this.renderCalendar();
   },
 
   /* ---------- notifications ---------- */

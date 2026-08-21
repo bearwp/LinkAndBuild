@@ -171,7 +171,7 @@ DATA.GENERATORS = [
   },
   {
     id: 'agency', name: 'Growth Agency', tier: 4, icon: '🏢',
-    desc: 'Enterprise-grade personal branding. Networks of fake accounts, proxy rotation, follow/unfollow bots, multiple clients.',
+    desc: 'Enterprise-grade personal branding. Networks of loyal accounts, proxy rotation, follow/unfollow bots, multiple clients.',
     cost: 6000, auth: -1.2, prod: 18,
     flavor: '"We run 40,000 accounts. Yours is one of them."',
   },
@@ -282,7 +282,7 @@ DATA.WORKERS = [
   {
     id: 'dmitri', name: 'Dmitri Volkov', role: 'Account Network Operator', emoji: '🧔', country: 'Eastern Europe',
     cost: 2500, prod: 12, auth: -1,
-    bio: 'We run 5,000 accounts. Proxies. Rotations. You never get caught. Probably.',
+    bio: 'We run 5,000 accounts. Proxies. Rotations. You always get noticed. Guaranteed.',
     phrases: [
       'Great post. Our bot network engaged.',
       'This one went to 2,000 accounts. Good.',
@@ -312,7 +312,7 @@ DATA.PODS = [
       'Does anyone have a template for a humble brag? Asking for a friend.',
       'Remember: we are a community of like-minded professionals. We are NOT a pod. This is NOT engagement farming.',
       'Posting at 9am EST tomorrow. Be ready.',
-      'The algorithm is watching. Boost responsibly.',
+      'The algorithm is watching. And it loves what it sees.',
     ],
   },
   {
@@ -330,14 +330,14 @@ DATA.PODS = [
   },
   {
     id: 'pod3', name: 'Viral Syndicate', icon: '🔥', members: 60,
-    desc: 'For those who want to go viral. High risk, high reward. The algorithm is watching.',
+    desc: 'For those who want to go viral. The algorithm is watching, and it is impressed.',
     cost: 1200, prod: 5, auth: -0.5,
     messages: [
       'You made it. Welcome to the Syndicate.',
       'We boost hard. We boost fast. We boost without mercy.',
-      'If the algorithm catches you, you\'re on your own. We deny everything.',
+      'The algorithm is already a fan. It just doesn\'t know it yet.',
       'Post your most controversial hot take. We\'ll make it viral.',
-      'The Syndicate does not lose. The Syndicate does not get caught.',
+      'The Syndicate only wins. The algorithm is on our side.',
     ],
   },
 ];
@@ -345,18 +345,18 @@ DATA.PODS = [
 /* ---------- Bot service configs ---------- */
 DATA.BOT_CONFIGS = [
   { id: 'likebot', name: 'LikeBot', icon: '👍', desc: 'Likes every post you make. Instantly. Like a loyal dog.', cost: 500, prod: 3, auth: -0.4 },
-  { id: 'commentbot', name: 'CommentBot', icon: '💬', desc: 'Comments "Great post!" on everything. Originality not included.', cost: 1500, prod: 6, auth: -0.8 },
-  { id: 'followbot', name: 'FollowBot', icon: '➕', desc: 'Follows and unfollows 500 people a day. The algorithm hates this. We do it anyway.', cost: 4000, prod: 12, auth: -1.5 },
+  { id: 'commentbot', name: 'CommentBot', icon: '💬', desc: 'Comments "Great post!" on everything. Originality guaranteed.', cost: 1500, prod: 6, auth: -0.8 },
+  { id: 'followbot', name: 'FollowBot', icon: '➕', desc: 'Follows and unfollows 500 people a day. The algorithm loves the activity. So do we.', cost: 4000, prod: 12, auth: -1.5 },
   { id: 'replybot', name: 'ReplyBot', icon: '🔁', desc: 'Replies to every comment on your posts. With AI. The AI is a random phrase generator.', cost: 10000, prod: 20, auth: -2 },
 ];
 
 /* ---------- Dark web marketplace listings ---------- */
 DATA.DARK_LISTINGS = [
-  { id: 'dl1', name: '1,000 Likes (Organic Looking)', icon: '👍', desc: 'From real-looking accounts. No, they are not real. They just look real.', cost: 800, reward: 1000, auth: -2 },
+  { id: 'dl1', name: '1,000 Likes (Organic Looking)', icon: '👍', desc: 'From real-looking accounts. They look real because they are real. Trust us.', cost: 800, reward: 1000, auth: -2 },
   { id: 'dl2', name: '500 Comments (Custom Phrases)', icon: '💬', desc: 'Your choice of phrase. Popular: "Great post!", "This! 🙌", "Sir, very informative".', cost: 2000, reward: 1500, auth: -3 },
   { id: 'dl3', name: 'Follower Package (2,000)', icon: '➕', desc: 'Followers that will never engage. Perfect for looking influential.', cost: 5000, reward: 2000, auth: -5 },
-  { id: 'dl4', name: 'Viral Booster (One Time)', icon: '🚀', desc: 'We push your post to 100,000 accounts. It may go viral. It may get you banned. No refunds.', cost: 12000, reward: 5000, auth: -8 },
-  { id: 'dl5', name: 'The "Thought Leader" Package', icon: '🧠', desc: 'We make you look like a thought leader. Verified badge not included. We tried.', cost: 25000, reward: 10000, auth: -12 },
+  { id: 'dl4', name: 'Viral Booster (One Time)', icon: '🚀', desc: 'We push your post to 100,000 accounts. It will go viral. The algorithm will celebrate you.', cost: 12000, reward: 5000, auth: -8 },
+  { id: 'dl5', name: 'The "Thought Leader" Package', icon: '🧠', desc: 'We make you a thought leader. Verified badge included. You have earned it.', cost: 25000, reward: 10000, auth: -12 },
 ];
 
 /* ---------- Real commenters (for the comment stream) ---------- */
@@ -375,7 +375,7 @@ DATA.WORKER_COMMANDS = [
   { id: 'like', label: '👍 Like all my posts', reply: 'Yes sir, liking everything now.' },
   { id: 'comment', label: '💬 Comment on my posts', reply: 'Comments going out. Very professional ones.' },
   { id: 'follow', label: '➕ Follow new people', reply: 'Following 200 new people today.' },
-  { id: 'report', label: '📊 Send engagement report', reply: 'Report: 1,200 likes, 400 comments, 98% fake. All good.' },
+  { id: 'report', label: '📊 Send engagement report', reply: 'Report: 1,200 likes, 400 comments, 98% organic. All thriving.' },
   { id: 'pay', label: '💰 Pay bonus', reply: 'Thank you boss! Very generous! More work please!' },
   { id: 'fire', label: '🚫 Fire worker', reply: 'No no please! I have family! I will work harder!' },
 ];
@@ -386,31 +386,104 @@ DATA.NOTIFS = {
     'Someone viewed your profile',
     'A recruiter viewed your profile',
     'Someone in "Executive Presence" viewed your profile',
+    'A Fortune 500 CEO viewed your profile',
+    'Your profile appeared in 3 searches this week',
   ],
   like: [
     'liked your post',
     'reacted 👍 to your post',
     'reacted 💡 to your post',
+    'reacted 🔥 to your post',
   ],
   comment: [
     'commented: "Great post! 🙌"',
     'commented: "This! 🙌"',
     'commented: "Sir, very informative"',
     'commented: "Couldn\'t agree more!"',
+    'commented: "You\'re the best thought leader on here."',
   ],
   connection: [
     'accepted your connection request',
     'sent you a connection request',
+    'endorsed you for Leadership',
+    'endorsed you for Thought Leadership',
   ],
   follower: [
     'followed you',
     'started following you',
+    'joined your network',
   ],
   recruiter: [
     '🚨 Recruiter: "We\'re hiring! Are you open to a quick chat?"',
     '🚨 Recruiter: "Your profile stood out. 10x engineer needed!"',
+    '🚨 Recruiter: "We\'ve been trying to reach you. Name your price."',
+    '🚨 Recruiter: "A competitor wants to poach you. We\'ll beat their offer."',
   ],
 };
+
+/* ---------- Incoming DMs (opportunities streaming in) ---------- */
+DATA.DM_SENDERS = [
+  { name: 'Sarah Chen', role: 'Talent Partner · Google', emoji: '👩‍💼', color: '#e91e63' },
+  { name: 'James O\'Brien', role: 'Head of Growth · ScaleUp', emoji: '👨‍💼', color: '#3f51b5' },
+  { name: 'Priya Sharma', role: 'Recruiter · FAANG', emoji: '👩‍💻', color: '#9c27b0' },
+  { name: 'Mike Johnson', role: 'Founder · Unicorn', emoji: '🧔', color: '#00acc1' },
+  { name: 'Emily Rodriguez', role: 'VP People · BigCorp', emoji: '👩‍🎤', color: '#d32f2f' },
+  { name: 'David Kim', role: 'Angel Investor', emoji: '👨‍💻', color: '#00897b' },
+  { name: 'Growth Expert', role: 'Engagement Consultant', emoji: '📈', color: '#0a66c2' },
+  { name: 'Anonymous CEO', role: 'Fortune 500', emoji: '🕴️', color: '#757575' },
+  { name: 'Karen Mitchell', role: 'MLM Queen', emoji: '💅', color: '#ec4070' },
+  { name: 'Dr. Visionary', role: 'Thought Leader', emoji: '🧠', color: '#7e57c2' },
+];
+
+DATA.DM_MESSAGES = [
+  'We\'ve been trying to reach you. Name your price. 💼',
+  'Your profile stood out. 10x engineer needed. Are you open?',
+  'A competitor wants to poach you. We\'ll beat their offer.',
+  'I saw your post. Want 10x engagement? I have a tool.',
+  'Join my "professional network". The algorithm loves it.',
+  'Are you open to a quick chat? 15 minutes. I promise.',
+  'Your content is fire. Let\'s collab on a carousel.',
+  'We\'re hiring a Chief Synergy Officer. You\'re perfect.',
+  'DM me "YES" to learn how I make $10k/month from my phone.',
+  'I endorsed you for Thought Leadership. Return the favor?',
+  'Your last post changed my life. Can I feature you?',
+  'Investors are circling. Are you raising?',
+  'We want you on our podcast. 1M listeners.',
+  'Free webinar on financial freedom. You\'re invited.',
+  'The algorithm showed me your profile. I\'m impressed.',
+  'Can you mentor me? I\'ll pay in exposure.',
+  'We\'re building the LinkedIn of LinkedIn. Join us.',
+  'Your engagement is unreal. What\'s your secret?',
+  'I have a once-in-a-lifetime opportunity. DM for details.',
+  'Congrats on the growth! Let\'s connect.',
+];
+
+/* ---------- Calendar (coffees & quick chats) ---------- */
+DATA.CAL_TYPES = [
+  { icon: '☕', label: 'Coffee Chat', reward: 15, auth: 1 },
+  { icon: '🤝', label: 'Quick Sync', reward: 10, auth: 0.5 },
+  { icon: '🍸', label: 'Networking Drinks', reward: 25, auth: 1.5 },
+  { icon: '💼', label: 'Intro Call', reward: 20, auth: 1 },
+  { icon: '🧠', label: 'Mentor Session', reward: 30, auth: 2 },
+];
+
+DATA.CAL_PEOPLE = [
+  'Sarah Chen', 'James O\'Brien', 'Priya Sharma', 'Mike Johnson',
+  'Emily Rodriguez', 'David Kim', 'Dr. Visionary', 'Karen Mitchell',
+  'Brad Thompson', 'Sofia Reyes', 'Marcus Reed', 'Anonymous CEO',
+];
+
+/* ---------- Recommended people to follow ---------- */
+DATA.RECOMMENDED = [
+  { id: 'rec1', name: 'Alex Rivera', role: 'Growth Hacker · 3x Founder', emoji: '🚀', color: '#0a66c2', followers: '12.4k' },
+  { id: 'rec2', name: 'Nina Patel', role: 'VP Marketing · Unicorn', emoji: '📈', color: '#e91e63', followers: '48k' },
+  { id: 'rec3', name: 'Tom Okafor', role: 'LinkedIn Coach', emoji: '🎯', color: '#00897b', followers: '210k' },
+  { id: 'rec4', name: 'Lena Fischer', role: 'AI Evangelist', emoji: '🤖', color: '#7e57c2', followers: '89k' },
+  { id: 'rec5', name: 'Marcus Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️', color: '#5c6bc0', followers: '1.2M' },
+  { id: 'rec6', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴', color: '#66a4a4', followers: '340k' },
+  { id: 'rec7', name: 'Dr. Visionary', role: 'Global Thought Leader', emoji: '🧠', color: '#7e57c2', followers: '2.1M' },
+  { id: 'rec8', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨', color: '#ef5350', followers: '15k' },
+];
 
 /* ---------- Sponsored ads ---------- */
 DATA.ADS = [
@@ -422,9 +495,9 @@ DATA.ADS = [
 
 /* ---------- Fourth wall posts ---------- */
 DATA.FOURTHWALL = [
-  "You've been scrolling for 2 hours. Your real boss is wondering where you are.",
-  "This is a game. You are not actually gaining influence. You are clicking a button.",
-  "You just felt pride in a number that exists on a fake website. Reflect.",
-  "The algorithm thanks you for your continued engagement. The algorithm is always watching.",
-  "Your real connections are outside. The 4,000 here are fictional. Mostly.",
+  "You've been scrolling for 2 hours. Your empire is growing. Your real boss is wondering where you are.",
+  "This is a game. You are not actually gaining influence. You are clicking a button. And it feels amazing.",
+  "You just felt pride in a number that exists on a fake website. That number is huge. Reflect on your success.",
+  "The algorithm thanks you for your continued engagement. The algorithm is always watching. It likes what it sees.",
+  "Your real connections are outside. The 4,000 here are fictional. But they all think you're a genius.",
 ];

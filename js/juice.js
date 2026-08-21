@@ -5,7 +5,7 @@
 
 const Juice = {
   audio: null,
-  muted: false,
+  muted: true,
 
   init() {
     // Tiny WebAudio synth for satisfying dings/pops. No assets needed.

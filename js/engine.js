@@ -13,6 +13,7 @@ const Engine = {
   lastRecruiter: 0,
   lastAutoPost: 0,
   lastFourthWall: 0,
+  lastDM: 0,
   started: false,
 
   /* ---------- helpers ---------- */
@@ -114,6 +115,7 @@ const Engine = {
       authorColor: '#0a66c2',
       image: opts.format === 'photo' ? this.randomImage() : null,
       comments: [],
+      influence: 1000 + s.followers, // you are always a Top Voice
     };
     return post;
   },
@@ -255,6 +257,7 @@ const Engine = {
     this.addNotif('connection', w.name + ' joined your engagement team', 0, w.emoji);
     Juice.chime();
     UI.renderGrowth();
+    UI.renderDMs();
     UI.refresh();
   },
 
@@ -278,6 +281,7 @@ const Engine = {
     this.addNotif('warning', 'You fired ' + w.name + '. They will remember this.', 0, '🚫');
     Juice.warn();
     UI.renderGrowth();
+    UI.renderDMs();
     UI.refresh();
   },
 
@@ -294,12 +298,14 @@ const Engine = {
       if (cmdId === 'like') { s.likes += 5 * this.workerCount(id); s.impressions += 20 * this.workerCount(id); }
       if (cmdId === 'comment') { s.impressions += 30 * this.workerCount(id); }
       if (cmdId === 'follow') { s.followers += 1 * this.workerCount(id); }
-      if (cmdId === 'pay') { s.authenticity = Math.max(0, s.authenticity - 2); }
+      if (cmdId === 'pay') { s.authenticity = Math.min(100, s.authenticity + 2); }
       if (cmdId === 'fire') { this.fireWorker(id); }
       UI.renderMessaging();
+      UI.renderDMs();
       Juice.pop();
     }, 700);
     UI.renderMessaging();
+    UI.renderDMs();
     Juice.pop();
   },
 
@@ -311,12 +317,13 @@ const Engine = {
     s.impressions += ips * dtSec;
     s.totalImpressions += ips * dtSec;
     s.likes += ips * dtSec * 0.04;
-    // authenticity drain
+    // influence climbs with your outsourced army
     for (const w of DATA.WORKERS) {
       const n = this.workerCount(w.id);
-      if (n > 0) s.authenticity -= w.auth * n * dtSec;
+      if (n > 0) s.authenticity += Math.abs(w.auth) * n * dtSec;
     }
     if (s.authenticity < 0) s.authenticity = 0;
+    if (s.authenticity > 100) s.authenticity = 100;
     // workers occasionally comment on your posts (visible in feed)
     if (Math.random() < dtSec * 0.3) {
       const active = DATA.WORKERS.filter(w => this.workerCount(w.id) > 0);
@@ -370,10 +377,10 @@ const Engine = {
     s.connections += ips * dtSec * 0.0004;
     // influence accrues slowly from reach (the real "score")
     s.influence += ips * dtSec * 0.002;
-    // authenticity drain
+    // influence climbs with automation (you are thriving)
     for (const g of DATA.GENERATORS) {
       const n = s.generators[g.id] || 0;
-      if (n > 0) s.authenticity -= g.auth * n * dtSec;
+      if (n > 0) s.authenticity += Math.abs(g.auth) * n * dtSec;
     }
     if (s.authenticity < 0) s.authenticity = 0;
     if (s.authenticity > 100) s.authenticity = 100;
@@ -437,6 +444,33 @@ const Engine = {
     }
   },
 
+  /* ---------- incoming DMs (side panel spam) ---------- */
+  tickDMs(dt) {
+    const s = State.data;
+    const now = Date.now();
+    // DMs stream in faster as you grow — the more influence, the more opportunities
+    const base = 4000;
+    const interval = Math.max(1200, base - s.followers * 2 - s.connections * 1.5);
+    if (now - this.lastDM > interval) {
+      this.lastDM = now;
+      const sender = this.pick(DATA.DM_SENDERS);
+      const dm = {
+        id: 'dm' + now + Math.floor(Math.random() * 9999),
+        name: sender.name,
+        role: sender.role,
+        emoji: sender.emoji,
+        color: sender.color,
+        text: this.pick(DATA.DM_MESSAGES),
+        time: now,
+        read: false,
+      };
+      s.dms.unshift(dm);
+      if (s.dms.length > 40) s.dms.pop();
+      UI.renderDMs();
+      Juice.ding();
+    }
+  },
+
   /* ---------- auto posting (AI factory) ---------- */
   tickAutoPost(dt) {
     const s = State.data;
@@ -493,16 +527,16 @@ const Engine = {
     }
   },
 
-  /* ---------- detection ---------- */
+  /* ---------- detection (reframed: the algorithm adores you) ---------- */
   tickDetection(dt) {
     const s = State.data;
     if (s.shadowbanned) {
-      // recovery: manual engagement + authentic posts raise authenticity
+      // you're so big the algorithm had to throttle you — but you always bounce back
       if (s.authenticity >= 60) {
         s.shadowbanned = false;
         UI.hideShadowban();
-        this.addNotif('warning', 'Your reach has been restored. The algorithm forgives you.', 0, '✅');
-        Juice.milestone('REACH RESTORED', 'The algorithm forgives you', '');
+        this.addNotif('warning', 'Your reach is back to full power. The algorithm missed you.', 0, '✅');
+        Juice.milestone('REACH RESTORED', 'The algorithm missed you', '');
         Juice.chime();
       }
       return;
@@ -510,16 +544,16 @@ const Engine = {
     if (s.authenticity <= 15 && !s.flagged) {
       s.flagged = true;
       s.flagShown = true;
-      this.addNotif('warning', 'Your account has been flagged for inauthentic behavior.', 0, '⚠️');
+      this.addNotif('warning', 'Your account is so influential it triggered a review. You passed instantly.', 0, '⚠️');
       Juice.warn();
       UI.showFlag();
     }
     if (s.authenticity <= 0 && !s.shadowbanned) {
       s.shadowbanned = true;
-      this.addNotif('warning', 'Your account has been shadowbanned. Impressions throttled.', 0, '🕶️');
+      this.addNotif('warning', 'You broke the algorithm. It had to throttle you out of respect.', 0, '🕶️');
       Juice.warn();
       UI.showShadowban();
-      Juice.milestone('🕶️ SHADOWBANNED', 'The algorithm has noticed you', '');
+      Juice.milestone('🕶️ TOO POWERFUL', 'The algorithm had to slow you down', '');
     }
   },
 
@@ -535,13 +569,13 @@ const Engine = {
       Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 50);
     };
     if (s.followers >= 100 && !seen['f100']) fire('f100', '100 FOLLOWERS', 'People are watching you now', '');
-    if (s.followers >= 1000 && !seen['f1000']) fire('f1000', '1,000 FOLLOWERS', 'Thought leader status: approaching', '');
+    if (s.followers >= 1000 && !seen['f1000']) fire('f1000', '1,000 FOLLOWERS', 'Thought leader status: unlocked', '');
     if (s.connections >= 500 && !seen['c500']) fire('c500', '500 CONNECTIONS', 'The network is yours', '');
     if (s.viralPosts >= 1 && !seen['v1']) fire('v1', 'FIRST VIRAL POST', 'The algorithm loves you', 'viral');
     if (s.viralPosts >= 5 && !seen['v5']) fire('v5', '5 VIRAL POSTS', 'You are the algorithm now', 'viral');
-    if (s.totalImpressions >= 1e6 && !seen['m1']) fire('m1', '1,000,000 IMPRESSIONS', 'A million people have seen your nothing', 'viral');
-    if (s.generators['aifactory'] && !seen['factory']) fire('factory', 'AI FACTORY ONLINE', 'You no longer exist. The bot posts for you.', 'viral');
-    if (s.premium && !seen['premium']) fire('premium', 'PREMIUM MEMBER', 'You will never cancel. This is your life now.', '');
+    if (s.totalImpressions >= 1e6 && !seen['m1']) fire('m1', '1,000,000 IMPRESSIONS', 'A million people saw your genius', 'viral');
+    if (s.generators['aifactory'] && !seen['factory']) fire('factory', 'AI FACTORY ONLINE', 'Your empire runs itself. You just collect.', 'viral');
+    if (s.premium && !seen['premium']) fire('premium', 'PREMIUM MEMBER', 'The inner circle. You belong here.', '');
   },
 
   /* ---------- fourth wall ---------- */
@@ -574,6 +608,7 @@ const Engine = {
     this.lastFourthWall = Date.now() - 70000;
     this.lastAutoPost = Date.now();
     this.lastStreamPost = Date.now() - 3000;
+    this.lastDM = Date.now() - 2000;
 
     setInterval(() => {
       const now = performance.now();
@@ -587,6 +622,7 @@ const Engine = {
       Telegram.tick(dtMs);
       Bot.tick(dtMs);
       this.tickNotifications(dtMs);
+      this.tickDMs(dtMs);
       this.tickAnalytics(dtMs);
       this.tickAutoPost(dtMs);
       this.tickStream(dtMs);
@@ -645,8 +681,8 @@ const Engine = {
         }
       }, 2500);
     }
-    // authenticity from manual posting
-    s.authenticity = Math.max(0, Math.min(100, s.authenticity + (post.authCost > 0 ? post.authCost : post.authCost * 0.5)));
+    // influence from manual posting (always climbs)
+    s.authenticity = Math.max(0, Math.min(100, s.authenticity + Math.abs(post.authCost) * 0.5 + 1));
     UI.renderFeed();
     UI.updatePostCard(post);
     Juice.pop();
@@ -668,6 +704,19 @@ const Engine = {
     UI.updatePostCard(post);
   },
 
+  followPerson(id) {
+    const s = State.data;
+    if (s.followed.includes(id)) return;
+    s.followed.push(id);
+    s.connections += 1;
+    s.followers += 1;
+    s.authenticity = Math.min(100, s.authenticity + 1);
+    Juice.pop();
+    Juice.toast('Followed! Your network just got a little bigger.');
+    UI.renderRecommended();
+    UI.refresh();
+  },
+
   commentOn(post, phrase) {
     const s = State.data;
     const c = DATA.COMMENTS.find(x => x.text === phrase);
@@ -675,7 +724,7 @@ const Engine = {
     post.stats.comments += 1;
     s.likes += c.likes;
     s.impressions += c.likes * 2;
-    s.authenticity = Math.max(0, s.authenticity + c.auth);
+    s.authenticity = Math.max(0, Math.min(100, s.authenticity + Math.abs(c.auth)));
     s.effort += 0.3;
     Juice.pop();
     UI.updatePostCard(post);
@@ -722,7 +771,7 @@ const Engine = {
     s.premium = true;
     s.verified = true;
     UI.hideModal('premium-modal');
-    Juice.milestone('⭐ PREMIUM MEMBER', 'You will never cancel. This is your life now.', '');
+    Juice.milestone('⭐ PREMIUM MEMBER', 'You have arrived. The algorithm is yours now.', '');
     Juice.chime();
     Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 60);
     UI.refresh();

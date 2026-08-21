@@ -119,11 +119,11 @@
       </div>
       <div class="card authenticity-card">
         <div class="auth-header">
-          <span>Authenticity</span>
+          <span>Influence</span>
           <b id="auth-value">100%</b>
         </div>
         <div class="auth-bar"><div class="auth-fill" id="auth-fill"></div></div>
-        <div class="auth-note" id="auth-note">Organic. Keep it real.</div>
+        <div class="auth-note" id="auth-note">Top 1% of creators. The algorithm is obsessed with you.</div>
       </div>
       <div class="card productivity-card">
         <div class="prod-title">⏱️ Hours Saved</div>
@@ -162,6 +162,10 @@
         <div class="next-title" id="next-title">Next Unlock</div>
         <div class="next-bar"><div class="next-fill" id="next-fill"></div></div>
         <div class="next-sub" id="next-sub">Earn more impressions to unlock</div>
+      </div>
+      <div class="card rec-card">
+        <div class="rec-title">People you may know</div>
+        <div class="rec-list" id="rec-list"></div>
       </div>
       <div class="card ads-card">
         <div class="ad-title">Sponsored</div>
@@ -333,9 +337,9 @@
   <!-- Flag warning -->
   <div class="modal-overlay hidden" id="flag-modal">
     <div class="modal flag-modal">
-      <div class="flag-icon">⚠️</div>
-      <div class="flag-title">Account flagged for inauthentic behavior</div>
-      <div class="flag-copy">Our systems have detected suspicious engagement patterns on your account. Continued inauthentic activity may result in a <b>shadowban</b> or <b>account removal</b>.</div>
+      <div class="flag-icon">👑</div>
+      <div class="flag-title">Your influence triggered a review</div>
+      <div class="flag-copy">Your engagement is so strong our systems flagged it for a closer look. You passed instantly. <b>Keep dominating.</b></div>
       <button class="btn btn-danger" id="flag-ack">I understand</button>
     </div>
   </div>
@@ -343,9 +347,9 @@
   <!-- Shadowban overlay -->
   <div class="shadowban-overlay hidden" id="shadowban-overlay">
     <div class="shadowban-box">
-      <div class="shadowban-title">Your reach has been limited</div>
-      <div class="shadowban-copy">Your content is no longer being shown to non-connections. Impressions have been throttled. Post authentic content to recover.</div>
-      <div class="shadowban-tip">💡 Post by hand. Engage genuinely. Take a break.</div>
+      <div class="shadowban-title">You broke the algorithm</div>
+      <div class="shadowban-copy">Your reach grew so fast the algorithm had to throttle you out of respect. It will recover. You always do.</div>
+      <div class="shadowban-tip">💡 Keep posting. The algorithm can't resist you for long.</div>
     </div>
   </div>
 
@@ -412,6 +416,26 @@
     </div><!-- /app-view dark -->
   </div><!-- /browser-body -->
 </div><!-- /browser -->
+
+<!-- ===== ALPHAMAIL (side software) ===== -->
+<div id="alphamail" class="alphamail hidden">
+  <div class="am-titlebar">
+    <span class="am-dot am-dot-r"></span><span class="am-dot am-dot-y"></span><span class="am-dot am-dot-g"></span>
+    <span class="am-title">📅 AlphaMail</span>
+  </div>
+  <div class="am-body">
+    <div class="dm-header">💬 Messaging <span class="dm-count" id="dm-count">0</span></div>
+    <div class="dm-list" id="dm-list"></div>
+    <div class="am-divider"></div>
+    <div class="dcal-header">
+      <span>Calendar</span>
+      <span class="dcal-date" id="dcal-date"></span>
+    </div>
+    <div class="dcal-sub">Link &amp; build. Book the coffees.</div>
+    <div class="dcal-list" id="dcal-list"></div>
+    <button class="dcal-btn" id="dcal-schedule">+ Schedule a Coffee</button>
+  </div>
+</div>
 
 <script src="js/data.js"></script>
 <script src="js/state.js"></script>

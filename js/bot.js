@@ -132,14 +132,15 @@ const Bot = {
     const ips = this.botIps();
     s.impressions += ips * dtSec;
     s.totalImpressions += ips * dtSec;
-    // authenticity drain
+    // influence climbs with your bot army
     for (const a of s.os.bot.activity) {
       if (a.type === 'acquire') {
         const c = DATA.BOT_CONFIGS.find(x => x.id === a.config);
-        if (c) s.authenticity -= c.auth * dtSec;
+        if (c) s.authenticity += Math.abs(c.auth) * dtSec;
       }
     }
     if (s.authenticity < 0) s.authenticity = 0;
+    if (s.authenticity > 100) s.authenticity = 100;
     // occasional activity log entries
     if (ips > 0 && Math.random() < dtSec * 0.15) {
       const entries = [

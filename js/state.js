@@ -30,6 +30,9 @@ function defaultState() {
     posts: [],               // published posts
     notifications: [],      // newest first
     notifCount: 0,           // unread
+    dms: [],                 // incoming LinkedIn DMs (side panel)
+    calendar: [],            // scheduled coffees / quick chats
+    followed: [],            // ids of recommended people the player follows
     milestonesSeen: {},      // id -> true
     fourthWallShown: false,
     lastSaved: Date.now(),
@@ -75,6 +78,9 @@ const State = {
         if (!this.data.workerChats) this.data.workerChats = {};
         if (!this.data.posts) this.data.posts = [];
         if (!this.data.notifications) this.data.notifications = [];
+        if (!this.data.dms) this.data.dms = [];
+        if (!this.data.calendar) this.data.calendar = [];
+        if (!this.data.followed) this.data.followed = [];
         if (!this.data.milestonesSeen) this.data.milestonesSeen = {};
         if (!this.data.analytics) this.data.analytics = { history: [], postsPublished: 0, totalLikes: 0, totalComments: 0, bestPost: null, analyticsLevel: 0 };
         if (!this.data.os) this.data.os = { booted: false, unlockedApps: ['linkedin'], activeApp: 'linkedin', telegram: { unlocked: false, joinedPods: [], messages: [] }, bot: { unlocked: false, created: false, name: '', activity: [], intensity: 1 }, dark: { unlocked: false } };

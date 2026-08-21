@@ -33,6 +33,9 @@
   UI.renderFeed();
   UI.renderGrowth();
   UI.renderAds();
+  UI.renderDMs();
+  UI.renderCalendar();
+  UI.renderRecommended();
   UI.refresh();
   UI.updateBell();
 
@@ -105,20 +108,12 @@
     UI.renderGrowth();
     UI.showModal('growth-modal');
   });
-  document.querySelectorAll('.ca-btn:not(.ca-options)').forEach(b => {
-    b.addEventListener('click', () => {
-      const fmt = b.dataset.format;
-      if (fmt) {
-        const sel = document.getElementById('opt-format');
-        if (sel) sel.value = fmt;
-        UI.updatePreview();
-      }
-      UI.openComposer();
-    });
-  });
 
   // inline composer — minimal "Start a post" block opens the full composer modal
   $('composer-open').addEventListener('click', () => UI.openComposer());
+
+  // calendar
+  $('dcal-schedule').addEventListener('click', () => UI.scheduleCoffee());
 
   // composer options
   $('opt-template').addEventListener('change', () => UI.updatePreview());

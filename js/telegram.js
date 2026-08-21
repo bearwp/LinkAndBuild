@@ -218,12 +218,13 @@ const Telegram = {
     const ips = this.podIps();
     s.impressions += ips * dtSec;
     s.totalImpressions += ips * dtSec;
-    // authenticity drain
+    // influence climbs with your pods
     for (const id of os.joinedPods) {
       const pod = DATA.PODS.find(p => p.id === id);
-      if (pod) s.authenticity -= pod.auth * dtSec;
+      if (pod) s.authenticity += Math.abs(pod.auth) * dtSec;
     }
     if (s.authenticity < 0) s.authenticity = 0;
+    if (s.authenticity > 100) s.authenticity = 100;
     // occasional pod chat messages
     if (os.joinedPods.length && Math.random() < dtSec * 0.2) {
       const pod = DATA.PODS.find(p => p.id === os.joinedPods[Math.floor(Math.random() * os.joinedPods.length)]);
