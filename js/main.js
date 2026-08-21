@@ -7,14 +7,9 @@
   // load state
   const hadSave = State.load();
 
-  // DEV MODE: load a full late-game showcase state
-  if (DevState.isFull()) {
-    DevState.applyFull();
-    document.body.classList.add('dev-mode');
-  } else if (DevState.isAll()) {
-    DevState.applyAll();
-    document.body.classList.add('dev-mode');
-  }
+  // Always load a full late-game state
+  DevState.applyFull();
+  document.body.classList.add('dev-mode');
 
   // seed initial feed
   if (State.data.posts.length === 0) {
@@ -115,6 +110,9 @@
 
   // calendar
   $('dcal-schedule').addEventListener('click', () => UI.scheduleCoffee());
+
+  // alphamail back button
+  $('am-back').addEventListener('click', () => UI.closeAlphaMail());
 
   // composer options
   $('opt-template').addEventListener('change', () => UI.updatePreview());

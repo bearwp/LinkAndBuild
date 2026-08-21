@@ -82,11 +82,6 @@
           <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
           <span>Jobs</span>
         </button>
-        <button class="nav-item" data-tab="messaging">
-          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
-          <span>Messaging</span>
-          <span class="nav-badge" id="nav-message-badge">3</span>
-        </button>
         <button class="nav-item" data-tab="bell">
           <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
           <span>Notifications</span>
@@ -310,24 +305,6 @@
     </div>
   </div>
 
-  <!-- Messaging -->
-  <div class="modal-overlay hidden" id="messaging-modal">
-    <div class="modal messaging-modal">
-      <div class="modal-head">
-        <span class="modal-title">Messaging</span>
-        <button class="modal-close" data-close="messaging-modal">✕</button>
-      </div>
-      <div class="msg-body">
-        <div class="msg-list" id="msg-list"></div>
-        <div class="msg-chat" id="msg-chat">
-          <div class="msg-chat-empty" id="msg-chat-empty">Select a worker to start chatting. They're very responsive.</div>
-          <div class="msg-thread" id="msg-thread"></div>
-          <div class="msg-commands" id="msg-commands"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Analytics -->
   <div class="modal-overlay hidden" id="analytics-modal">
     <div class="modal analytics-modal">
@@ -456,8 +433,14 @@
     <span class="am-title">📅 AlphaMail</span>
   </div>
   <div class="am-body">
-    <div class="dm-header">💬 Messaging <span class="dm-count" id="dm-count">0</span></div>
+    <div class="dm-header">💬 Messages <span class="dm-count" id="dm-count">0</span></div>
     <div class="dm-list" id="dm-list"></div>
+    <div class="am-chat hidden" id="am-chat">
+      <button class="am-back" id="am-back">← Back</button>
+      <div class="am-chat-title" id="am-chat-title"></div>
+      <div class="msg-thread" id="msg-thread"></div>
+      <div class="msg-commands" id="msg-commands"></div>
+    </div>
     <div class="am-divider"></div>
     <div class="dcal-header">
       <span>Calendar</span>

@@ -607,8 +607,7 @@ const UI = {
       const msgBtn = item.querySelector('[data-msg]');
       if (msgBtn) msgBtn.addEventListener('click', () => {
         UI._activeWorker = w.id;
-        UI.showModal('messaging-modal');
-        UI.renderMessaging();
+        UI.openAlphaMail();
       });
       paneO.appendChild(item);
     }
@@ -826,41 +825,35 @@ const UI = {
     this.renderAnalytics();
   },
 
-  /* ---------- messaging ---------- */
-  renderMessaging() {
-    const s = State.data;
-    const list = document.getElementById('msg-list');
-    if (!list) return;
-    const hired = DATA.WORKERS.filter(w => Engine.workerCount(w.id) > 0);
-    list.innerHTML = '';
-    if (hired.length === 0) {
-      list.innerHTML = '<div style="padding:12px;font-size:12px;color:#666">No workers yet. Hire them in the Growth Console → Outsource.</div>';
-    }
-    for (const w of hired) {
-      const el = document.createElement('div');
-      el.className = 'msg-contact' + (this._activeWorker === w.id ? ' active' : '');
-      el.innerHTML = `<div class="avatar" style="background:#0a66c2;width:32px;height:32px;font-size:14px">${w.emoji}</div>
-        <div><div class="mc-name">${w.name}</div><div class="mc-role">${w.count > 1 ? '×' + w.count + ' · ' : ''}${w.role}</div></div>`;
-      el.addEventListener('click', () => { this._activeWorker = w.id; this.renderMessaging(); });
-      list.appendChild(el);
-    }
+  /* ---------- messaging (inside AlphaMail) ---------- */
+  openAlphaMail() {
+    const list = document.getElementById('dm-list');
+    const chat = document.getElementById('am-chat');
+    if (list) list.classList.add('hidden');
+    if (chat) chat.classList.remove('hidden');
     this.renderChat();
+  },
+
+  closeAlphaMail() {
+    const list = document.getElementById('dm-list');
+    const chat = document.getElementById('am-chat');
+    if (list) list.classList.remove('hidden');
+    if (chat) chat.classList.add('hidden');
   },
 
   renderChat() {
     const s = State.data;
-    const chat = document.getElementById('msg-chat');
-    const empty = document.getElementById('msg-chat-empty');
+    const chat = document.getElementById('am-chat');
+    const title = document.getElementById('am-chat-title');
     const thread = document.getElementById('msg-thread');
     const commands = document.getElementById('msg-commands');
+    if (!chat) return;
     const w = DATA.WORKERS.find(x => x.id === this._activeWorker);
     if (!w || Engine.workerCount(w.id) === 0) {
-      empty.style.display = 'grid';
-      thread.innerHTML = '';
-      commands.innerHTML = '';
+      this.closeAlphaMail();
       return;
     }
-    empty.style.display = 'none';
+    title.textContent = w.emoji + ' ' + w.name;
     // thread
     thread.innerHTML = '';
     const msgs = (s.workerChats[w.id] || []).slice(-50);
@@ -964,8 +957,7 @@ const UI = {
         </div>`;
       el.addEventListener('click', () => {
         this._activeWorker = w.id;
-        this.showModal('messaging-modal');
-        this.renderMessaging();
+        this.openAlphaMail();
       });
       return el;
     }
@@ -1209,9 +1201,6 @@ const UI = {
       this.renderNetwork();
     } else if (tab === 'jobs') {
       this.renderJobs();
-    } else if (tab === 'messaging') {
-      this.showModal('messaging-modal');
-      this.renderMessaging();
     }
   },
 };

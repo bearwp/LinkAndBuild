@@ -321,22 +321,17 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .an-bench b { color: rgba(0,0,0,0.75); }
 
 /* messaging modal */
-.messaging-modal { max-width: 720px; height: 80vh; display: flex; flex-direction: column; }
-.msg-body { display: flex; flex: 1; min-height: 0; }
-.msg-list { width: 220px; border-right: 1px solid #e0dfdc; overflow-y: auto; flex-shrink: 0; }
-.msg-contact { display: flex; gap: 8px; align-items: center; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f3f2ef; }
-.msg-contact:hover { background: #f3f2ef; }
-.msg-contact.active { background: #eef3f8; }
-.msg-contact .mc-name { font-size: 13px; font-weight: 600; }
-.msg-contact .mc-role { font-size: 11px; color: #666; }
-.msg-chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.msg-chat-empty { display: grid; place-items: center; flex: 1; color: #999; font-size: 13px; }
-.msg-thread { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
-.msg-bubble { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; }
+/* messaging (inside AlphaMail) */
+.am-chat { display: flex; flex-direction: column; height: 100%; }
+.am-chat.hidden { display: none; }
+.am-back { align-self: flex-start; padding: 4px 10px; border: 1px solid #e0dfdc; border-radius: 6px; font-size: 12px; color: #0a66c2; background: #fff; margin-bottom: 8px; }
+.am-chat-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.msg-thread { flex: 1; overflow-y: auto; padding: 4px 0; display: flex; flex-direction: column; gap: 6px; }
+.msg-bubble { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; }
 .msg-bubble.me { align-self: flex-end; background: #0a66c2; color: #fff; border-bottom-right-radius: 2px; }
 .msg-bubble.them { align-self: flex-start; background: #f3f2ef; color: rgba(0,0,0,0.9); border-bottom-left-radius: 2px; }
 .msg-bubble .mb-time { display: block; font-size: 10px; opacity: 0.7; margin-top: 3px; }
-.msg-commands { padding: 8px 12px; border-top: 1px solid #e0dfdc; display: flex; flex-wrap: wrap; gap: 6px; }
+.msg-commands { padding: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .msg-commands button { padding: 6px 10px; border: 1px solid #e0dfdc; border-radius: 999px; font-size: 12px; color: #0a66c2; background: #fff; }
 .msg-commands button:hover { background: #eef3f8; }
 

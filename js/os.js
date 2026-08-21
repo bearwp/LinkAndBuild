@@ -14,11 +14,7 @@ const OS = {
       s.os.telegram.unlocked = true;
       this.unlockApp('telegram');
     }
-    if (s.os.booted) {
-      this.showBrowser();
-    } else {
-      this.runBoot();
-    }
+    this.showDesktop();
     this.updateClock();
     setInterval(() => this.updateClock(), 1000);
   },
