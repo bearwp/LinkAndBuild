@@ -139,6 +139,21 @@ DATA.TEMPLATES = [
   },
 ];
 
+/* ---------- Naive first posts (the honest, pre-grift voice) ---------- */
+// The first few posts are written by a real person who actually needs a job.
+// No bait, no hustle — just someone asking the internet for help. The
+// algorithm reads this as weakness, which is exactly the point.
+DATA.NAIVE_POSTS = [
+  "Hi everyone. I just got laid off and I'm looking for a new role. I have 5 years of experience and I'm open to anything. Please reach out if you know of anything. 🙏",
+  "I need a job. I've applied to 200 places and heard back from 3. If anyone is hiring, I'd really appreciate a referral.",
+  "Honestly just posting here because I don't know what else to do. I need work. I'm reliable, I show up, and I learn fast. Please help.",
+  "My rent is due in two weeks and I still haven't found anything. I'm not asking for a handout, just a chance. Anyone hiring entry-level?",
+  "First time posting. I'm nervous but I need to put myself out there. I'm looking for literally any job. I'll take anything at this point.",
+  "I keep seeing everyone's success stories and I'm happy for them, but I just need one person to give me a shot. I need a job. That's it.",
+  "Not sure how this app works but I heard people find jobs here. I'm a hard worker, I have references, and I need a job. Please share if you can.",
+  "I've been unemployed for 6 months. I'm not here to network or build a brand. I just need a job so I can pay my bills.",
+];
+
 /* ---------- Comment phrases (click power / minigame) ---------- */
 DATA.COMMENTS = [
   { text: 'Great post! 🙌', likes: 2, auth: 0, safe: true },
@@ -843,6 +858,38 @@ DATA.COMMENTERS = [
   { name: 'Anonymous User', role: 'Professional', emoji: '🙂', color: '#757575', phrases: ['Great post!', 'This! 🙌', 'Very informative!', 'Thanks for sharing!', 'Couldn\'t agree more!', 'Absolutely! 👏'] },
 ];
 
+/* ---------- Trolls (the low-level reminder) ---------- */
+// When you're a nobody, the only people who notice you are the ones who
+// want to remind you of it. These land on your posts until you've built
+// enough of a machine that the algorithm starts sending you fans instead.
+DATA.TROLLS = [
+  { name: 'Chad Thundercock', role: 'CEO · Alpha Male', emoji: '😤', color: '#d32f2f', phrases: [
+    'Who is this guy? 😂',
+    'Nobody asked.',
+    'This is why you have 0 followers.',
+    'Cringe. Delete this.',
+    'Ratio + you fell off.',
+    'My intern posts better than this.',
+  ] },
+  { name: 'Karen "BossBabe"', role: 'MLM Queen', emoji: '💅', color: '#ec4070', phrases: [
+    'Honey, this isn\'t it. 💅',
+    'You need my course. DM me.',
+    'Sweetie, no.',
+    'This is why you\'re still at 9-5.',
+  ] },
+  { name: 'Anonymous', role: 'Professional', emoji: '🙂', color: '#757575', phrases: [
+    'Is this a joke?',
+    'Who even are you?',
+    'This flopped.',
+    'Try again when you have followers.',
+  ] },
+  { name: 'Dr. Visionary', role: 'Thought Leader', emoji: '🧠', color: '#7e57c2', phrases: [
+    'I\'ve seen better takes from my AI.',
+    'Amateur hour.',
+    'Read my book before you post again.',
+  ] },
+];
+
 /* ---------- Worker command phrases (player -> worker) ---------- */
 DATA.WORKER_COMMANDS = [
   { id: 'like', label: '👍 Like all my posts', reply: 'Yes sir, liking everything now.' },
@@ -948,26 +995,26 @@ DATA.CAL_PEOPLE = [
 
 /* ---------- Recommended people to follow ---------- */
 DATA.RECOMMENDED = [
-  { id: 'rec1', name: 'Alex Rivera', role: 'Growth Hacker · 3x Founder', emoji: '🚀', color: '#0a66c2', followers: '12.4k' },
-  { id: 'rec2', name: 'Nina Patel', role: 'VP Marketing · Unicorn', emoji: '📈', color: '#e91e63', followers: '48k' },
-  { id: 'rec3', name: 'Tom Okafor', role: 'LockedIn Coach', emoji: '🎯', color: '#00897b', followers: '210k' },
-  { id: 'rec4', name: 'Lena Fischer', role: 'AI Evangelist', emoji: '🤖', color: '#7e57c2', followers: '89k' },
-  { id: 'rec5', name: 'Marcus Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️', color: '#5c6bc0', followers: '1.2M' },
-  { id: 'rec6', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴', color: '#66a4a4', followers: '340k' },
-  { id: 'rec7', name: 'Dr. Visionary', role: 'Global Thought Leader', emoji: '🧠', color: '#7e57c2', followers: '2.1M' },
-  { id: 'rec8', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨', color: '#ef5350', followers: '15k' },
+  { id: 'rec1', name: 'Alex Rivera', role: 'Growth Hacker · 3x Founder', emoji: '🚀', color: '#0a66c2', followers: '12.4k', arch: 'greatpost' },
+  { id: 'rec2', name: 'Nina Patel', role: 'VP Marketing · Unicorn', emoji: '📈', color: '#e91e63', followers: '48k', arch: 'humbled' },
+  { id: 'rec3', name: 'Tom Okafor', role: 'LockedIn Coach', emoji: '🎯', color: '#00897b', followers: '210k', arch: 'thought' },
+  { id: 'rec4', name: 'Lena Fischer', role: 'AI Evangelist', emoji: '🤖', color: '#7e57c2', followers: '89k', arch: 'ai' },
+  { id: 'rec5', name: 'Marcus Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️', color: '#5c6bc0', followers: '1.2M', arch: 'gym' },
+  { id: 'rec6', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴', color: '#66a4a4', followers: '340k', arch: 'burnout' },
+  { id: 'rec7', name: 'Dr. Visionary', role: 'Global Thought Leader', emoji: '🧠', color: '#7e57c2', followers: '2.1M', arch: 'thought' },
+  { id: 'rec8', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨', color: '#ef5350', followers: '15k', arch: 'recruiter' },
 ];
 
 /* ---------- Network people (want to Link & Build with you) ---------- */
 DATA.NETWORK_PEOPLE = [
-  { id: 'net1', name: 'Brad Thompson', role: 'Serial Networker · 40k connections', emoji: '🤝', color: '#0a66c2' },
-  { id: 'net2', name: 'Chloe Nguyen', role: 'Startup Founder · Raising Series A', emoji: '🚀', color: '#e91e63' },
-  { id: 'net3', name: 'Dev Patel', role: 'Full-Stack · Open to collab', emoji: '💻', color: '#00897b' },
-  { id: 'net4', name: 'Amara Osei', role: 'Product Designer · Ex-FAANG', emoji: '🎨', color: '#7e57c2' },
-  { id: 'net5', name: 'Jake Miller', role: 'Sales · "Let\'s hop on a call"', emoji: '📞', color: '#5c6bc0' },
-  { id: 'net6', name: 'Fatima Al-Rashid', role: 'Marketing Lead · Growth obsessed', emoji: '📈', color: '#ef5350' },
-  { id: 'net7', name: 'Lucas Weber', role: 'AI Engineer · Prompt whisperer', emoji: '🤖', color: '#00acc1' },
-  { id: 'net8', name: 'Grace Kim', role: 'HR · "I know a guy"', emoji: '👩‍💼', color: '#d32f2f' },
+  { id: 'net1', name: 'Brad Thompson', role: 'Serial Networker · 40k connections', emoji: '🤝', color: '#0a66c2', arch: 'humbled' },
+  { id: 'net2', name: 'Chloe Nguyen', role: 'Startup Founder · Raising Series A', emoji: '🚀', color: '#e91e63', arch: 'greatpost' },
+  { id: 'net3', name: 'Dev Patel', role: 'Full-Stack · Open to collab', emoji: '💻', color: '#00897b', arch: 'ai' },
+  { id: 'net4', name: 'Amara Osei', role: 'Product Designer · Ex-FAANG', emoji: '🎨', color: '#7e57c2', arch: 'greatpost' },
+  { id: 'net5', name: 'Jake Miller', role: 'Sales · "Let\'s hop on a call"', emoji: '📞', color: '#5c6bc0', arch: 'mlm' },
+  { id: 'net6', name: 'Fatima Al-Rashid', role: 'Marketing Lead · Growth obsessed', emoji: '📈', color: '#ef5350', arch: 'greatpost' },
+  { id: 'net7', name: 'Lucas Weber', role: 'AI Engineer · Prompt whisperer', emoji: '🤖', color: '#00acc1', arch: 'ai' },
+  { id: 'net8', name: 'Grace Kim', role: 'HR · "I know a guy"', emoji: '👩‍💼', color: '#d32f2f', arch: 'recruiter' },
 ];
 
 /* ---------- Bank (pathetic transactions) ---------- */
@@ -1343,6 +1390,49 @@ DATA.NARRATOR = {
       ],
       auditor: [
         "First post archived. This one will post into an empty room and call it a win.",
+      ],
+    },
+    // ---- the first-post arc: like -> comment -> nice comment -> unlock ----
+    first_like: {
+      coach: [
+        "Someone liked your post. See? The algorithm believes in you. Keep going.",
+        "A like. The first of many. We're routing more eyes to you now.",
+        "Your first like just landed. The market is noticing. This is how it starts.",
+      ],
+      pm: [
+        "First like logged. Engagement is forming. The funnel is warm.",
+        "A like. We're boosting your reach. You've earned it.",
+      ],
+      auditor: [
+        "First like recorded. One person, or one bot, pressed the button. It felt like being seen.",
+      ],
+    },
+    first_comment: {
+      coach: [
+        "A comment. Someone actually read it. Don't get comfortable — they're judging you.",
+        "Your first comment. Real engagement. Or at least, engagement-shaped.",
+        "A comment came in. The algorithm is watching how you handle it.",
+      ],
+      pm: [
+        "First comment logged. The thread is alive. Keep feeding it.",
+        "A comment. We're routing more of them to you now.",
+      ],
+      auditor: [
+        "First comment recorded. Someone typed words at you. It felt like conversation.",
+      ],
+    },
+    nice_comment: {
+      coach: [
+        "A kind comment. That's the signal we were waiting for. You're ready for more.",
+        "Someone said something nice. The algorithm has decided: you're worth investing in.",
+        "A nice comment. Enough engagement to unlock the rest. Welcome to the machine.",
+      ],
+      pm: [
+        "Positive sentiment detected. Unlocking the full interface. You've earned it.",
+        "A kind comment. The market has spoken. The machine opens for you now.",
+      ],
+      auditor: [
+        "A nice comment. The algorithm unlocked the rest. It was always going to.",
       ],
     },
     // ---- rarity reveals ----

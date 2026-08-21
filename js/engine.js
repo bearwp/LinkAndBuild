@@ -291,6 +291,13 @@ const Engine = {
       rate *= this.upgradeMult('viral_mult');
     }
     if (post.authorId === 'you' && s.shadowbanned) rate *= 0.15;
+    // nobody multiplier: a fresh account's posts barely register. Reach is
+    // earned, not given — the first posts get a trickle, and only once you
+    // build followers/automation does the algorithm start to notice you.
+    if (post.authorId === 'you') {
+      const nobody = Math.max(0.05, Math.min(1, s.followers / 500));
+      rate *= nobody;
+    }
     return rate * this.scale();
   },
 
@@ -315,17 +322,27 @@ const Engine = {
       const likeRate = imp * 0.04;
       post.stats.likes += likeRate;
       if (yours) s.likes += likeRate;
+      // onboarding: the first like on the player's first post
+      if (yours && !s.onboarding.firstLike && post.stats.likes >= 1) {
+        s.onboarding.firstLike = true;
+        Bus.emit('onboarding:first-like', post);
+      }
       // reposts trickle in too
       post.stats.shares += imp * 0.008;
       // spawn real comments fast
       const commentChance = imp * 0.12 * dtSec;
       if (Math.random() < commentChance && post.comments.length < 30) {
         post.stats.comments += 1;
-        const c = this.pick(DATA.COMMENTERS);
+        // the very first comment on the player's first post is a troll —
+        // the algorithm's snarky beat. Later comments are the "nice" ones.
+        const firstComment = yours && !s.onboarding.firstComment;
+        const c = firstComment ? this.pick(DATA.TROLLS) : this.pick(DATA.COMMENTERS);
         // NPC posts draw comments from their own archetype's comment pool,
         // so comments read differently from the post body.
         const arch = post.isNPC ? DATA.ARCHETYPES.find(a => a.id === post.authorId) : null;
-        const text = arch && arch.comments.length ? this.pick(arch.comments) : this.pick(c.phrases);
+        const text = firstComment
+          ? this.pick(c.phrases)
+          : (arch && arch.comments.length ? this.pick(arch.comments) : this.pick(c.phrases));
         post.comments.push({
           author: c.name,
           role: c.role,
@@ -333,7 +350,35 @@ const Engine = {
           color: c.color,
           text: text,
           time: Date.now(),
+          troll: firstComment,
         });
+        // onboarding: the first comment on the player's first post
+        if (firstComment) {
+          s.onboarding.firstComment = true;
+          Bus.emit('onboarding:first-comment', post);
+        } else if (yours && !s.onboarding.niceComment) {
+          // a later, non-troll comment is the "nice" one that unlocks the UI
+          s.onboarding.niceComment = true;
+          Bus.emit('onboarding:nice-comment', post);
+        }
+      }
+      // troll comments: when you're a nobody, the only engagement you get is
+      // someone reminding you of it. Fades out as you build the machine.
+      if (yours && this.era() < 2 && post.comments.length < 30) {
+        const trollChance = dtSec * 0.02 * (1 - s.followers / 100);
+        if (Math.random() < trollChance) {
+          post.stats.comments += 1;
+          const t = this.pick(DATA.TROLLS);
+          post.comments.push({
+            author: t.name,
+            role: t.role,
+            emoji: t.emoji,
+            color: t.color,
+            text: this.pick(t.phrases),
+            time: Date.now(),
+            troll: true,
+          });
+        }
       }
     }
   },
@@ -896,11 +941,16 @@ const Engine = {
     const s = State.data;
     if (s.followed.includes(id)) return;
     s.followed.push(id);
+    // map the followed person to their archetype so their posts show in the feed
+    const rec = DATA.RECOMMENDED.find(p => p.id === id) || DATA.NETWORK_PEOPLE.find(p => p.id === id);
+    if (rec && rec.arch && !s.followedAuthors.includes(rec.arch)) {
+      s.followedAuthors.push(rec.arch);
+    }
     s.connections += 1;
     s.followers += 1;
     s.authenticity = Math.min(100, s.authenticity + 1);
     Juice.pop();
-    Juice.toast('Followed! Your network just got a little bigger.');
+    Juice.toast('Followed! Their posts now appear in your feed.');
     Bus.emit('person:followed');
   },
 
@@ -908,10 +958,14 @@ const Engine = {
     const s = State.data;
     if (s.network.includes(id)) return;
     s.network.push(id);
+    const rec = DATA.NETWORK_PEOPLE.find(p => p.id === id);
+    if (rec && rec.arch && !s.followedAuthors.includes(rec.arch)) {
+      s.followedAuthors.push(rec.arch);
+    }
     s.connections += 1;
     s.authenticity = Math.min(100, s.authenticity + 1);
     Juice.pop();
-    Juice.toast('Connected! They want to Link & Build with you.');
+    Juice.toast('Connected! Their posts now appear in your feed.');
     Bus.emit('person:connected');
   },
 

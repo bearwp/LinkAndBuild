@@ -61,6 +61,76 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .scale-card input[type="range"] { width: 100%; accent-color: #0a66c2; }
 .scale-sub { font-size: 12px; color: #666; margin-top: 4px; text-align: center; font-weight: 600; }
 
+/* ============ Debug bar (always visible, togglable) ============ */
+.debug-bar {
+  position: fixed;
+  right: 8px; bottom: 8px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  font-size: 12px;
+}
+.debug-bar .db-toggle {
+  background: #1a1a1a;
+  color: #ffd54f;
+  border: 1px solid #444;
+  border-radius: 4px;
+  padding: 6px 9px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+.debug-bar .db-toggle:hover { background: #333; }
+.debug-bar .db-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: #1a1a1a;
+  color: #ccc;
+  border: 1px solid #333;
+  border-radius: 6px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.debug-bar .db-label { font-weight: 700; color: #ffd54f; }
+.debug-bar .db-item { display: flex; align-items: center; gap: 6px; }
+.debug-bar input[type="range"] { width: 120px; accent-color: #ffd54f; }
+.debug-bar select { background: #2a2a2a; color: #ccc; border: 1px solid #444; border-radius: 4px; padding: 2px 4px; font-size: 12px; }
+.debug-bar .db-reset { padding: 3px 8px; font-size: 12px; }
+/* collapsed: only the wrench button shows */
+.debug-bar.collapsed .db-panel { display: none; }
+
+/* ============ First-run minimal mode ============ */
+/* Before the first post, hide everything that isn't the one obvious
+   action: the composer. The guide and composer stay front and center. */
+body.first-run .left-rail,
+body.first-run .right-rail,
+body.first-run .feed,
+body.first-run .feed-end,
+body.first-run .topnav .nav-search,
+body.first-run .topnav .nav-icons { display: none; }
+body.first-run .layout { grid-template-columns: 1fr; max-width: 640px; }
+body.first-run .center { gap: 16px; }
+body.first-run .guide-card { border-left-width: 4px; }
+body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
+
+/* ============ Signup ============ */
+.signup { position: fixed; inset: 0; background: #f3f2ef; display: grid; place-items: center; z-index: 200; padding: 16px; }
+.signup-box { background: #fff; border: 1px solid #e0dfdc; border-radius: 8px; width: 100%; max-width: 400px; padding: 32px; text-align: center; }
+.signup-logo { background: #0a66c2; color: #fff; width: 48px; height: 48px; border-radius: 8px; display: grid; place-items: center; margin: 0 auto 16px; }
+.signup-logo svg { width: 28px; height: 28px; }
+.signup-title { font-size: 24px; font-weight: 700; }
+.signup-sub { font-size: 13px; color: #666; margin: 8px 0 24px; }
+.signup-field { text-align: left; margin-bottom: 16px; }
+.signup-field label { display: block; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 6px; }
+.signup-field input { width: 100%; border: 1px solid #e0dfdc; border-radius: 4px; padding: 10px 12px; font-size: 14px; }
+.signup-field input:focus { outline: none; border-color: #0a66c2; }
+.signup-btn { width: 100%; padding: 12px; font-size: 15px; }
+.signup-note { font-size: 11px; color: #999; margin-top: 16px; }
+
 /* ============ Composer ============ */
 .composer { padding: 12px 16px; }
 .composer-highlight { animation: composerPulse 1.5s ease 3; }
@@ -123,6 +193,11 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .pc-text { font-size: 13px; color: rgba(0,0,0,0.75); line-height: 1.4; }
 .pc-more { background: none; border: none; color: #0a66c2; font-size: 12px; font-weight: 600; padding: 4px 0; text-align: left; cursor: pointer; }
 .pc-more:hover { text-decoration: underline; }
+.pc-troll { background: #fdf2f2; border-radius: 6px; padding: 6px 8px; }
+.pc-troll .pc-text { color: #b71c1c; }
+
+/* progressive UI unlock: hidden panels reveal as the player climbs */
+.prog-hidden { display: none !important; }
 @keyframes pcIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
 @keyframes postIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 .post-head { display: flex; gap: 10px; align-items: flex-start; }
@@ -376,7 +451,7 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .shadowban-tip { font-size: 13px; color: #ffc107; }
 
 /* toast */
-.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 500; animation: toastIn 0.3s ease; }
+.toast { position: fixed; bottom: 48px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 14px; z-index: 500; animation: toastIn 0.3s ease; }
 @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 /* milestone banner */

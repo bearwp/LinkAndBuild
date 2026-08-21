@@ -72,11 +72,11 @@ const Narrator = {
   // fire a line for an event, choosing a channel by the event's weight.
   // big beats (reveal, register shifts) arrive as DMs; routine beats as
   // notifications; automation beats also echo into the bot log.
-  say(event, channel) {
+  say(event, channel, force) {
     const text = this.line(event);
     if (!text) return;
     const now = Date.now();
-    if (now - this._lastSpoke < this.COOLDOWN) return;
+    if (!force && now - this._lastSpoke < this.COOLDOWN) return;
     this._lastSpoke = now;
 
     channel = channel || 'notif';
@@ -115,6 +115,20 @@ const Narrator = {
     // first post
     Bus.on('post:published', (post) => {
       if (State.data.analytics.postsPublished === 1) this.say('first_post', 'dm');
+    });
+
+    // the first-post arc: like -> comment -> nice comment -> unlock
+    Bus.on('onboarding:first-like', () => this.say('first_like', 'dm', true));
+    Bus.on('onboarding:first-comment', () => this.say('first_comment', 'dm', true));
+    Bus.on('onboarding:nice-comment', () => {
+      this.say('nice_comment', 'dm', true);
+      // enough engagement: unlock the rest of the interface
+      if (!State.data.onboarding.unlocked) {
+        State.data.onboarding.unlocked = true;
+        UI.applyProgression();
+        Juice.chime();
+        Juice.toast('🔓 The interface unlocked. Welcome to the machine.');
+      }
     });
 
     // rarity reveals

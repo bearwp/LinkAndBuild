@@ -13,6 +13,11 @@ const UI = {
     const s = State.data;
     const $ = id => document.getElementById(id);
 
+    // first-run: before the first post, strip the UI down to a single
+    // obvious action so the player knows exactly what to do.
+    document.body.classList.toggle('first-run', s.analytics.postsPublished === 0);
+    this.applyProgression();
+
     this._popTrack = this._popTrack || {};
     const popIfChanged = (el, val) => {
       const key = el.id;
@@ -103,6 +108,88 @@ const UI = {
     }
     if (s.verified) {
       $('profile-name').innerHTML = s.name + ' <span style="color:#0a66c2">✔</span>';
+    }
+  },
+
+  /* ---------- progressive UI unlock ---------- */
+  // The interface reveals itself as the player climbs. A fresh account sees
+  // almost nothing: just the feed and the composer. Each milestone unlocks a
+  // new panel, so the game never dumps the whole machine on you at once.
+  //
+  // This is the single source of truth for what's visible at each stage.
+  // Every panel, nav item and rail card is gated here, so nothing "pops in"
+  // all at once — each piece arrives at its own milestone with a chime.
+  applyProgression() {
+    const s = State.data;
+    const era = Engine.era();
+    const followers = s.followers;
+    const posts = s.analytics.postsPublished;
+    // The interface stays locked until the first-post arc completes: a like,
+    // a comment, then a nice comment. Until then, only the composer + feed.
+    const unlocked = s.onboarding && s.onboarding.unlocked;
+
+    // what's visible at each stage (true = visible, false = hidden)
+    const show = {
+      // left rail
+      'profile-card': true,             // your identity — always there
+      'menu-card': unlocked,             // menu appears after the onboarding arc
+      'authenticity-card': unlocked,     // influence bar after the arc
+      'productivity-card': era >= 2,     // hours saved once you automate
+      // nav items
+      'nav-network': followers >= 50,    // my network
+      'nav-jobs': followers >= 200,      // jobs
+      'nav-bell': unlocked,              // notifications
+      // right rail
+      'growth-card': unlocked,           // after the arc: growth console
+      'next-card': unlocked,             // next unlock nudge
+      'rec-card': followers >= 50,       // people you may know
+      'ads-card': followers >= 100,      // sponsored content
+      'footer-card': followers >= 100,   // footer links
+      // menu items
+      'menu-analytics': unlocked,        // analytics menu
+      'menu-premium': followers >= 200,  // premium upsell
+      'menu-prestige': followers >= 500, // brand equity (the reset)
+      'menu-endorsements': followers >= 1000, // endorsements
+    };
+
+    // friendly labels for the unlock celebration
+    const labels = {
+      'menu-card': 'Your profile menu',
+      'authenticity-card': 'Your Influence meter',
+      'productivity-card': 'Hours Saved',
+      'nav-network': 'My Network',
+      'nav-jobs': 'Jobs',
+      'nav-bell': 'Notifications',
+      'growth-card': 'The Growth Console',
+      'next-card': 'Next Unlock',
+      'rec-card': 'People you may know',
+      'ads-card': 'Sponsored content',
+      'footer-card': 'The fine print',
+      'menu-analytics': 'Analytics',
+      'menu-premium': 'LockedIn Premium',
+      'menu-prestige': 'Brand Equity',
+      'menu-endorsements': 'Endorsements',
+    };
+
+    this._progSeen = this._progSeen || {};
+    for (const id in show) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const visible = show[id];
+      const wasVisible = !el.classList.contains('prog-hidden');
+      if (visible) {
+        el.classList.remove('prog-hidden');
+        // celebrate the moment a panel first appears
+        if (!wasVisible && !this._progSeen[id]) {
+          this._progSeen[id] = true;
+          if (labels[id]) {
+            Juice.chime();
+            Juice.toast('🔓 ' + labels[id] + ' unlocked');
+          }
+        }
+      } else {
+        el.classList.add('prog-hidden');
+      }
     }
   },
 
@@ -197,7 +284,10 @@ const UI = {
     // so the feed never collapses into only the player's own posts.
     const MIN_NPC = 20;
     const yours = s.posts.filter(p => p.authorId === 'you');
-    const npcs = s.posts.filter(p => p.authorId !== 'you');
+    // Only posts from people you follow (plus your own) appear in the feed.
+    // A fresh account sees a ghost town until it follows someone.
+    const followed = new Set(s.followedAuthors || []);
+    const npcs = s.posts.filter(p => p.authorId !== 'you' && followed.has(p.authorId));
     const yourCap = 60 - MIN_NPC;
     const shownYours = yours.slice(0, yourCap);
     const posts = shownYours.concat(npcs.slice(0, 60 - shownYours.length));
@@ -286,7 +376,7 @@ const UI = {
         for (let i = rendered; i < post.comments.length; i++) {
           const c = post.comments[i];
           const div = document.createElement('div');
-          div.className = 'pc pc-new';
+          div.className = 'pc pc-new' + (c.troll ? ' pc-troll' : '');
           div.innerHTML = `
             <div class="pc-avatar" style="background:${c.color || '#b3c6d8'}">${c.emoji || '🙂'}</div>
             <div class="pc-body">
@@ -395,7 +485,7 @@ const UI = {
       const shown = post._showAllComments ? post.comments : post.comments.slice(-SHOW_LIMIT);
       const hidden = post._showAllComments ? 0 : total - shown.length;
       const rows = shown.map(c => `
-        <div class="pc">
+        <div class="pc${c.troll ? ' pc-troll' : ''}">
           <div class="pc-avatar" style="background:${c.color || '#b3c6d8'}">${c.emoji || '🙂'}</div>
           <div class="pc-body">
             <div class="pc-author">${this.escapeHtml(c.author)} <span class="pc-role">${c.role || ''}</span></div>
@@ -406,6 +496,9 @@ const UI = {
         ? `<button class="pc-more" data-more="${post.id}">Show all ${total} comments</button>`
         : '';
       commentsHtml = `<div class="post-comments">${rows}${moreLink}</div>`;
+    } else {
+      // always render the container so live comments can append into it
+      commentsHtml = `<div class="post-comments"></div>`;
     }
 
     card.innerHTML = `
@@ -523,11 +616,14 @@ const UI = {
     const textEl = document.getElementById('inline-text');
     const sendBtn = document.getElementById('inline-send');
     if (!box || this._typing) return;
-    // pick a template (bait) or free write
-    const t = Engine.pick(DATA.TEMPLATES);
-    const content = t.id === 'free'
-      ? Engine.pick(DATA.ARCHETYPES).posts[0]
-      : t.text;
+    // The first few posts are naive and honest — a real person who needs a
+    // job. Only once the player has posted a few times does the bait machine
+    // (templates) take over.
+    const naive = s.analytics.postsPublished < 3;
+    const t = naive ? null : Engine.pick(DATA.TEMPLATES);
+    const content = naive
+      ? Engine.pick(DATA.NAIVE_POSTS)
+      : (t.id === 'free' ? Engine.pick(DATA.ARCHETYPES).posts[0] : t.text);
     this._inlineTemplate = t;
     this._inlineContent = content;
     this._typing = true;

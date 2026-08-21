@@ -14,9 +14,44 @@ const OS = {
       s.os.telegram.unlocked = true;
       this.unlockApp('telegram');
     }
-    this.showDesktop();
     this.updateClock();
     setInterval(() => this.updateClock(), 1000);
+
+    // existing players (saves from before the signup gate) skip it
+    if (!s.signedUp && s.analytics.postsPublished > 0) {
+      s.signedUp = true;
+    }
+
+    // signup gate: only a brand-new game asks you to create a profile
+    if (!s.signedUp) {
+      this.showSignup();
+    } else {
+      this.showDesktop();
+    }
+  },
+
+  /* ---------- signup ---------- */
+  showSignup() {
+    document.getElementById('desktop').classList.add('hidden');
+    document.getElementById('browser').classList.add('hidden');
+    document.getElementById('signup').classList.remove('hidden');
+  },
+
+  submitSignup() {
+    const s = State.data;
+    const name = document.getElementById('signup-name').value.trim();
+    const headline = document.getElementById('signup-headline').value.trim();
+    s.name = name || 'You';
+    s.headline = headline || 'Just here for the game.';
+    s.signedUp = true;
+    State.save();
+    document.getElementById('signup').classList.add('hidden');
+    this.showBrowser();
+    Juice.milestone('WELCOME TO LOCKEDIN', 'The game. Post something.', '');
+    Juice.chime();
+    const composer = document.getElementById('composer');
+    composer.classList.add('composer-highlight');
+    setTimeout(() => composer.classList.remove('composer-highlight'), 4000);
   },
 
   runBoot() {

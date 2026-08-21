@@ -33,9 +33,16 @@ function defaultState() {
     dms: [],                 // incoming LockedIn DMs (side panel)
     calendar: [],            // scheduled coffees / quick chats
     followed: [],            // ids of recommended people the player follows
+    followedAuthors: [],     // archetype ids whose posts appear in the feed
     network: [],             // ids of network people the player connected with
     milestonesSeen: {},      // id -> true
     fourthWallShown: false,
+    onboarding: {            // the first-post arc: like -> comment -> nice comment -> unlock
+      firstLike: false,
+      firstComment: false,
+      niceComment: false,
+      unlocked: false,
+    },
     narrator: {              // the algorithm's voice over everything
       register: 'coach',     // 'coach' | 'pm' | 'auditor'
       revealed: false,       // dead-internet reveal has landed
@@ -75,6 +82,7 @@ function defaultState() {
         survivedShadowban: false,
       },
     },
+    signedUp: false,          // has the player completed the signup page
     createdAt: Date.now(),
     lastSeen: Date.now(),
     version: State.VERSION,
@@ -177,6 +185,7 @@ const State = {
     merged.os.dark = Object.assign({}, base.os.dark, (save.os && save.os.dark) || {});
     merged.os.bank = Object.assign({}, base.os.bank, (save.os && save.os.bank) || {});
     merged.narrator = Object.assign({}, base.narrator, save.narrator || {});
+    merged.onboarding = Object.assign({}, base.onboarding, save.onboarding || {});
     merged.reveal = Object.assign({}, base.reveal, save.reveal || {});
     merged.sponsors = Object.assign({}, base.sponsors, save.sponsors || {});
     merged.prestige = Object.assign({}, base.prestige, save.prestige || {});

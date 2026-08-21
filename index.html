@@ -14,6 +14,25 @@
   <div class="boot-bar"><div class="boot-fill" id="boot-fill"></div></div>
 </div>
 
+<!-- ===== SIGNUP ===== -->
+<div id="signup" class="signup hidden">
+  <div class="signup-box">
+    <div class="signup-logo"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></div>
+    <div class="signup-title">Join LockedIn</div>
+    <div class="signup-sub">The professional network for people who want to Link &amp; Build.</div>
+    <div class="signup-field">
+      <label>Full name</label>
+      <input id="signup-name" type="text" placeholder="Your name">
+    </div>
+    <div class="signup-field">
+      <label>Headline</label>
+      <input id="signup-headline" type="text" placeholder="What do you do?">
+    </div>
+    <button class="btn btn-primary signup-btn" id="signup-submit">Agree &amp; Join</button>
+    <div class="signup-note">By joining you agree to be farmed for engagement. This is your life now.</div>
+  </div>
+</div>
+
 <!-- ===== OS DESKTOP ===== -->
 <div id="desktop" class="desktop hidden">
   <div class="desktop-wallpaper">
@@ -74,15 +93,15 @@
           <svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
           <span>Home</span>
         </button>
-        <button class="nav-item" data-tab="network">
+        <button class="nav-item" id="nav-network" data-tab="network">
           <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5s-3 1.34-3 3 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
           <span>My Network</span>
         </button>
-        <button class="nav-item" data-tab="jobs">
+        <button class="nav-item" id="nav-jobs" data-tab="jobs">
           <svg viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg>
           <span>Jobs</span>
         </button>
-        <button class="nav-item" data-tab="bell">
+        <button class="nav-item" id="nav-bell" data-tab="bell">
           <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
           <span>Notifications</span>
           <span class="nav-badge bell-badge" id="bell-badge">0</span>
@@ -99,7 +118,7 @@
   <div class="layout">
     <!-- LEFT RAIL -->
     <aside class="left-rail">
-      <div class="card profile-card">
+      <div class="card profile-card" id="profile-card">
         <div class="profile-banner"></div>
         <div class="profile-avatar" id="profile-avatar">Y</div>
         <div class="profile-name" id="profile-name">You</div>
@@ -111,7 +130,7 @@
           <div class="stat-row retention-row hidden" id="retention-row"><span>Retention</span><b id="stat-retention">0</b></div>
         </div>
       </div>
-      <div class="card menu-card">
+      <div class="card menu-card" id="menu-card">
         <div class="menu-item" id="menu-analytics"><span>📈</span> Analytics</div>
         <div class="menu-item" id="menu-premium"><span>⭐</span> Premium <span class="premium-tag">Try free</span></div>
         <div class="menu-item" id="menu-prestige"><span>♻️</span> Brand Equity</div>
@@ -119,7 +138,7 @@
         <div class="menu-item hidden" id="menu-algorithm"><span>🕸️</span> Become the Algorithm</div>
         <div class="menu-item"><span>⚙️</span> Settings &amp; Privacy</div>
       </div>
-      <div class="card authenticity-card">
+      <div class="card authenticity-card" id="authenticity-card">
         <div class="auth-header">
           <span>Influence</span>
           <b id="auth-value">100%</b>
@@ -127,22 +146,10 @@
         <div class="auth-bar"><div class="auth-fill" id="auth-fill"></div></div>
         <div class="auth-note" id="auth-note">Top 1% of creators. The algorithm is obsessed with you.</div>
       </div>
-      <div class="card productivity-card">
+      <div class="card productivity-card" id="productivity-card">
         <div class="prod-title">⏱️ Hours Saved</div>
         <div class="prod-big" id="prod-hours">0.0</div>
         <div class="prod-sub" id="prod-headline">"I did it all by hand."</div>
-      </div>
-      <div class="card scale-card">
-        <div class="scale-title">📏 Scale</div>
-        <input type="range" id="scale-slider" min="0.1" max="10" step="0.1" value="1">
-        <div class="scale-sub" id="scale-label">1.0×</div>
-        <div class="scale-title" style="margin-top:8px">🔢 Numbers</div>
-        <select id="notation-select" style="width:100%;padding:4px;border:1px solid #e0dfdc;border-radius:4px;font-size:12px">
-          <option value="standard">Standard (K, M, B)</option>
-          <option value="scientific">Scientific (1.2e6)</option>
-          <option value="engineering">Engineering (1.2M, 1.2B)</option>
-        </select>
-        <button id="debug-reset" class="btn btn-danger" style="width:100%;margin-top:12px">🗑️ Reset Save</button>
       </div>
     </aside>
 
@@ -190,7 +197,7 @@
 
     <!-- RIGHT RAIL -->
     <aside class="right-rail">
-      <div class="card growth-card">
+      <div class="card growth-card" id="growth-card">
         <div class="growth-title">🚀 Growth Console</div>
         <div class="growth-stats">
           <div class="g-stat"><span>Impressions/s</span><b id="g-ips">0</b></div>
@@ -199,16 +206,16 @@
         </div>
         <button class="btn btn-primary" id="open-growth">Manage Growth</button>
       </div>
-      <div class="card next-card">
+      <div class="card next-card" id="next-card">
         <div class="next-title" id="next-title">Next Unlock</div>
         <div class="next-bar"><div class="next-fill" id="next-fill"></div></div>
         <div class="next-sub" id="next-sub">Earn more impressions to unlock</div>
       </div>
-      <div class="card rec-card">
+      <div class="card rec-card" id="rec-card">
         <div class="rec-title">People you may know</div>
         <div class="rec-list" id="rec-list"></div>
       </div>
-      <div class="card ads-card">
+      <div class="card ads-card" id="ads-card">
         <div class="ad-title">Sponsored</div>
         <div class="ad-body">
           <div class="ad-emoji">💼</div>
@@ -219,7 +226,7 @@
           <div><b>Automate Your Brand</b><br><span class="ad-sub">AI writes. You retire. Try free.</span></div>
         </div>
       </div>
-      <div class="card footer-card">
+      <div class="card footer-card" id="footer-card">
         <div class="footer-links">About · Accessibility · Help Center</div>
         <div class="footer-links">Privacy &amp; Terms · Ad Choices</div>
         <div class="footer-copy">LockedIn Corporation © 2026</div>
@@ -500,6 +507,23 @@
     <div class="dcal-sub">Link &amp; build. Book the coffees.</div>
     <div class="dcal-list" id="dcal-list"></div>
     <button class="dcal-btn" id="dcal-schedule">+ Schedule a Coffee</button>
+  </div>
+</div>
+
+<!-- ===== DEBUG BAR (always visible, togglable) ===== -->
+<div id="debug-bar" class="debug-bar">
+  <button id="debug-toggle" class="db-toggle" title="Toggle debug panel">🛠️</button>
+  <div class="db-panel" id="debug-panel">
+    <span class="db-label">Debug</span>
+    <label class="db-item">Scale <input type="range" id="scale-slider" min="0.1" max="10" step="0.1" value="1"><span id="scale-label">1.0×</span></label>
+    <label class="db-item">Numbers
+      <select id="notation-select">
+        <option value="standard">Standard (K, M, B)</option>
+        <option value="scientific">Scientific (1.2e6)</option>
+        <option value="engineering">Engineering (1.2M, 1.2B)</option>
+      </select>
+    </label>
+    <button id="debug-reset" class="btn btn-danger db-reset">🗑️ Reset Save</button>
   </div>
 </div>
 

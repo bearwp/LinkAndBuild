@@ -31,6 +31,11 @@
     UI.renderFeed();
   });
 
+  // debug: toggle the debug panel open/closed (the wrench button stays)
+  document.getElementById('debug-toggle').addEventListener('click', () => {
+    document.getElementById('debug-bar').classList.toggle('collapsed');
+  });
+
   // debug: wipe the save and start from scratch
   document.getElementById('debug-reset').addEventListener('click', () => {
     if (confirm('Reset your save? This wipes everything and starts a fresh game.')) {
@@ -63,6 +68,11 @@
 
   // OS shell
   OS.init();
+
+  // signup: pre-fill the profile for now, then hand off to the OS
+  document.getElementById('signup-name').value = State.data.name === 'You' ? '' : State.data.name;
+  document.getElementById('signup-headline').value = State.data.headline === 'Just here for the game.' ? '' : State.data.headline;
+  document.getElementById('signup-submit').addEventListener('click', () => OS.submitSignup());
 
   // narrator (the algorithm's voice) — subscribes to the bus
   Narrator.init();
@@ -296,8 +306,9 @@
     if (document.hidden) State.save();
   });
 
-  // first-time welcome
+  // first-time welcome (only once past the signup gate)
   setTimeout(() => {
+    if (!State.data.signedUp) return;
     Juice.milestone('WELCOME TO LOCKEDIN', 'The game. Post something.', '');
     Juice.chime();
     // highlight the composer
