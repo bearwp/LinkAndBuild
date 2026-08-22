@@ -490,6 +490,73 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 html, body { height: 100%; }
 body { overflow: hidden; }
 
+/* ============ REAL WORLD (Three.js POV mode) ============ */
+.world-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 8001;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  background: #0a66c2;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(10, 102, 194, 0.45);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.world-toggle:hover { background: #004182; transform: translateY(-1px); }
+.world-toggle span { font-size: 15px; }
+
+/* In 3D mode, floating overlays that used body-fixed positioning must not
+   appear over the 3D viewport — the game is "paused" inside the monitor.
+   They now resolve against the transformed #screen and get hidden. */
+body.realworld .toast,
+body.realworld .milestone,
+body.realworld .particle,
+body.realworld .confetti,
+body.realworld .comment-pop { display: none !important; }
+
+/* Subtle CRT-style "you're looking at a physical monitor" overlay.
+   Only visible in real-world mode; sits above the game screen but
+   never intercepts input. */
+#screen { position: relative; width: 100%; height: 100%; }
+#screen-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  /* faint scanlines */
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.12) 0px,
+    rgba(0, 0, 0, 0.12) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5);
+  mix-blend-mode: multiply;
+}
+/* a brighter inner glass sheen so the screen reads as a glowing panel */
+#screen-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    rgba(140, 190, 255, 0.05) 0%,
+    rgba(0, 0, 0, 0.0) 70%
+  );
+}
+body.realworld #screen-overlay { display: block; }
+
+
 /* boot screen */
 .boot { position: fixed; inset: 0; background: #0a0a0a; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 1000; }
 .boot-logo { font-size: 64px; }
