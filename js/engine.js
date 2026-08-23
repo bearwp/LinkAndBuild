@@ -30,6 +30,20 @@ const Engine = {
     return s.followers + s.impressions / 1000 + s.connections / 10;
   },
 
+  // aura — the single scalar that tracks how big you feel, 0.0 (pauper) to
+  // 1.0 (god). It is the presentation's one source of truth for the whole
+  // pauper→god arc: avatar ornamentation, ambient glow, feed warmth, and the
+  // juice magnitude all read off this. It scales on a log-ish curve so early
+  // followers feel like nothing and late followers feel like ascendancy —
+  // mirroring the "nobody" multiplier: reach is earned, not given.
+  aura() {
+    const s = State.data;
+    const f = s.followers || 0;
+    if (f <= 0) return 0;
+    // 1 → ~0.25, 10 → ~0.5, 100 → 0.75, 1000 → 1.0; caps at god tier
+    return Math.min(1, Math.log10(1 + f) / 3);
+  },
+
   // number notation: 'standard' (K/M/B), 'scientific' (1.23e6),
   // 'engineering' (1.23M, 1.23B, 1.23T, ...). Every number on screen
   // goes through fmt/fmtTick so the toggle is global.
@@ -146,12 +160,6 @@ const Engine = {
     if (s.premium) ips *= 1.5;
     // shadowban throttle
     if (s.shadowbanned) ips *= 0.2;
-    // outsource workers add on top
-    ips += this.workerIps();
-    // telegram pods add on top
-    ips += Telegram.podIps();
-    // bot service add on top
-    ips += Bot.botIps();
     // prestige: permanent reach multiplier (brand equity)
     ips *= Prestige.multiplier('reach');
     // challenge rewards: permanent reach multiplier
@@ -160,6 +168,50 @@ const Engine = {
     this._ipsCache = ips * this.scale();
     this._ipsDirty = false;
     return this._ipsCache;
+  },
+
+  // The factory pipeline — one IPS becomes each downstream number, per second.
+  // Mirrors tickAutomation() exactly, so the "assembly line" the player sees is
+  // the honest math, not a decoration. Used by the Growth Console to render the
+  // machine's work as a visible conveyor: a single input, four traceable
+  // outputs, and the coefficients that turn one into the other.
+  pipeline() {
+    const s = State.data;
+    const ips = this.totalIps();
+    const reach = ips * 1000;
+    return {
+      ips,
+      impressions: reach,
+      likes: reach * 0.5 * this.upgradeMult('like_mult'),
+      comments: reach * 0.12,
+      shares: reach * 0.05,
+      followers: reach * 0.05 * Prestige.multiplier('followers') * this.upgradeMult('follower_mult') * (1 + Challenges.reward('followers')),
+      connections: reach * 0.02,
+      influence: reach * 0.1,
+    };
+  },
+
+  // which generator (if any) currently owns each gate of the distribution loop.
+  // A gate has a "handler": either YOU (the hand, still doing it yourself) or a
+  // machine you bought to delegate that step of the pipeline. This is the
+  // "do once, then delegate" made visible — every stage shows who's doing it.
+  gates() {
+    const s = State.data;
+    const owned = id => (s.generators[id] || 0) > 0;
+    // each gate's handler is the highest-tier owned generator for that gate
+    const resolve = gate => {
+      const gens = DATA.GENERATORS.filter(g => (g.gate === gate) && owned(g.id));
+      if (!gens.length) return null;
+      // highest tier wins (the "outermost" machine supersedes the inner ones)
+      gens.sort((a, b) => b.tier - a.tier);
+      return gens[0];
+    };
+    return {
+      content:  resolve('content')  || { hand: true, name: 'You write' },
+      audience: resolve('reach')    || { hand: true, name: 'You follow' },
+      engage:   resolve('engage')   || { hand: true, name: 'You reply' },
+      schedule: resolve('schedule') || { hand: true, name: 'You post by hand' },
+    };
   },
 
   /* ---------- post generation ---------- */
@@ -181,10 +233,15 @@ const Engine = {
       (1 + (opts.emojis || 0) * 0.08) *
       (1 + (opts.tags || 0) * 0.1) *
       (opts.question ? 1.2 : 1) *
+      (opts.potentialMult || 1) *
       (opts.format === 'carousel' ? 1.3 : opts.format === 'poll' ? 1.1 : opts.format === 'video' ? 1.2 : opts.format === 'photo' ? 1.15 : 1);
     const rarity = this.rollRarity(potential);
 
-    const base = (50 + s.followers * 1.5 + s.connections * 0.5) * this.scale() * this.upgradeMult('post_mult') * (1 + Challenges.reward('postMult'));
+    // base is driven by your network: followers carry the post, and connections
+    // (the relationships you actually built) add a manual multiplier. Early
+    // game, relationships are your reach; the generator ladder later outpaces
+    // them, which is the whole arc — you outgrow the people who made you.
+    const base = (50 + s.followers * 1.5 + s.connections * 1.5) * this.scale() * this.upgradeMult('post_mult') * (1 + Challenges.reward('postMult'));
     const viral = rarity === 'legendary' ? 6 : rarity === 'epic' ? 3.5 : rarity === 'rare' ? 2 : rarity === 'uncommon' ? 1.4 : 1;
     const decay = 0.9; // per hour
     const authCost = (template ? template.auth : 0) + (opts.emojis || 0) * -0.5 + (opts.tags || 0) * -0.8 + (opts.question ? -1 : 0) + (opts.format === 'carousel' ? -2 : 0);
@@ -281,24 +338,124 @@ const Engine = {
     return arr[arr.length - 1];
   },
 
-  /* ---------- engagement tick for a post ---------- */
-  postRate(post, s) {
-    const ageH = (Date.now() - post.publishedAt) / 3600000;
-    const spike = Math.pow(post.decay, ageH); // 1 at t=0, decays
-    let rate = post.base * post.viral * spike * 1.5; // impressions per second
-    // viral posts get the viral_mult upgrade bonus
+  /* ---------- distribution loop ---------- */
+  // The honest LinkedIn model, from the diagram:
+  //
+  //   POST → small audience → does it get engagement? → engagement signals
+  //   relevance → expand distribution → new audience → more engagement → ...
+  //
+  // This is NOT a flat drip of impressions. A post starts with a seed audience
+  // (its base). Each viewer engages at a rarity-driven "resonance" rate. That
+  // engagement is what EARNS more reach: the post expands to each engager's
+  // network. The reach then fades as the post ages out of the feed. So a post
+  // that resonates compounds; a boring post just trickles and dies. Engagement
+  // is the *cause* of distribution, not a side effect of impressions.
+
+  audienceMult(s) {
+    // how reachable you are as a nobody: 0.02 (fresh) → 1.0 (500 followers)
+    const n = Math.min(1, s.followers / 500);
+    return n < 0.1 ? 0.02 : Math.max(0.05, n);
+  },
+
+  // how likely a viewer engages — the "does it generate engagement" gate.
+  // Rarity is the proxy for quality: a legendary post resonates, common doesn't.
+  resonance(post) {
+    return 0.02 * (post.viral || 1);
+  },
+
+  // engagement weights: a share expands reach far more than a comment, a
+  // comment more than a like. This is the honest "what signal matters" split —
+  // a like is cheap, a repost opens a whole new network. The loop uses these
+  // weights to expand distribution, so a post full of reposts compounds harder
+  // than one full of likes.
+  ENGAGE_WEIGHTS: { like: 1, comment: 3, share: 9 },
+
+  // how long (seconds) a post stays "new" enough to keep spreading, how fast
+  // its reach fades once the feed moves on, and how big it can grow before the
+  // algorithm stops feeding it (a post saturates at REACH_CAP_MULT × its seed —
+  // it rises, peaks, then falls; it does NOT compound forever).
+  POST_LIFESPAN: 240,
+  REACH_DECAY_PER_SEC: 0.997,
+  REACH_CAP_MULT: 40,
+
+  stepPost(post, s, dtSec) {
+    // lazily seed reach for old saves / new posts
+    if (post.reach == null) {
+      let seed = post.base * (post.viral || 1);
+      if (post.authorId === 'you') seed *= this.audienceMult(s);
+      post.reach = seed;
+    }
+
+    const reach = post.reach;
+    const viewers = reach * dtSec;                    // this audience sees it now
+    const res = this.resonance(post) * (post.authorId === 'you' && s.shadowbanned ? 0.5 : 1);
+    const engaged = viewers * res;                    // how many actually engaged
+
+    // split engagement by weight: some engage lightly (like), some strongly
+    // (share). The stronger the engagement mix, the more the post spreads.
+    const likes = engaged * 0.8;
+    const comments = engaged * 0.15;
+    const shares = engaged * 0.05;
+    const spreadVal = likes * this.ENGAGE_WEIGHTS.like
+                    + comments * this.ENGAGE_WEIGHTS.comment
+                    + shares * this.ENGAGE_WEIGHTS.share;
+
+    // expand distribution — but bounded by headroom. The more of its ceiling a
+    // post has already captured, the less new reach it can win, so growth is a
+    // logistic S-curve: slow, fast, saturate, then fall with freshness + decay.
+    const seedCap = post.base * (post.viral || 1) * this.REACH_CAP_MULT * (post.authorId === 'you' ? this.audienceMult(s) : 1);
+    const headroom = Math.max(0, 1 - reach / seedCap);
+    const ageSec = (Date.now() - post.publishedAt) / 1000;
+    const freshness = Math.max(0, 1 - ageSec / this.POST_LIFESPAN);
+    const SPREAD = 4;                                 // each "share-equivalent" surfaces ~4 others
+    post.reach += spreadVal * SPREAD * freshness * headroom;
+
+    // the feed moves on: reach decays toward zero as the post ages out
+    post.reach *= Math.pow(this.REACH_DECAY_PER_SEC, dtSec);
+
+    return { viewers, engaged, likes, comments, shares, reach: post.reach };
+  },
+
+  // per-tick chance a post "goes viral" — the variable-ratio jackpot. The odds
+  // scale with how fast the post is already moving and with rarity (the
+  // fiction: the rarity draw IS the odds), plus a small baseline so even a
+  // trickle of impressions can pop. A cooldown keeps one post from chain-
+  // bursting, so it lands as a surprise, not a metronome.
+  viralChance(post, imp) {
+    if (post._lastViral && Date.now() - post._lastViral < 7000) return 0;
+    const rarityBoost = { legendary: 4, epic: 2.5, rare: 1.4, uncommon: 0.9, common: 0.6 }[post.rarity] || 0.6;
+    const flow = imp * 0.003 * rarityBoost;
+    const base = 0.0005 * rarityBoost;
+    return Math.min(0.4, flow + base);
+  },
+
+  // the "jokers" that multiplied a post's impressions — the modifier chain.
+  // Mirrors stepPost() math so the combo reveal is honest: each chip is a real
+  // multiplier that was in play, shown in the order it fired. Used by the
+  // viral cascade to render the left-to-right trigger sequence.
+  comboChain(post) {
+    const s = State.data;
+    const chips = [];
+    // rarity (the draw)
+    if (post.viral && post.viral > 1) {
+      chips.push({ icon: '🎲', label: 'RARITY', text: '×' + post.viral });
+    }
+    // post multiplier (upgrades)
+    const postMult = this.upgradeMult('post_mult');
+    if (postMult > 1) {
+      chips.push({ icon: '📈', label: 'POST MULT', text: '×' + postMult.toFixed(1) });
+    }
+    // viral boost (legendary/epic only)
     if (post.rarity === 'legendary' || post.rarity === 'epic') {
-      rate *= this.upgradeMult('viral_mult');
+      const vm = this.upgradeMult('viral_mult');
+      if (vm > 1) chips.push({ icon: '🚀', label: 'VIRAL BOOST', text: '×' + vm.toFixed(1) });
     }
-    if (post.authorId === 'you' && s.shadowbanned) rate *= 0.15;
-    // nobody multiplier: a fresh account's posts barely register. Reach is
-    // earned, not given — the first posts get a trickle, and only once you
-    // build followers/automation does the algorithm start to notice you.
-    if (post.authorId === 'you') {
-      const nobody = Math.max(0.05, Math.min(1, s.followers / 500));
-      rate *= nobody;
-    }
-    return rate * this.scale();
+    // audience reach (the nobody multiplier)
+    const nobody = this.audienceMult(s);
+    if (nobody < 1) chips.push({ icon: '👥', label: 'AUDIENCE', text: '×' + nobody.toFixed(2) });
+    // global scale
+    chips.push({ icon: '⚡', label: 'SCALE', text: '×' + this.scale() });
+    return chips;
   },
 
   tickPosts(dt) {
@@ -306,8 +463,16 @@ const Engine = {
     const dtSec = dt / 1000;
     for (const post of s.posts) {
       if (post.status !== 'live') continue;
-      const rate = this.postRate(post, s);
-      const imp = rate * dtSec;
+      // NPC posts are world texture, but they only earn once you've chosen to
+      // follow their archetype — the feed shows only followed authors, so an
+      // unfollowed NPC post ticking would be an invisible, compounding number
+      // with no cause on screen. Their cards stay frozen at 0 until you follow
+      // them, at which point the distribution loop starts and you watch it.
+      const isNPC = post.authorId !== 'you';
+      if (isNPC && !(s.followedAuthors || []).includes(post.authorId)) continue;
+      // the distribution loop: reach → viewers → engagement → expand reach
+      const step = this.stepPost(post, s, dtSec);
+      const imp = step.viewers;                     // people who saw it this tick
       post.stats.impressions += imp;
       // Only the player's own posts feed the global counters. NPC posts are
       // world texture — they tick their own numbers on their own cards, but
@@ -318,17 +483,34 @@ const Engine = {
         s.impressions += imp;
         s.totalImpressions += imp;
       }
-      // likes/comments trickle proportional to impressions
-      const likeRate = imp * 0.04;
-      post.stats.likes += likeRate;
-      if (yours) s.likes += likeRate;
+      // viral burst: the moment the loop visibly "catches" — a post whose
+      // engagement compounds hard enough expands explosively. Only the player's
+      // posts fire the celebratory event; an NPC post just quietly spreads.
+      if (Math.random() < this.viralChance(post, imp)) {
+        post._lastViral = Date.now();
+        const burst = imp * this.rnd(8, 20);
+        post.stats.impressions += burst;
+        post.reach += burst;                        // the burst feeds the loop, too
+        if (yours) {
+          s.impressions += burst;
+          s.totalImpressions += burst;
+          Bus.emit('post:viral', post);
+        }
+      }
+      // likes/comments/shares come from the distribution step (weighted): a
+      // view spawns engagement, and stronger engagement spawns more reach.
+      post.stats.likes += step.likes;
+      post.stats.comments += step.comments;
+      post.stats.shares += step.shares;
+      if (yours) {
+        s.likes += step.likes;
+        s.totalLikes += step.likes;
+      }
       // onboarding: the first like on the player's first post
       if (yours && !s.onboarding.firstLike && post.stats.likes >= 1) {
         s.onboarding.firstLike = true;
         Bus.emit('onboarding:first-like', post);
       }
-      // reposts trickle in too
-      post.stats.shares += imp * 0.008;
       // spawn real comments fast
       const commentChance = imp * 0.12 * dtSec;
       if (Math.random() < commentChance && post.comments.length < 30) {
@@ -380,114 +562,14 @@ const Engine = {
           });
         }
       }
-    }
-  },
-
-  /* ---------- outsource workers ---------- */
-  workerDef(id) { return DATA.WORKERS.find(w => w.id === id); },
-  workerCount(id) { return (State.data.workers[id] && State.data.workers[id].count) || 0; },
-  workerIntensity(id) { return (State.data.workers[id] && State.data.workers[id].intensity) || 0; },
-
-  workerIps() {
-    const s = State.data;
-    let ips = 0;
-    for (const w of DATA.WORKERS) {
-      const n = this.workerCount(w.id);
-      if (n > 0) ips += this.prodOf(w, n) * (1 + this.workerIntensity(w.id) * 0.5);
-    }
-    return ips;
-  },
-
-  hireWorker(id) {
-    const s = State.data;
-    const w = this.workerDef(id);
-    if (!w) return;
-    const owned = this.workerCount(id);
-    const cost = this.costOf(w, owned);
-    if (s.impressions < cost) {
-      Juice.toast('Not enough impressions to pay ' + w.name + '.');
-      return;
-    }
-    s.impressions -= cost;
-    if (!s.workers[id]) s.workers[id] = { count: 0, intensity: 0, lastPay: Date.now() };
-    s.workers[id].count++;
-    // welcome message
-    if (!s.workerChats[id]) s.workerChats[id] = [];
-    s.workerChats[id].push({ from: 'them', text: 'Hello boss! I am ' + w.name + '. I will work very hard for you. 🙏', time: Date.now() });
-    this.addNotif('connection', w.name + ' joined your engagement team', 0, w.emoji);
-    Juice.chime();
-    Bus.emit('worker:hired', { id });
-  },
-
-  setIntensity(id, val) {
-    const s = State.data;
-    if (!s.workers[id]) return;
-    s.workers[id].intensity = Math.max(0, Math.min(3, val));
-    const w = this.workerDef(id);
-    const msgs = ['Chill mode. Slow and natural.', 'Normal pace. Steady engagement.', 'High gear. Lots of activity.', 'MAXIMUM OVERDRIVE. The algorithm will notice.'];
-    if (s.workerChats[id]) s.workerChats[id].push({ from: 'them', text: msgs[val] + ' (' + w.name + ')', time: Date.now() });
-    Bus.emit('worker:intensity', { id });
-  },
-
-  fireWorker(id) {
-    const s = State.data;
-    const w = this.workerDef(id);
-    if (!s.workers[id] || s.workers[id].count <= 0) return;
-    s.workers[id].count--;
-    if (s.workers[id].count === 0) delete s.workers[id];
-    if (s.workerChats[id]) s.workerChats[id].push({ from: 'them', text: 'No no please! I have family! I will work harder! 😭', time: Date.now() });
-    this.addNotif('warning', 'You fired ' + w.name + '. They will remember this.', 0, '🚫');
-    Juice.warn();
-    Bus.emit('worker:fired', { id });
-  },
-
-  sendWorkerCommand(id, cmdId) {
-    const s = State.data;
-    const w = this.workerDef(id);
-    const cmd = DATA.WORKER_COMMANDS.find(c => c.id === cmdId);
-    if (!w || !cmd) return;
-    if (!s.workerChats[id]) s.workerChats[id] = [];
-    s.workerChats[id].push({ from: 'me', text: cmd.label, time: Date.now() });
-    setTimeout(() => {
-      s.workerChats[id].push({ from: 'them', text: cmd.reply, time: Date.now() });
-      // command effects
-      if (cmdId === 'like') { s.likes += 5 * this.workerCount(id) * this.scale(); s.impressions += 20 * this.workerCount(id) * this.scale(); }
-      if (cmdId === 'comment') { s.impressions += 30 * this.workerCount(id) * this.scale(); }
-      if (cmdId === 'follow') { s.followers += 1 * this.workerCount(id) * this.scale(); }
-      if (cmdId === 'pay') { s.authenticity = Math.min(100, s.authenticity + 2); }
-      if (cmdId === 'fire') { this.fireWorker(id); }
-      Bus.emit('worker:command', { id });
-      Juice.pop();
-    }, 700);
-    Bus.emit('worker:command', { id });
-    Juice.pop();
-  },
-
-  /* ---------- worker production tick ---------- */
-  tickWorkers(dt) {
-    const s = State.data;
-    const dtSec = dt / 1000;
-    const ips = this.workerIps() * this.scale();
-    s.impressions += ips * dtSec;
-    s.totalImpressions += ips * dtSec;
-    s.likes += ips * dtSec * 0.04;
-    // influence climbs with your outsourced army
-    for (const w of DATA.WORKERS) {
-      const n = this.workerCount(w.id);
-      if (n > 0) s.authenticity += Math.abs(w.auth) * n * dtSec;
-    }
-    if (s.authenticity < 0) s.authenticity = 0;
-    if (s.authenticity > 100) s.authenticity = 100;
-    // workers occasionally comment on your posts (visible in feed)
-    if (Math.random() < dtSec * 0.3 * this.scale()) {
-      const active = DATA.WORKERS.filter(w => this.workerCount(w.id) > 0);
-      if (active.length) {
-        const w = active[Math.floor(Math.random() * active.length)];
-        const yourPosts = s.posts.filter(p => p.authorId === 'you' && p.status === 'live');
-        if (yourPosts.length) {
-          const post = yourPosts[Math.floor(Math.random() * yourPosts.length)];
-          post.comments.push({ author: w.name, text: w.phrases[Math.floor(Math.random() * w.phrases.length)], time: Date.now() });
-          post.stats.comments += 1;
+      // mutual engagement: the people you actually built relationships with
+      // reciprocate. Their likes/comments are the "relationship" feeling — a
+      // warm audit trail that only fades once the generator ladder makes real
+      // people obsolete. Scales with how many relationships you have, and it
+      // is what automation later silently replaces with bots.
+      if (yours) {
+        const rels = s.followedAuthors.length + s.network.length;
+        if (rels > 0 && Math.random() < dtSec * rels * 0.015 * this.scale()) {
           post.stats.likes += 1;
           s.likes += 1;
         }
@@ -520,9 +602,9 @@ const Engine = {
     const dtSec = dt / 1000;
     const ips = this.totalIps();
     // Manual-first: the feed is quiet until you buy automation. Reach comes
-    // only from generators/workers/bot — zero automation means zero passive
-    // growth. Numbers climb because *you* did something, not because the
-    // game plays itself.
+    // only from generators — zero automation means zero passive growth.
+    // Numbers climb because *you* did something, not because the game
+    // plays itself.
     const reach = ips * 1000;
     s.impressions += reach * dtSec;
     s.totalImpressions += reach * dtSec;
@@ -576,9 +658,9 @@ const Engine = {
     // quiet until the player has delegated (era 2): no ambient notifications
     if (this.era() < 2) return;
     const src = this.sources();
-    // reactions come from your engagement ring: pods + the bot. More of
-    // either = more likes/comments/views landing on your posts.
-    const rate = Math.max(1, src.pods + src.bot * 3) * (s.premium ? 1.5 : 1);
+    // reactions come from your automation: more generators = more engagement
+    // landing on your posts.
+    const rate = Math.max(1, src.gens) * (s.premium ? 1.5 : 1);
     // profile views (golden cookie-ish)
     if (now - this.lastView > Math.max(500, 2000 / rate / this.scale()) && !s.shadowbanned) {
       this.lastView = now;
@@ -615,9 +697,9 @@ const Engine = {
     const now = Date.now();
     // quiet until the player has delegated (era 2): no ambient DM spam
     if (this.era() < 2) return;
-    // inbound spam scales with your outreach army: every worker you hire draws
+    // inbound spam scales with your automation: more generators draw more
     // "opportunities" back into your inbox.
-    const interval = Math.max(500, 1500 / Math.max(1, this.sources().workers) / this.scale());
+    const interval = Math.max(500, 1500 / Math.max(1, this.sources().gens) / this.scale());
     if (now - this.lastDM > interval) {
       this.lastDM = now;
       const sender = this.pick(DATA.DM_SENDERS);
@@ -689,8 +771,7 @@ const Engine = {
   automation() {
     const s = State.data;
     const gens = Object.values(s.generators).reduce((a, b) => a + b, 0);
-    const workers = Object.keys(s.workers).reduce((a, k) => a + (s.workers[k].count || 0), 0);
-    return gens + workers + (s.os.bot.created ? 1 : 0);
+    return gens;
   },
 
   // coarse era: 0 cold, 1 posting, 2 delegated, 3 industrial
@@ -706,15 +787,11 @@ const Engine = {
   // The factory: every automation unit feeds a specific downstream number.
   // Not one vague "churn" multiplier — each source is named and traceable:
   //   generators -> the feed (fake accounts flooding your timeline)
-  //   workers    -> inbound DMs (your outreach army draws spam back to you)
-  //   pods + bot -> notifications (your engagement ring reacts to your posts)
+  //   generators -> inbound DMs and notifications (your machine draws spam)
   sources() {
     const s = State.data;
     const gens = Object.values(s.generators).reduce((a, b) => a + b, 0);
-    const workers = Object.keys(s.workers).reduce((a, k) => a + (s.workers[k].count || 0), 0);
-    const pods = s.os.telegram.joinedPods.length;
-    const bot = s.os.bot.created ? 1 : 0;
-    return { gens, workers, pods, bot };
+    return { gens };
   },
 
   // one NPC post every 12s, divided by how many content generators you own.
@@ -840,9 +917,6 @@ const Engine = {
       this.invalidateIps();
       this.tickPosts(dtMs);
       this.tickAutomation(dtMs);
-      this.tickWorkers(dtMs);
-      Telegram.tick(dtMs);
-      Bot.tick(dtMs);
       Sponsors.tick();
       Endorsements.maybeSkill();
       Endorsements.maybeOneRealPerson();
@@ -870,6 +944,8 @@ const Engine = {
       }
       // live-update analytics dashboard while open
       UI.anLive();
+      // live-update the factory assembly line while the growth console is open
+      UI.factoryLive();
       this._raf = requestAnimationFrame(uiLoop);
     };
     this._raf = requestAnimationFrame(uiLoop);
@@ -896,23 +972,11 @@ const Engine = {
     if (!s.analytics.bestPost || post.stats.impressions > s.analytics.bestPost.stats.impressions) {
       s.analytics.bestPost = post;
     }
-    // first post -> growth expert DM unlocks Telegram
+    // first post -> the algorithm notices you (a warm DM opens the loop)
     if (s.analytics.postsPublished === 1) {
       setTimeout(() => {
-        this.addNotif('dm', 'Growth Expert: "I saw your post. Want 10x engagement? I have a tool for you."', 0, '📩', { type: 'unlock', app: 'telegram' });
-        Juice.milestone('📩 NEW DM', 'Someone wants to help you grow', '');
-        // unlock telegram
-        if (!s.os.telegram.unlocked) {
-          s.os.telegram.unlocked = true;
-          // growth expert opening messages
-          s.os.telegram.messages.push(
-            { from: 'them', text: 'Hey! I saw your post. Great stuff. 🙏', time: Date.now(), podId: 'expert' },
-            { from: 'them', text: 'I run a few "professional networks" on Telegram. They boost each other. The algorithm loves it.', time: Date.now(), podId: 'expert' },
-            { from: 'them', text: 'Open the Telegram tab and join a pod. I\'ll make you a thought leader.', time: Date.now(), podId: 'expert' }
-          );
-          OS.unlockApp('telegram');
-          Juice.toast('🔓 Telegram unlocked! Open the DM to check it out.');
-        }
+        this.addNotif('dm', 'The Algorithm: "You posted. The market responded."', 0, '👁️');
+        Juice.milestone('👁️ THE ALGORITHM NOTICES', 'It does not like everyone. Keep going.', '');
       }, 2500);
     }
     // influence from manual posting (always climbs)
@@ -949,8 +1013,18 @@ const Engine = {
     s.connections += 1;
     s.followers += 1;
     s.authenticity = Math.min(100, s.authenticity + 1);
+    // relationships are the manual economy: connecting puts you in front of
+    // THEIR network, and the reach is real — scaled to how big they are. A
+    // 2M thought leader is worth more than a 12k growth hacker. The burst is
+    // the "your network just saw you" hit, before automation makes it moot.
+    // Kept small: it's a warm introduction, not a jackpot.
+    const reach = (rec && rec.reach) || 1000;
+    const burst = Math.min(5000, Math.round(reach * 0.005 * this.scale()));
+    s.impressions += burst;
+    s.totalImpressions += burst;
     Juice.pop();
-    Juice.toast('Followed! Their posts now appear in your feed.');
+    Juice.coin();
+    Juice.toast('Followed! Their network just saw you. +' + Engine.fmt(burst) + ' impressions.');
     Bus.emit('person:followed');
   },
 
@@ -964,8 +1038,13 @@ const Engine = {
     }
     s.connections += 1;
     s.authenticity = Math.min(100, s.authenticity + 1);
+    const reach = (rec && rec.reach) || 1000;
+    const burst = Math.min(8000, Math.round(reach * 0.008 * this.scale()));
+    s.impressions += burst;
+    s.totalImpressions += burst;
     Juice.pop();
-    Juice.toast('Connected! Their posts now appear in your feed.');
+    Juice.coin();
+    Juice.toast('Connected! Their network sees you now. +' + Engine.fmt(burst) + ' impressions.');
     Bus.emit('person:connected');
   },
 

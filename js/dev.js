@@ -31,11 +31,8 @@ const DevState = {
     const s = State.data;
     s.dev = true; // showcase state: never persisted to the real save
     s.os.booted = true;
-    s.os.unlockedApps = ['linkedin', 'telegram', 'bot', 'dark', 'bank'];
+    s.os.unlockedApps = ['linkedin', 'bank'];
     s.os.activeApp = 'linkedin';
-    s.os.telegram.unlocked = true;
-    s.os.bot.unlocked = true;
-    s.os.dark.unlocked = true;
     return s;
   },
 
@@ -74,33 +71,6 @@ const DevState = {
       emoji: 1, question: 1, tag: 1, synergy: 1, humble: 1, viralboost: 1,
     };
 
-    // --- workers (the outsourced army) ---
-    s.workers = {
-      raj: { count: 20, intensity: 3, lastPay: Date.now() },
-      maria: { count: 12, intensity: 2, lastPay: Date.now() },
-      dmitri: { count: 5, intensity: 3, lastPay: Date.now() },
-    };
-    s.workerChats = {
-      raj: [
-        { from: 'them', text: 'Hello boss! I am Rajesh Kumar. I will work very hard for you. 🙏', time: Date.now() - 86400000 * 30 },
-        { from: 'me', text: '👍 Like all my posts', time: Date.now() - 86400000 * 30 },
-        { from: 'them', text: 'Yes sir, liking everything now.', time: Date.now() - 86400000 * 30 },
-        { from: 'them', text: 'Sir, I liked all 50 posts. Please pay on time.', time: Date.now() - 86400000 * 2 },
-        { from: 'me', text: '💰 Pay bonus', time: Date.now() - 86400000 * 2 },
-        { from: 'them', text: 'Thank you boss! Very generous! More work please!', time: Date.now() - 86400000 * 2 },
-      ],
-      maria: [
-        { from: 'them', text: 'Boss, team is ready. We comment on everything.', time: Date.now() - 86400000 * 20 },
-        { from: 'me', text: '💬 Comment on my posts', time: Date.now() - 86400000 * 20 },
-        { from: 'them', text: 'Comments going out. Very professional ones.', time: Date.now() - 86400000 * 20 },
-      ],
-      dmitri: [
-        { from: 'them', text: 'Network is stable. 5,000 accounts online.', time: Date.now() - 86400000 * 10 },
-        { from: 'me', text: '📊 Send engagement report', time: Date.now() - 86400000 * 10 },
-        { from: 'them', text: 'Report: 1,200 likes, 400 comments, 98% fake. All good.', time: Date.now() - 86400000 * 10 },
-      ],
-    };
-
     // --- analytics ---
     s.analytics.analyticsLevel = 4;
     s.analytics.postsPublished = 320;
@@ -122,38 +92,8 @@ const DevState = {
 
     // --- OS: everything unlocked ---
     s.os.booted = true;
-    s.os.unlockedApps = ['linkedin', 'telegram', 'bot', 'dark', 'bank'];
+    s.os.unlockedApps = ['linkedin', 'bank'];
     s.os.activeApp = 'linkedin';
-    s.os.telegram.unlocked = true;
-    s.os.telegram.joinedPods = ['pod1', 'pod2', 'pod3'];
-    s.os.telegram.messages = [
-      { from: 'them', text: 'Hey! I saw your post. Great stuff. 🙏', time: Date.now() - 86400000 * 60, podId: 'expert' },
-      { from: 'them', text: 'I run a few "professional networks" on Telegram. They boost each other. The algorithm loves it.', time: Date.now() - 86400000 * 60, podId: 'expert' },
-      { from: 'me', text: 'I\'m in. Let\'s go.', time: Date.now() - 86400000 * 60, podId: 'expert' },
-      { from: 'them', text: 'Exactly. Join a pod below and I\'ll make you a thought leader.', time: Date.now() - 86400000 * 60, podId: 'expert' },
-      { from: 'them', text: 'Welcome to Engagement Pod Alpha! 🙏', time: Date.now() - 86400000 * 55, podId: 'pod1' },
-      { from: 'them', text: 'Welcome! Post your content here and everyone will boost it. 🙏', time: Date.now() - 86400000 * 55, podId: 'pod1' },
-      { from: 'them', text: 'I posted my morning thought leadership. Please boost! 🙏', time: Date.now() - 86400000 * 1, podId: 'pod1' },
-      { from: 'them', text: 'Boosted your post. Great content sir!', time: Date.now() - 3600000, podId: 'pod1' },
-      { from: 'them', text: 'Welcome to the inner circle. Here we become thought leaders together.', time: Date.now() - 86400000 * 40, podId: 'pod2' },
-      { from: 'them', text: 'You made it. Welcome to the Syndicate.', time: Date.now() - 86400000 * 20, podId: 'pod3' },
-      { from: 'them', text: 'We boost hard. We boost fast. We boost without mercy.', time: Date.now() - 86400000 * 20, podId: 'pod3' },
-    ];
-    s.os.bot.unlocked = true;
-    s.os.bot.created = true;
-    s.os.bot.name = 'ThoughtLeader9000';
-    s.os.bot.intensity = 3;
-    s.os.bot.activity = [
-      { type: 'create', text: 'Bot ThoughtLeader9000 created.', time: Date.now() - 86400000 * 30, icon: '🤖' },
-      { type: 'acquire', config: 'likebot', text: 'LikeBot acquired.', time: Date.now() - 86400000 * 29, icon: '👍' },
-      { type: 'acquire', config: 'commentbot', text: 'CommentBot acquired.', time: Date.now() - 86400000 * 28, icon: '💬' },
-      { type: 'acquire', config: 'followbot', text: 'FollowBot acquired.', time: Date.now() - 86400000 * 25, icon: '➕' },
-      { type: 'acquire', config: 'replybot', text: 'ReplyBot acquired.', time: Date.now() - 86400000 * 20, icon: '🔁' },
-      { type: 'log', text: 'Liked 12 posts.', time: Date.now() - 3600000, icon: '🤖' },
-      { type: 'log', text: 'Commented "Great post!" on 8 posts.', time: Date.now() - 1800000, icon: '🤖' },
-      { type: 'log', text: 'Your bot is working hard. You are not.', time: Date.now() - 600000, icon: '🤖' },
-    ];
-    s.os.dark.unlocked = true;
 
     // --- notifications (a busy bell) ---
     s.notifications = [

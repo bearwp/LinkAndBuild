@@ -9,11 +9,6 @@ const OS = {
 
   init() {
     const s = State.data;
-    // if the player has already posted (existing save), unlock telegram
-    if (s.analytics.postsPublished > 0 && !s.os.telegram.unlocked) {
-      s.os.telegram.unlocked = true;
-      this.unlockApp('telegram');
-    }
     this.updateClock();
     setInterval(() => this.updateClock(), 1000);
 
@@ -113,7 +108,7 @@ const OS = {
       v.classList.toggle('active', v.dataset.app === appId);
     });
     // url bar
-    const urls = { linkedin: 'https://www.lockedin.com/feed/', telegram: 'https://web.telegram.org/', bot: 'https://engagebot.example.com/dashboard', dark: 'http://marketplace.onion/', bank: 'https://bank.firstnationalgrind.com/' };
+    const urls = { linkedin: 'https://www.lockedin.com/feed/', bank: 'https://bank.firstnationalgrind.com/' };
     const url = document.getElementById('b-url');
     if (url) url.value = urls[appId] || '';
     // taskbar
@@ -121,9 +116,6 @@ const OS = {
       t.classList.toggle('active', t.dataset.app === appId);
     });
     // app-specific render
-    if (appId === 'telegram') Telegram.render();
-    if (appId === 'bot') Bot.render();
-    if (appId === 'dark') Dark.render();
     if (appId === 'bank') Bank.render();
   },
 
@@ -145,7 +137,7 @@ const OS = {
     if (s.os.unlockedApps.includes(appId)) return;
     s.os.unlockedApps.push(appId);
     this.syncAppIcons();
-    const names = { telegram: 'Telegram', bot: 'Bot Service', dark: 'The Marketplace' };
+    const names = { bank: 'Bank' };
     Juice.milestone('🔓 UNLOCKED: ' + names[appId] || appId, 'A new tool for your empire', '');
     Juice.chime();
     Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 40);

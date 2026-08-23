@@ -15,8 +15,8 @@
 const Reveal = {
   /* ---------- progress (the hidden counter) ---------- */
   // How deep the player is into automating their life. The more the game
-  // plays itself, the closer the reveal. Two drivers: automation (generators,
-  // workers, the bot) and raw lifetime impressions.
+  // plays itself, the closer the reveal. Two drivers: automation and raw
+  // lifetime impressions.
   progress() {
     const s = State.data;
     // The reveal is the automation axis run forward to its conclusion: the

@@ -42,9 +42,6 @@
   <div class="desktop-wallpaper">
     <div class="desktop-icons">
       <div class="d-icon" data-app="linkedin"><div class="d-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></div><span>LockedIn</span></div>
-      <div class="d-icon" data-app="telegram"><div class="d-ico">✈️</div><span>Telegram</span></div>
-      <div class="d-icon" data-app="bot"><div class="d-ico">🤖</div><span>Bot Service</span></div>
-      <div class="d-icon" data-app="dark"><div class="d-ico">🕶️</div><span>Dark Web</span></div>
       <div class="d-icon" data-app="bank"><div class="d-ico">🏦</div><span>Bank</span></div>
       <div class="d-icon" data-app="files"><div class="d-ico">📁</div><span>Files</span></div>
       <div class="d-icon" data-app="recycle"><div class="d-ico">🗑️</div><span>Recycle Bin</span></div>
@@ -55,9 +52,6 @@
     <button class="task-start" id="task-start">🪟 Start</button>
     <div class="task-apps" id="task-apps">
       <button class="task-app active" data-app="linkedin"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></button>
-      <button class="task-app" data-app="telegram">✈️</button>
-      <button class="task-app" data-app="bot">🤖</button>
-      <button class="task-app" data-app="dark">🕶️</button>
       <button class="task-app" data-app="bank">🏦</button>
     </div>
     <div class="task-clock" id="task-clock">12:00 PM</div>
@@ -69,9 +63,6 @@
   <div class="browser-chrome">
     <div class="browser-tabs" id="browser-tabs">
       <button class="b-tab active" data-app="linkedin"><span class="b-fav"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.65 10A5.99 5.99 0 0 0 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6a5.99 5.99 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg></span> LockedIn</button>
-      <button class="b-tab" data-app="telegram"><span class="b-fav">✈️</span> Telegram</button>
-      <button class="b-tab" data-app="bot"><span class="b-fav">🤖</span> Bot Service</button>
-      <button class="b-tab" data-app="dark"><span class="b-fav">🕶️</span> Dark Web</button>
       <button class="b-tab" data-app="bank"><span class="b-fav">🏦</span> Bank</button>
     </div>
     <div class="browser-addr">
@@ -123,14 +114,14 @@
     <!-- LEFT RAIL -->
     <aside class="left-rail">
       <div class="card profile-card" id="profile-card">
-        <div class="profile-banner"></div>
+        <div class="profile-banner" id="profile-banner"></div>
         <div class="profile-avatar" id="profile-avatar">Y</div>
         <div class="profile-name" id="profile-name">You</div>
         <div class="profile-headline" id="profile-headline">Just here for the game.</div>
         <div class="profile-stats">
           <div class="stat-row"><span>Connections</span><b id="stat-connections">0</b></div>
           <div class="stat-row"><span>Followers</span><b id="stat-followers">0</b></div>
-          <div class="stat-row"><span>Impressions</span><b id="stat-impressions">0</b></div>
+          <div class="stat-row"><span>🪙 Impressions</span><b id="stat-impressions" class="gold">0</b></div>
           <div class="stat-row retention-row hidden" id="retention-row"><span>Retention</span><b id="stat-retention">0</b></div>
         </div>
       </div>
@@ -208,6 +199,7 @@
           <div class="g-stat"><span>Likes</span><b id="g-likes">0</b></div>
           <div class="g-stat"><span>Followers</span><b id="g-followers">0</b></div>
         </div>
+        <div class="factory-strip" id="factory-strip"></div>
         <button class="btn btn-primary" id="open-growth">Manage Growth</button>
       </div>
       <div class="card next-card" id="next-card">
@@ -316,11 +308,9 @@
       <div class="growth-tabs">
         <button class="gtab active" data-gtab="generators">Automation</button>
         <button class="gtab" data-gtab="upgrades">Upgrades</button>
-        <button class="gtab" data-gtab="outsource">Outsource</button>
       </div>
       <div class="growth-pane" id="g-pane-generators"></div>
       <div class="growth-pane hidden" id="g-pane-upgrades"></div>
-      <div class="growth-pane hidden" id="g-pane-outsource"></div>
     </div>
   </div>
 
@@ -424,63 +414,6 @@
 </div>
     </div><!-- /app-view linkedin -->
 
-    <!-- ===== TELEGRAM APP ===== -->
-    <div class="app-view" data-app="telegram">
-      <div class="tg-app">
-        <div class="tg-sidebar">
-          <div class="tg-title">✈️ Telegram</div>
-          <div class="tg-search"><input placeholder="Search chats"></div>
-          <div class="tg-chats" id="tg-chats"></div>
-        </div>
-        <div class="tg-main">
-          <div class="tg-chat-head" id="tg-chat-head">Select a chat</div>
-          <div class="tg-messages" id="tg-messages"></div>
-          <div class="tg-input">
-            <input id="tg-text" placeholder="Message" disabled>
-            <button id="tg-send" disabled>➤</button>
-          </div>
-        </div>
-      </div>
-    </div><!-- /app-view telegram -->
-
-    <!-- ===== BOT SERVICE APP ===== -->
-    <div class="app-view" data-app="bot">
-      <div class="bot-app">
-        <div class="bot-header">
-          <div class="bot-logo">🤖</div>
-          <div>
-            <div class="bot-name">EngageBot™</div>
-            <div class="bot-tag">Automate your engagement. Trusted by 0 real people.</div>
-          </div>
-        </div>
-        <div class="bot-body" id="bot-body">
-          <div class="bot-locked" id="bot-locked">
-            <div style="font-size:40px">🔒</div>
-            <div class="bot-locked-title">Bot Service Locked</div>
-            <div class="bot-locked-sub">Get a DM from a "growth expert" on LockedIn to unlock this.</div>
-          </div>
-        </div>
-      </div>
-    </div><!-- /app-view bot -->
-
-    <!-- ===== DARK WEB APP ===== -->
-    <div class="app-view" data-app="dark">
-      <div class="dark-app">
-        <div class="dark-header">
-          <div class="dark-logo">🕶️</div>
-          <div class="dark-title">The Marketplace</div>
-          <div class="dark-sub">you are in a place. do not tell anyone.</div>
-        </div>
-        <div class="dark-body" id="dark-body">
-          <div class="dark-locked" id="dark-locked">
-            <div style="font-size:40px">🔒</div>
-            <div class="dark-locked-title">Access Restricted</div>
-            <div class="dark-locked-sub">A mysterious DM with a strange link will unlock this. Probably.</div>
-          </div>
-        </div>
-      </div>
-    </div><!-- /app-view dark -->
-
     <!-- ===== BANK APP ===== -->
     <div class="app-view" data-app="bank">
       <div class="bank-body" id="bank-body"></div>
@@ -539,9 +472,6 @@
 <script src="js/engine.js"></script>
 <script src="js/narrator.js"></script>
 <script src="js/os.js"></script>
-<script src="js/telegram.js"></script>
-<script src="js/bot.js"></script>
-<script src="js/dark.js"></script>
 <script src="js/bank.js"></script>
 <script src="js/sponsors.js"></script>
 <script src="js/prestige.js"></script>
@@ -560,5 +490,6 @@
 <script src="js/vendor/postprocessing/MaskPass.js"></script>
 <script src="js/vendor/postprocessing/UnrealBloomPass.js"></script>
 <script src="js/realworld.js"></script>
+<script src="js/wordcatch.js"></script>
 </body>
 </html>

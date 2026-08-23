@@ -1,20 +1,16 @@
 /* ============================================================
-   LINK & BUILD — Sponsors (the money loop)
-   Clout converts to cash. Cash converts back to clout. The player
-   is always converting one into the other, and the narrator frames
-   it as "scaling your personal brand."
+   LINK & BUILD — Sponsors (the one-shot brand deal)
+   Clout converts to one real deposit. The bank is the game's
+   quietest, saddest number — it starts at $12.47 and is the only
+   number that is actually real. A single brand deal lands once the
+   player is big enough, pays a one-time check, and then Chad
+   confesses (during the reveal) that there was never a company.
 
-   Sponsors are dropshipped wellness brands run by "Chad", a grifter
-   as broke as the player. They activate at clout thresholds, pay out
-   on a schedule, and demand more engagement each cycle. The money is
-   real; the brand is a shell.
+   The whole point of the money is that there is very little of it,
+   and it only ever points back at the account that made it.
    ============================================================ */
 
 const Sponsors = {
-  // how often (ms) we check for newly-crossed thresholds
-  CHECK_INTERVAL: 2000,
-  _lastCheck: 0,
-
   // a sponsor DM from Chad (the founder). Arrives in the unified inbox.
   dm(sponsor, text) {
     const s = State.data;
@@ -33,59 +29,30 @@ const Sponsors = {
     Bus.emit('dm:received');
   },
 
-  // activate a sponsor: add to active list, send the intro DM, narrate it
+  // the one-shot deal: activate the first sponsor once clout crosses its
+  // threshold, pay a single real check, then stop. No recurring payouts —
+  // the money is a moment, not a machine.
   activate(sponsor) {
     const s = State.data;
     if (s.sponsors.active.includes(sponsor.id)) return;
     s.sponsors.active.push(sponsor.id);
     this.dm(sponsor, sponsor.intro);
+    Bank.deposit(sponsor.payout, sponsor.name + ' brand deal', sponsor.icon);
     Narrator.say('sponsor_first', 'notif');
     Bus.emit('sponsor:activated', { id: sponsor.id });
   },
 
-  // pay out every active sponsor whose interval has elapsed
-  payOut(sponsor) {
-    const s = State.data;
-    const now = Date.now();
-    const last = s.sponsors.lastPayout || now;
-    if (now - last < sponsor.interval) return;
-    Bank.deposit(sponsor.payout, sponsor.name + ' sponsorship', sponsor.icon);
-    Narrator.say('sponsor_paid', 'notif');
-    Bus.emit('sponsor:paid', { id: sponsor.id });
-  },
-
-  // check thresholds and fire payouts. Called from the engine tick.
+  // one-shot check: fire the first (cheapest) sponsor when the player is big
+  // enough, exactly once. Kept as a tick so the engine wiring is unchanged.
   tick() {
     const s = State.data;
-    const now = Date.now();
-    if (now - this._lastCheck < this.CHECK_INTERVAL) return;
-    this._lastCheck = now;
-
+    if (s.sponsors.active.length > 0) return;
     const clout = Engine.clout();
-    for (const sp of DATA.SPONSORS) {
-      if (clout >= sp.cloutThreshold && !s.sponsors.active.includes(sp.id)) {
-        this.activate(sp);
-      }
-    }
-
-    // pay out active sponsors on their own schedules
-    for (const id of s.sponsors.active) {
-      const sp = DATA.SPONSORS.find(x => x.id === id);
-      if (sp) this.payOut(sp);
-    }
-
-    // occasionally a sponsor demands more engagement
-    if (s.sponsors.active.length > 0 && Math.random() < 0.02) {
-      const sp = DATA.SPONSORS.find(x => x.id === s.sponsors.active[Math.floor(Math.random() * s.sponsors.active.length)]);
-      if (sp) {
-        this.dm(sp, sp.demand);
-        Narrator.say('sponsor_demand', 'notif');
-      }
-    }
+    const first = DATA.SPONSORS.find(sp => clout >= sp.cloutThreshold);
+    if (first) this.activate(first);
   },
 
-  // the reveal (Phase 6): Chad admits there was never a company. Fired by
-  // the reveal system later; exposed here so the sponsor can confess.
+  // the reveal: Chad admits there was never a company.
   reveal(sponsorId) {
     const s = State.data;
     const sp = DATA.SPONSORS.find(x => x.id === sponsorId);
@@ -95,6 +62,6 @@ const Sponsors = {
   },
 
   init() {
-    // nothing to subscribe to yet — the engine tick drives this system.
+    // nothing to subscribe to — the engine tick drives this system.
   },
 };

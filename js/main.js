@@ -59,6 +59,7 @@
   UI.updatePreview();
   UI.renderFeed();
   UI.renderGrowth();
+  UI.renderFactoryStrip();
   UI.renderAds();
   UI.renderDMs();
   UI.renderCalendar();
@@ -102,10 +103,6 @@
   // Event bus: systems emit domain events, presentation subscribes.
   // This is the seam that lets the narrator, scare posts, and achievements
   // be added later as pure listeners.
-  Bus.on('worker:hired', () => { UI.renderGrowth(); UI.renderDMs(); UI.refresh(); });
-  Bus.on('worker:fired', () => { UI.renderGrowth(); UI.renderDMs(); UI.refresh(); });
-  Bus.on('worker:intensity', () => UI.renderGrowth());
-  Bus.on('worker:command', () => { UI.renderChat(); UI.renderDMs(); });
   Bus.on('notif:added', () => UI.updateBell());
   Bus.on('dm:received', () => UI.renderDMs());
   Bus.on('post:autoposted', (post) => { UI.renderFeedDebounced(); UI.updatePostCard(post); });
@@ -118,10 +115,11 @@
   Bus.on('post:published', (post) => { UI.renderFeed(); UI.updatePostCard(post); });
   Bus.on('post:liked', (post) => UI.updatePostCard(post));
   Bus.on('post:commented', (post) => UI.updatePostCard(post));
+  Bus.on('post:viral', (post) => UI.viralBurst(post));
   Bus.on('person:followed', () => { UI.renderRecommended(); UI.refresh(); });
   Bus.on('person:connected', () => { UI.renderNetwork(); UI.refresh(); });
-  Bus.on('generator:bought', () => { UI.renderGrowth(); UI.refresh(); });
-  Bus.on('upgrade:bought', () => { UI.renderGrowth(); UI.refresh(); });
+  Bus.on('generator:bought', () => { UI.renderGrowth(); UI.renderFactoryStrip(); UI.refresh(); });
+  Bus.on('upgrade:bought', () => { UI.renderGrowth(); UI.renderFactoryStrip(); UI.refresh(); });
   Bus.on('premium:bought', () => { UI.hideModal('premium-modal'); UI.refresh(); });
 
   // desktop icons
@@ -165,19 +163,6 @@
 
   // start button -> desktop
   $('task-start').addEventListener('click', () => OS.showDesktop());
-
-  // telegram send
-  $('tg-send').addEventListener('click', () => {
-    const input = $('tg-text');
-    Telegram.sendMessage(input.value);
-    input.value = '';
-  });
-  $('tg-text').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      Telegram.sendMessage(e.target.value);
-      e.target.value = '';
-    }
-  });
 
   // composer open
   $('open-growth').addEventListener('click', () => {

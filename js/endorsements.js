@@ -110,16 +110,6 @@ const Endorsements = {
       if (e && e.id === 'aifactory') this.unlock('factory');
     });
 
-    Bus.on('worker:hired', () => {
-      if (Object.keys(State.data.workers).length === 1) this.unlock('first-worker');
-    });
-
-    Bus.on('pod:joined', () => this.unlock('first-pod'));
-
-    Bus.on('bot:created', () => this.unlock('first-bot'));
-
-    Bus.on('dark:bought', () => this.unlock('first-dark'));
-
     Bus.on('sponsor:activated', () => {
       if (State.data.sponsors.active.length === 1) this.unlock('first-sponsor');
     });
@@ -218,7 +208,7 @@ const Challenges = {
         if (st.silentPosts >= 10) this.complete(c);
         break;
       case 'purist':
-        if (s.generators['aifactory'] && !st.boughtDark) this.complete(c);
+        if (s.generators['aifactory'] && !s.premium) this.complete(c);
         break;
       case 'ghost':
         if (s.impressions >= 100000 && s.followers < 50) this.complete(c);
@@ -230,10 +220,6 @@ const Challenges = {
   },
 
   init() {
-    // mark dark-market purchases so "The Purist" can fail
-    Bus.on('dark:bought', () => {
-      if (State.data.challenges.stats) State.data.challenges.stats.boughtDark = true;
-    });
     // mark surviving a shadowban cycle for "The Survivor"
     Bus.on('detection:restored', () => {
       if (State.data.challenges.stats) State.data.challenges.stats.survivedShadowban = true;

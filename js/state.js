@@ -25,8 +25,6 @@ function defaultState() {
     flagShown: false,
     generators: {},          // id -> count owned
     upgrades: {},            // id -> count owned
-    workers: {},             // workerId -> { count, intensity, lastPay }
-    workerChats: {},         // workerId -> [ {from, text, time} ]
     posts: [],               // published posts
     notifications: [],      // newest first
     notifCount: 0,           // unread
@@ -78,7 +76,6 @@ function defaultState() {
       stats: {               // per-challenge tracking, reset each run
         posts: 0,            // posts published this run
         silentPosts: 0,      // posts with no emojis/tags/question
-        boughtDark: false,   // bought from the marketplace this run
         survivedShadowban: false,
       },
     },
@@ -100,13 +97,6 @@ function defaultState() {
       booted: false,
       unlockedApps: ['linkedin', 'bank'],  // apps the player has unlocked
       activeApp: 'linkedin',
-      telegram: {
-        unlocked: false,
-        joinedPods: [],   // pod ids joined
-        messages: [],     // [{ from, text, time, podId }]
-      },
-      bot: { unlocked: false, created: false, name: '', activity: [], intensity: 1 },
-      dark: { unlocked: false },
       bank: { balance: 12.47, transactions: [] },
     },
   };
@@ -180,9 +170,6 @@ const State = {
       }
     }
     merged.os = Object.assign({}, base.os, save.os || {});
-    merged.os.telegram = Object.assign({}, base.os.telegram, (save.os && save.os.telegram) || {});
-    merged.os.bot = Object.assign({}, base.os.bot, (save.os && save.os.bot) || {});
-    merged.os.dark = Object.assign({}, base.os.dark, (save.os && save.os.dark) || {});
     merged.os.bank = Object.assign({}, base.os.bank, (save.os && save.os.bank) || {});
     merged.narrator = Object.assign({}, base.narrator, save.narrator || {});
     merged.onboarding = Object.assign({}, base.onboarding, save.onboarding || {});

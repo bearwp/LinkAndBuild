@@ -32,13 +32,16 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 
 /* ============ Left rail ============ */
 .profile-card { text-align: center; padding-bottom: 12px; }
-.profile-banner { height: 56px; background: linear-gradient(135deg, #0a66c2, #7fb8e8); }
-.profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: #b3c6d8; color: #fff; display: grid; place-items: center; font-size: 28px; font-weight: 700; margin: -36px auto 8px; border: 2px solid #fff; }
+.profile-banner { height: 56px; background: linear-gradient(135deg, #0a66c2, #7fb8e8); transition: background 0.8s ease, filter 0.8s ease; }
+body.aura-rising .profile-banner { background: linear-gradient(135deg, #4383c9, #b08ad6); }
+body.aura-god .profile-banner { background: linear-gradient(135deg, #b8860b, #ffd700); }
+.profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: #b3c6d8; color: #fff; display: grid; place-items: center; font-size: 28px; font-weight: 700; margin: -36px auto 8px; border: 2px solid #fff; position: relative; transition: box-shadow 0.6s ease, border-color 0.6s ease; }
 .profile-name { font-weight: 700; font-size: 15px; }
 .profile-headline { font-size: 12px; color: #666; padding: 0 12px; margin-top: 2px; }
 .profile-stats { margin-top: 12px; border-top: 1px solid #e0dfdc; padding: 8px 12px 0; }
 .stat-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; color: #666; }
 .stat-row b { color: #0a66c2; }
+.stat-row b.gold { color: #b8860b; }
 
 .menu-card { padding: 8px 0; }
 .menu-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 13px; color: rgba(0,0,0,0.75); cursor: pointer; }
@@ -50,6 +53,18 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 .auth-bar { height: 8px; background: #e0dfdc; border-radius: 4px; overflow: hidden; }
 .auth-fill { height: 100%; background: linear-gradient(90deg, #2e7d32, #8bc34a); border-radius: 4px; transition: width 0.4s ease, background 0.4s ease; }
 .auth-note { font-size: 11px; color: #666; margin-top: 6px; }
+
+/* ---- aura: the pauper→god scalar, surfaced on the avatar + ambient ----
+   The avatar is your "body." At aura 0 it is a cold gray dot; as you climb it
+   gains a ring, then a crown, then a radiant halo. The body of the page warms
+   with you — but the glow is earned, so a nobody's profile stays desaturated
+   and quiet, and only a god makes the room itself feel lit from within. */
+body.aura-pauper .profile-card { filter: saturate(0.4); }
+body.aura-pauper .profile-banner { background: linear-gradient(135deg, #9e9e9e, #c0c0c0); }
+.profile-avatar[data-aura] { box-shadow: var(--aura-glow, none); border-color: var(--aura-ring, #fff); }
+.aura-halo { position: absolute; inset: -8px; border-radius: 50%; pointer-events: none; animation: auraPulse 2.4s ease-in-out infinite; }
+@keyframes auraPulse { 0%, 100% { opacity: 0.35; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.12); } }
+.aura-crown { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
 
 .productivity-card { padding: 12px 16px; }
 .prod-title { font-size: 13px; font-weight: 600; }
@@ -183,6 +198,32 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .post-card.tier-low .post-author { color: #666; }
 .tier-badge { display: inline-block; margin-left: 6px; background: #e2a33b; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; vertical-align: middle; }
 .post-card-first { border-left: 3px solid #0a66c2; }
+/* impression pop — a real damped spring. Fast attack to a big overshoot, then
+   the number wobbles up/down and squash/stretch through a decaying oscillation
+   before settling — the physicsy "boing" that sells a tactile hit. */
+.st-imp { display: inline-block; position: relative; transform-origin: center; }
+.st-imp.imp-glow { animation: impPop 0.6s cubic-bezier(0.22, 1, 0.36, 1) var(--imp-drift, 0ms); }
+.st-imp.imp-glow::after {
+  content: '';
+  position: absolute; inset: -4px;
+  border: 2px solid rgba(255, 152, 0, 0.9);
+  border-radius: 6px;
+  animation: impRing 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes impPop {
+  0%   { transform: translate(0, 0) rotate(0) scale(1, 1); color: rgba(0,0,0,0.75); text-shadow: 0 0 0 rgba(255,152,0,0); }
+  12%  { transform: translate(var(--imp-dx, 0), -4px) rotate(var(--imp-rot, -6deg)) scale(calc(1.8 * var(--imp-pop, 1)), calc(0.68 / var(--imp-pop, 1))); color: #ff8f00; text-shadow: 0 0 calc(20px * var(--imp-glow, 1)) rgba(255,152,0,1); }
+  26%  { transform: translate(calc(var(--imp-dx, 0) * -0.5), 3px) rotate(calc(var(--imp-rot, 5deg) * -1)) scale(calc(0.78 / var(--imp-pop, 1)), calc(1.28 * var(--imp-pop, 1))); color: #ffa726; text-shadow: 0 0 calc(12px * var(--imp-glow, 1)) rgba(255,152,0,0.8); }
+  40%  { transform: translate(calc(var(--imp-dx, 0) * 0.3), -2px) rotate(calc(var(--imp-rot, -2deg))) scale(calc(1.3 * var(--imp-pop, 1)), calc(0.82 / var(--imp-pop, 1))); color: #ffa726; text-shadow: 0 0 calc(8px * var(--imp-glow, 1)) rgba(255,152,0,0.55); }
+  55%  { transform: translate(calc(var(--imp-dx, 0) * -0.15), 1.5px) rotate(calc(var(--imp-rot, 1deg) * -1)) scale(calc(0.9 / var(--imp-pop, 1)), calc(1.1 * var(--imp-pop, 1))); color: rgba(0,0,0,0.85); }
+  70%  { transform: translate(0, -0.6px) rotate(0) scale(calc(1.08 * var(--imp-pop, 1)), calc(0.95 / var(--imp-pop, 1))); color: rgba(0,0,0,0.75); }
+  84%  { transform: translate(0, 0.3px) rotate(0) scale(0.98, 1.02); color: rgba(0,0,0,0.75); }
+  100% { transform: translate(0, 0) rotate(0) scale(1, 1); color: rgba(0,0,0,0.75); text-shadow: 0 0 0 rgba(255,152,0,0); }
+}
+@keyframes impRing {
+  0%   { opacity: 1; transform: scale(0.7); }
+  100% { opacity: 0; transform: scale(2.2); }
+}
 .pc-new { animation: pcIn 0.3s ease; }
 .post-comments { margin-top: 8px; border-top: 1px solid #f3f2ef; padding-top: 8px; display: flex; flex-direction: column; gap: 8px; }
 .pc { display: flex; gap: 8px; align-items: flex-start; }
@@ -211,6 +252,68 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .post-gif img { display: block; width: 100%; max-height: 200px; object-fit: contain; }
 .post-format-tag { display: inline-block; margin-top: 8px; background: #eef3f8; color: #0a66c2; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 4px; }
 .post-format-tag.risky { background: #fdecea; color: #d11124; }
+
+/* ON FIRE — a post that went viral keeps real flames licking off its top edge.
+   The flame tongues are randomized in size and flicker on independent beats so
+   the whole post reads as genuinely, continuously burning. */
+.post-card { position: relative; }
+.post-card.on-fire {
+  border-color: #ff6d00;
+  box-shadow: 0 0 18px rgba(255, 109, 0, 0.35), 0 0 40px rgba(255, 145, 0, 0.15);
+  background: linear-gradient(180deg, #fff7f0, #fff 40%);
+}
+.flames {
+  position: absolute; top: -12px; left: 0; right: 0; height: 0;
+  pointer-events: none; z-index: 2;
+}
+.flame {
+  position: absolute; bottom: 0;
+  border-radius: 50% 50% 20% 20%;
+  background: linear-gradient(180deg, #ffe082, #ff9800 60%, #f44336);
+  transform-origin: bottom center;
+  animation: flicker 0.9s ease-in-out infinite alternate;
+}
+@keyframes flicker {
+  0%   { transform: translateY(0) scaleY(1) scaleX(1); opacity: 0.9; }
+  50%  { transform: translateY(-5px) scaleY(1.15) scaleX(0.85); opacity: 1; }
+  100% { transform: translateY(-1px) scaleY(0.9) scaleX(1.1); opacity: 0.85; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flame { animation: none; opacity: 0.8; transform: translateY(-2px) scaleY(1.1); }
+}
+
+/* viral stamp — removed; the on-fire flames replace the text label */
+.viral-screen-flash { position: fixed; inset: 0; pointer-events: none; z-index: 900; background: radial-gradient(circle, rgba(255, 145, 0, 0.25), rgba(255, 23, 68, 0.05)); animation: viralFade 0.6s ease forwards; }
+@keyframes viralFade { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+/* combo cascade — the Balatro-style joker chips that fire left-to-right */
+.combo-chip {
+  position: fixed; z-index: 800; pointer-events: none;
+  display: flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px;
+  background: #fff; border: 1px solid #ff9100;
+  color: #333; font-size: 11px; font-weight: 700;
+  box-shadow: 0 4px 12px rgba(255, 145, 0, 0.3);
+  animation: comboChip 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.combo-chip-icon { font-size: 13px; }
+.combo-chip-text { white-space: nowrap; }
+@keyframes comboChip {
+  0% { opacity: 0; transform: translateY(-8px) scale(0.7); }
+  25% { opacity: 1; transform: translateY(0) scale(1.12); }
+  60% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.9); }
+}
+
+/* screen shake — fires on the jackpot landing */
+.shake { animation: shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-6px, 2px); }
+  40% { transform: translate(6px, -2px); }
+  60% { transform: translate(-4px, 1px); }
+  80% { transform: translate(4px, -1px); }
+}
 .post-stats { margin-top: 10px; font-size: 12px; color: #666; display: flex; gap: 14px; }
 .post-stats b { color: rgba(0,0,0,0.75); }
 .post-actions { display: flex; margin-top: 8px; border-top: 1px solid #e0dfdc; padding-top: 4px; }
@@ -221,8 +324,39 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .thumb { display: inline-block; transition: transform 0.15s ease; }
 .viral-flash { animation: viralFlash 1.2s ease; }
 @keyframes viralFlash { 0% { box-shadow: 0 0 0 0 rgba(255,193,7,0.8); } 100% { box-shadow: 0 0 0 24px rgba(255,193,7,0); } }
+
+/* FIRE POST — the sticky "you won" badge that latches to a post once its
+   impressions bank enough dings. It stays put (no re-firing) so the win
+   registers once, then glows quietly as the signal of a hot post. */
+.fire-post {
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 8px; padding: 5px 10px;
+  background: linear-gradient(90deg, #ff6d00, #ff9100);
+  color: #fff; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;
+  border-radius: 6px; width: fit-content;
+  animation: fireIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fire-post span { font-size: 15px; }
+.fire-post.pop { animation: firePop 0.5s ease; }
+@keyframes fireIn { 0% { opacity: 0; transform: translateY(-6px) scale(0.8); } 100% { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes firePop { 0% { transform: scale(1); } 35% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+/* post tiers — earned by impressions. Each rung recolors the badge so the
+   climb is legible at a glance: gray nobody → gold thought leader → red viral
+   → violet legend. */
+.post-card.tier-0 .fire-post { background: linear-gradient(90deg, #9e9e9e, #bdbdbd); }
+.post-card.tier-1 .fire-post { background: linear-gradient(90deg, #0a66c2, #42a5f5); }
+.post-card.tier-2 .fire-post { background: linear-gradient(90deg, #2e7d32, #66bb6a); }
+.post-card.tier-3 .fire-post { background: linear-gradient(90deg, #b8860b, #ffd54f); }
+.post-card.tier-4 .fire-post { background: linear-gradient(90deg, #ff6d00, #ff1744); }
+.post-card.tier-5 .fire-post { background: linear-gradient(90deg, #6a1b9a, #ab47bc); }
+.post-card.tier-4, .post-card.tier-5 { box-shadow: 0 0 0 1px rgba(255, 145, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.08); }
 @media (prefers-reduced-motion: reduce) {
-  .viral-flash { animation: none; }
+  .viral-flash, .fire-post { animation: none; }
+  .st-imp.imp-glow { animation: none; }
+  .st-imp.imp-glow::after, .imp-float { animation: none; }
+  .viral-screen-flash { animation: none; }
+  .combo-chip, .shake, .aura-halo { animation: none; }
 }
 .feed-end { text-align: center; color: #666; font-size: 13px; padding: 16px; }
 
@@ -365,6 +499,33 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .g-item-desc { font-size: 12px; color: #666; }
 .g-item-stats { font-size: 11px; color: #0a66c2; margin-top: 2px; }
 .g-item-btn { flex-shrink: 0; }
+.g-item-count { color: #999; font-size: 11px; font-weight: 400; }
+.g-output { color: #0a66c2; font-weight: 700; }
+.g-per { color: #999; font-size: 10px; }
+.g-would { color: #888; }
+.g-item.idle { opacity: 0.72; }
+.g-item.running { border-color: #0a66c2; }
+
+/* the assembly line — the distribution loop as a transparent pipeline */
+.factory-strip { margin-top: 10px; }
+.factory-line { border: 1px solid #e0dfdc; border-radius: 8px; padding: 10px; background: #fafafa; transition: background 0.4s ease, border-color 0.4s ease; }
+.factory-line.online { background: linear-gradient(180deg, #f0f7ff, #fff); border-color: #0a66c2; }
+.fl-title { font-size: 11px; font-weight: 800; letter-spacing: 0.5px; color: #0a66c2; margin-bottom: 8px; }
+.factory-line.offline .fl-title { color: #999; }
+.fl-stages { display: flex; align-items: stretch; gap: 5px; flex-wrap: nowrap; }
+.gate { flex: 1; min-width: 0; text-align: center; padding: 6px 3px; border-radius: 6px; background: #fff; border: 1px solid #e0dfdc; }
+.gate.machine { border-color: #0a66c2; background: #f0f7ff; animation: nodePulse 2s ease-in-out infinite; }
+.gate.hand { border-style: dashed; opacity: 0.75; }
+.gate-handler { font-size: 9px; font-weight: 700; color: #666; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gate.machine .gate-handler { color: #0a66c2; }
+.gate-flow { font-size: 14px; font-weight: 800; color: #0a66c2; font-variant-numeric: tabular-nums; }
+.factory-line.offline .gate-flow { color: #999; }
+.gate-label { font-size: 7px; color: #999; text-transform: uppercase; letter-spacing: 0.2px; margin-top: 1px; }
+.fl-arrow { color: #c4c4c4; font-size: 12px; display: flex; align-items: center; }
+.factory-line.online .fl-arrow { animation: arrowFlow 1.2s linear infinite; }
+.fl-sub { font-size: 9px; color: #999; margin-top: 8px; font-style: italic; }
+@keyframes nodePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+@keyframes arrowFlow { 0% { opacity: 0.35; transform: translateX(-2px); } 50% { opacity: 1; transform: translateX(2px); } 100% { opacity: 0.35; transform: translateX(-2px); } }
 .g-item-btn.owned-btn { background: #eef3f8; color: #666; }
 
 /* bell modal */
@@ -467,6 +628,29 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .confetti { position: fixed; pointer-events: none; z-index: 700; width: 8px; height: 12px; animation: confettiFall 1.6s ease forwards; }
 @keyframes confettiFall { 0% { opacity: 1; transform: translateY(0) rotate(0); } 100% { opacity: 0; transform: translateY(140px) rotate(360deg); } }
 
+/* coin payout (casino feel) */
+.coin { position: fixed; pointer-events: none; z-index: 700; font-size: 22px; animation: coinToss 1.05s cubic-bezier(0.22, 0.61, 0.36, 1) forwards; }
+@keyframes coinToss {
+  0% { opacity: 0; transform: translate(var(--dx, 0), 0) scale(0.5) rotate(0); }
+  12% { opacity: 1; transform: translate(calc(var(--dx, 0) * 0.5), var(--dy, -60px)) scale(1.15) rotate(0); }
+  45% { opacity: 1; transform: translate(var(--dx, 0), 20px) rotate(240deg); }
+  100% { opacity: 0; transform: translate(var(--dx, 0), 120px) rotate(480deg); }
+}
+
+/* +N float — the legible "you gained this much" cue that arcs up off the
+   impression number. Bold, gold, and rising so the gain is unmissable. */
+.imp-float {
+  position: fixed; pointer-events: none; z-index: 710;
+  color: #ff8f00; font-size: 15px; font-weight: 800;
+  text-shadow: 0 0 8px rgba(255, 152, 0, 0.7);
+  animation: impFloat 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes impFloat {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  15% { opacity: 1; transform: translate(0, -4px) scale(1.15); }
+  100% { opacity: 0; transform: translate(0, -44px) scale(1); }
+}
+
 /* number pop */
 .num-pop { display: inline-block; animation: numPop 0.4s ease; }
 @keyframes numPop { 0% { transform: scale(1); } 30% { transform: scale(1.6); } 100% { transform: scale(1); } }
@@ -478,6 +662,30 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 /* fourth wall */
 .fourthwall { background: #0a0a0a !important; color: #e0e0e0; border-color: #333; }
 .fourthwall .post-body { color: #e0e0e0; }
+
+/* word catch composer (prototype, ?words=1) */
+#wordcomposer { position: fixed; right: 24px; top: 24px; width: 720px; max-width: calc(100vw - 32px); z-index: 950; background: #fff; border: 1px solid #e0dfdc; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.18); overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+.wc-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #e0dfdc; background: #fafafa; }
+.wc-title { font-weight: 700; color: #0a66c2; font-size: 14px; }
+.wc-badge { font-size: 10px; font-weight: 700; color: #666; background: #eef3f8; padding: 3px 8px; border-radius: 999px; }
+.wc-quality { height: 4px; background: #f0f0f0; opacity: 0; transition: opacity 0.25s ease; }
+.wc-quality.show { opacity: 1; }
+.wc-quality-fill { height: 100%; width: 0; transition: width 0.3s ease, background 0.3s ease; }
+#wc-canvas { display: block; width: 100%; height: 420px; background: #f7f9fb; cursor: crosshair; touch-action: none; }
+.wc-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid #e0dfdc; background: #fbfcfd; }
+.wc-sentence { flex: 1; min-height: 40px; line-height: 2; padding: 0 6px; }
+.wc-bar-ph { color: #aaa; font-style: italic; font-size: 12px; }
+.wc-chip { display: inline-block; padding: 3px 9px; margin: 1px 3px; border-radius: 9px; font-weight: 600; color: #fff; background: hsla(210, 70%, 50%, 0.92); }
+.wc-chip.first { background: #0a66c2; }
+.wc-chip.content { background: hsla(210, 70%, 50%, 0.92); }
+.wc-chip.glue { background: hsla(0, 0%, 66%, 0.85); font-weight: 400; }
+.wc-chip.gold { background: hsla(42, 95%, 48%, 0.95); }
+.wc-chip.wc-fly { animation: wcFly 0.32s cubic-bezier(0.25, 1, 0.4, 1) both; }
+@keyframes wcFly {
+  0% { transform: translate(var(--fx), var(--fy)) scale(1.3); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: translate(0, 0) scale(1); }
+}
 
 /* responsive */
 @media (max-width: 900px) {
@@ -520,7 +728,11 @@ body.realworld .toast,
 body.realworld .milestone,
 body.realworld .particle,
 body.realworld .confetti,
-body.realworld .comment-pop { display: none !important; }
+body.realworld .coin,
+body.realworld .imp-float,
+body.realworld .combo-chip,
+body.realworld .comment-pop,
+body.realworld .viral-screen-flash { display: none !important; }
 
 /* Subtle CRT-style "you're looking at a physical monitor" overlay.
    Only visible in real-world mode; sits above the game screen but
@@ -615,81 +827,6 @@ body.has-alphamail .browser { right: 300px; }
 .am-title { margin-left: 6px; font-size: 12px; font-weight: 700; color: #444; }
 .am-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
 .am-divider { height: 1px; background: #d0cfcc; margin: 14px 0; }
-
-/* ============ TELEGRAM APP ============ */
-.tg-app { display: flex; height: 100%; background: #fff; }
-.tg-sidebar { width: 260px; border-right: 1px solid #e0dfdc; display: flex; flex-direction: column; }
-.tg-title { padding: 12px; font-weight: 700; font-size: 16px; color: #2aabee; border-bottom: 1px solid #e0dfdc; }
-.tg-search { padding: 8px; }
-.tg-search input { width: 100%; background: #f3f2ef; border: none; border-radius: 6px; padding: 6px 10px; font-size: 12px; }
-.tg-chats { flex: 1; overflow-y: auto; }
-.tg-chat { display: flex; gap: 8px; align-items: center; padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f3f2ef; }
-.tg-chat:hover { background: #f3f2ef; }
-.tg-chat .tg-c-icon { font-size: 22px; }
-.tg-chat .tg-c-name { font-weight: 600; font-size: 13px; }
-.tg-chat .tg-c-desc { font-size: 11px; color: #666; }
-.tg-chat.joined { background: #e8f5fb; }
-.tg-chat .tg-c-btn { margin-left: auto; }
-.tg-main { flex: 1; display: flex; flex-direction: column; }
-.tg-chat-head { padding: 12px; border-bottom: 1px solid #e0dfdc; font-weight: 700; font-size: 14px; }
-.tg-messages { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 6px; background: #e8ecef; }
-.tg-msg { max-width: 70%; padding: 8px 12px; border-radius: 10px; font-size: 13px; line-height: 1.4; background: #fff; align-self: flex-start; }
-.tg-msg.me { align-self: flex-end; background: #2aabee; color: #fff; }
-.tg-msg .tg-time { display: block; font-size: 10px; opacity: 0.6; margin-top: 3px; }
-.tg-input { display: flex; gap: 8px; padding: 10px; border-top: 1px solid #e0dfdc; background: #fff; }
-.tg-input input { flex: 1; border: 1px solid #e0dfdc; border-radius: 20px; padding: 8px 14px; font-size: 13px; }
-.tg-input button { background: #2aabee; color: #fff; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 16px; }
-
-/* ============ BOT SERVICE APP ============ */
-.bot-app { display: flex; flex-direction: column; height: 100%; background: #f8f9fb; }
-.bot-header { display: flex; gap: 12px; align-items: center; padding: 20px; background: linear-gradient(135deg, #0a66c2, #7fb8e8); color: #fff; }
-.bot-logo { font-size: 44px; }
-.bot-name { font-size: 20px; font-weight: 700; }
-.bot-tag { font-size: 12px; opacity: 0.9; }
-.bot-body { flex: 1; display: grid; place-items: center; }
-.bot-locked { text-align: center; color: #666; padding: 24px; }
-.bot-locked-title { font-size: 18px; font-weight: 700; color: #333; margin: 8px 0; }
-.bot-setup { text-align: center; color: #666; padding: 24px; }
-.bot-name-input { margin-top: 12px; padding: 8px 12px; border: 1px solid #e0dfdc; border-radius: 6px; font-size: 14px; width: 220px; }
-.bot-dash { width: 100%; max-width: 640px; margin: 0 auto; padding: 16px; }
-.bot-dash-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.bot-dash-name { font-size: 18px; font-weight: 700; }
-.bot-dash-status { color: #2e7d32; font-weight: 700; font-size: 12px; }
-.bot-configs { display: flex; flex-direction: column; gap: 8px; }
-.bot-config { border: 1px solid #e0dfdc; border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; }
-.bot-config.owned { background: #f0f7ff; border-color: #0a66c2; }
-.bot-config-icon { font-size: 24px; }
-.bot-config-info { flex: 1; }
-.bot-config-name { font-weight: 700; font-size: 13px; }
-.bot-config-desc { font-size: 11px; color: #666; }
-.bot-config-stats { font-size: 11px; color: #0a66c2; margin-top: 2px; }
-.bot-log { margin-top: 12px; border-top: 1px solid #e0dfdc; padding-top: 12px; }
-.bot-log-title { font-weight: 700; font-size: 13px; margin-bottom: 8px; }
-.bot-log-entries { max-height: 160px; overflow-y: auto; }
-.bot-log-entry { font-size: 12px; color: #666; padding: 3px 0; }
-.bot-log-time { color: #999; font-size: 10px; float: right; }
-
-/* ============ DARK WEB APP ============ */
-.dark-app { display: flex; flex-direction: column; height: 100%; background: #0a0a0a; color: #0f0; font-family: monospace; }
-.dark-header { padding: 20px; border-bottom: 1px solid #1a1a1a; }
-.dark-logo { font-size: 40px; }
-.dark-title { font-size: 20px; font-weight: 700; }
-.dark-sub { font-size: 11px; color: #0a0; opacity: 0.6; }
-.dark-body { flex: 1; display: grid; place-items: center; overflow-y: auto; }
-.dark-locked { text-align: center; color: #0a0; padding: 24px; }
-.dark-locked-title { font-size: 18px; font-weight: 700; margin: 8px 0; }
-.dark-market { width: 100%; max-width: 560px; padding: 16px; }
-.dark-market-title { text-align: center; color: #0a0; font-size: 12px; margin-bottom: 12px; }
-.dark-listing { border: 1px solid #1a3a1a; border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; margin-bottom: 8px; background: #0d0d0d; }
-.dark-listing-icon { font-size: 24px; }
-.dark-listing-info { flex: 1; }
-.dark-listing-name { font-weight: 700; font-size: 13px; color: #0f0; }
-.dark-listing-desc { font-size: 11px; color: #0a0; opacity: 0.7; }
-.dark-listing-stats { font-size: 11px; color: #0f0; margin-top: 2px; }
-.dark-buy { background: #0a0; color: #000; font-weight: 700; }
-.dark-buy:hover { background: #0f0; }
-.dark-buy:disabled { background: #1a3a1a; color: #0a0; }
-.dark-warning { text-align: center; color: #0a0; opacity: 0.6; font-size: 11px; margin-top: 12px; }
 
 /* ============ BANK APP ============ */
 .bank-body { height: 100%; overflow-y: auto; background: #f3f2ef; }

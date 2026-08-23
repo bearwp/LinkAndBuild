@@ -60,12 +60,10 @@ const Narrator = {
     Engine.addNotif('narrator', text, 0, this.EMOJI);
   },
 
-  // a bot-log entry (only once the bot exists; the voice lives in the machine)
+  // a log-style entry (the voice lives in the machine; kept simple without the
+  // bot service — falls back to a notification if no bot exists)
   log(text) {
-    const s = State.data;
-    if (!s.os.bot.created) return;
-    s.os.bot.activity.push({ type: 'log', text: text, time: Date.now(), icon: this.EMOJI });
-    if (s.os.bot.activity.length > 40) s.os.bot.activity.shift();
+    this.notif(text);
   },
 
   /* ---------- the speak primitive ---------- */
@@ -137,6 +135,19 @@ const Narrator = {
       else if (post.rarity === 'epic') this.say('epic', 'notif');
     });
 
+    // viral burst — the variable-ratio jackpot. Kept on the bell (not a DM) so
+    // the random win reads as luck, not an award you were promised.
+    Bus.on('post:viral', () => this.say('viral', 'notif'));
+
+    // relationships — the manual economy before automation. First follow/connect
+    // gets a warm beat; the narrator quietly notes what these are actually worth.
+    Bus.on('person:followed', () => {
+      if (State.data.connections === 1) this.say('first_follow', 'dm');
+    });
+    Bus.on('person:connected', () => {
+      if (State.data.connections === 1) this.say('first_follow', 'dm');
+    });
+
     // delegation / automation
     Bus.on('generator:bought', (e) => {
       const total = Object.values(State.data.generators).reduce((a, b) => a + b, 0);
@@ -144,22 +155,9 @@ const Narrator = {
       if (e && e.id === 'aifactory') this.say('factory', 'dm');
       this.maybeTransition();
     });
-    Bus.on('worker:hired', (e) => {
-      const total = Object.keys(State.data.workers).length;
-      if (total === 1) this.say('first_worker', 'notif');
-      this.maybeTransition();
-    });
-    Bus.on('bot:created', () => {
-      this.say('bot_created', 'log');
-      this.maybeTransition();
-    });
 
     // unlocks
-    Bus.on('app:unlocked', (e) => {
-      if (e && e.app === 'telegram') this.say('telegram', 'notif');
-      else if (e && e.app === 'bot') this.say('bot', 'notif');
-      else if (e && e.app === 'dark') this.say('dark', 'notif');
-    });
+    Bus.on('app:unlocked', () => {});
 
     // milestones
     Bus.on('milestone:reached', (e) => {

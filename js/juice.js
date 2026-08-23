@@ -39,6 +39,29 @@ const Juice = {
   ding() { this.tone(880, 0.15, 'sine', 0.12); this.tone(1320, 0.2, 'sine', 0.06, 0.06); },
   chime() { this.tone(523, 0.15, 'sine', 0.12); this.tone(659, 0.15, 'sine', 0.12, 0.08); this.tone(784, 0.2, 'sine', 0.12, 0.16); this.tone(1046, 0.3, 'sine', 0.1, 0.24); },
   warn() { this.tone(220, 0.3, 'sawtooth', 0.08); this.tone(180, 0.4, 'sawtooth', 0.08, 0.1); },
+  // metallic ka-ching — the coin payout sound
+  coin() { this.tone(988, 0.06, 'square', 0.08); this.tone(1319, 0.08, 'square', 0.08, 0.04); this.tone(1760, 0.12, 'square', 0.07, 0.08); },
+  // combo ka-ching — pitch rises with each step so the cascade climbs audibly
+  kaChing(step) {
+    const f = 660 + (step || 0) * 180;
+    this.tone(f, 0.07, 'square', 0.09);
+    this.tone(f * 1.5, 0.11, 'square', 0.07, 0.045);
+  },
+
+  // tactile "flick" punch — a thumpy low blip then a bright tick, so the
+  // number landing has weight and a tiny sparkle on top.
+  thock() {
+    this.tone(180, 0.06, 'triangle', 0.1);
+    this.tone(2400, 0.04, 'sine', 0.05);
+  },
+
+  /* --- shake --- */
+  shake(el) {
+    if (!el) return;
+    el.classList.remove('shake');
+    void el.offsetWidth;
+    el.classList.add('shake');
+  },
 
   /* --- particles --- */
   particles(x, y, text, color) {
@@ -64,6 +87,49 @@ const Juice = {
       document.body.appendChild(el);
       setTimeout(() => el.remove(), 1700);
     }
+  },
+
+  // slot-machine coin payout: gold coins arc up, spin, and rain down
+  coins(x, y, n) {
+    for (let i = 0; i < (n || 6); i++) {
+      const el = document.createElement('div');
+      el.className = 'coin';
+      el.textContent = '🪙';
+      el.style.left = (x + (Math.random() - 0.5) * 50) + 'px';
+      el.style.top = y + 'px';
+      el.style.animationDelay = (Math.random() * 0.08) + 's';
+      el.style.setProperty('--dx', ((Math.random() - 0.5) * 160) + 'px');
+      el.style.setProperty('--dy', (-(50 + Math.random() * 90)) + 'px');
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1100);
+    }
+  },
+
+  // a single "joker chip" that fires during a combo cascade: it slides in,
+  // flashes its multiplier contribution, then fades — the Balatro-style
+  // left-to-right trigger reveal.
+  comboChip(x, y, label, text) {
+    const el = document.createElement('div');
+    el.className = 'combo-chip';
+    el.innerHTML = `<span class="combo-chip-icon">${label || ''}</span><span class="combo-chip-text">${text || ''}</span>`;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 700);
+  },
+
+  // the "+N" that floats off the number — the legible "you gained this much"
+  // cue. Pops in, arcs up, fades. Size scales with aura so a god's gains feel
+  // weightier than a pauper's crumbs.
+  floatUp(x, y, text, size) {
+    const el = document.createElement('div');
+    el.className = 'imp-float';
+    el.textContent = text;
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.fontSize = (size || 14) + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 800);
   },
 
   /* --- toast --- */

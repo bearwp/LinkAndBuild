@@ -167,97 +167,97 @@ DATA.COMMENTS = [
 /* ---------- Generators (the automation ladder) ---------- */
 DATA.GENERATORS = [
   {
-    id: 'pod', name: 'Engagement Pod', tier: 1, layer: 1, icon: '👥',
+    id: 'pod', name: 'Engagement Pod', gate: 'engage', tier: 1, layer: 1, icon: '👥',
     desc: 'Join a community of like-minded professionals who agree to boost each other in the critical first hour.',
     cost: { base: 50, growth: 1.15 }, auth: -0.1, prod: { base: 0.8, perUnit: 0 },
     flavor: '"We scratch each other\'s backs. Professionally."',
   },
   {
-    id: 'scheduler', name: 'Scheduling & Analytics', tier: 2, layer: 1, icon: '📅',
+    id: 'scheduler', name: 'Scheduling & Analytics', gate: 'schedule', tier: 2, layer: 1, icon: '📅',
     desc: 'Maximize your reach with data-driven posting. Auto-posts at the optimal time. Shows you the curves.',
     cost: { base: 250, growth: 1.15 }, auth: -0.15, prod: { base: 2.5, perUnit: 0 },
     flavor: '"Post at 9am EST. The data demands it."',
   },
   {
-    id: 'outsource', name: 'Outsourced Engagement', tier: 3, layer: 1, icon: '🌏',
+    id: 'outsource', name: 'Outsourced Engagement', gate: 'engage', tier: 3, layer: 1, icon: '🌏',
     desc: 'Scale your engagement affordably. Cheap likes and comments from a global workforce with broken English.',
     cost: { base: 1200, growth: 1.15 }, auth: -0.5, prod: { base: 7, perUnit: 0 },
     flavor: '"Sir, very informative. Please follow me back."',
   },
   {
-    id: 'agency', name: 'Growth Agency', tier: 4, layer: 1, icon: '🏢',
+    id: 'agency', name: 'Growth Agency', gate: 'reach', tier: 4, layer: 1, icon: '🏢',
     desc: 'Enterprise-grade personal branding. Networks of loyal accounts, proxy rotation, follow/unfollow bots, multiple clients.',
     cost: { base: 6000, growth: 1.15 }, auth: -1.2, prod: { base: 18, perUnit: 0 },
     flavor: '"We run 40,000 accounts. Yours is one of them."',
   },
   {
-    id: 'aifactory', name: 'AI Factory', tier: 5, layer: 1, icon: '🏭',
+    id: 'aifactory', name: 'AI Factory', gate: 'content', tier: 5, layer: 1, icon: '🏭',
     desc: 'Fully automated thought leadership. AI writes, AI comments, AI replies, AI lives your life. You just watch.',
     cost: { base: 30000, growth: 1.15 }, auth: -3, prod: { base: 45, perUnit: 0 },
     flavor: '"In the symphony of business... (written by you, an AI)"',
   },
   {
-    id: 'hashtag', name: 'Hashtag Farm', tier: 6, layer: 1, icon: '#️⃣',
+    id: 'hashtag', name: 'Hashtag Farm', gate: 'schedule', tier: 6, layer: 1, icon: '#️⃣',
     desc: 'A server farm that generates trending hashtags and tags them onto everything you post.',
     cost: { base: 150000, growth: 1.15 }, auth: -4, prod: { base: 90, perUnit: 0 },
     flavor: '"#grindset #hustle #synergy #blessed #thoughtleader"',
   },
   {
-    id: 'newsletter', name: 'Newsletter Empire', tier: 7, layer: 1, icon: '📧',
+    id: 'newsletter', name: 'Newsletter Empire', gate: 'reach', tier: 7, layer: 1, icon: '📧',
     desc: 'A daily newsletter nobody reads, forwarded to 100,000 inboxes that mark it as spam.',
     cost: { base: 750000, growth: 1.15 }, auth: -5, prod: { base: 180, perUnit: 0 },
     flavor: '"Issue #1,247: The same three paragraphs, reworded."',
   },
   {
-    id: 'podcast', name: 'Podcast Network', tier: 8, layer: 1, icon: '🎙️',
+    id: 'podcast', name: 'Podcast Network', gate: 'reach', tier: 8, layer: 1, icon: '🎙️',
     desc: 'A podcast where you interview other thought leaders about their thought leadership.',
     cost: { base: 4000000, growth: 1.15 }, auth: -6, prod: { base: 360, perUnit: 0 },
     flavor: '"Episode 89: How I Built My Brand (by talking about building my brand)."',
   },
   {
-    id: 'course', name: 'Online Course Mill', tier: 9, layer: 1, icon: '🎓',
+    id: 'course', name: 'Online Course Mill', gate: 'content', tier: 9, layer: 1, icon: '🎓',
     desc: 'Sell a $499 course on how to sell $499 courses. The funnel feeds itself.',
     cost: { base: 20000000, growth: 1.15 }, auth: -7, prod: { base: 720, perUnit: 0 },
     flavor: '"Module 1: Believe in yourself. Module 2: Charge for it."',
   },
   {
-    id: 'conference', name: 'Thought Leadership Summit', tier: 10, layer: 1, icon: '🏛️',
+    id: 'conference', name: 'Thought Leadership Summit', gate: 'content', tier: 10, layer: 1, icon: '🏛️',
     desc: 'Host a conference where everyone pays to watch you talk about how you got here.',
     cost: { base: 100000000, growth: 1.15 }, auth: -8, prod: { base: 1500, perUnit: 0 },
     flavor: '"Keynote: The Art of the Keynote."',
   },
   {
-    id: 'brand', name: 'Personal Brand Inc.', tier: 11, layer: 2, icon: '💼',
+    id: 'brand', name: 'Personal Brand Inc.', gate: 'reach', tier: 11, layer: 2, icon: '💼',
     desc: 'Incorporate yourself. You are now a legal entity with a mission statement and a logo.',
     cost: { base: 500000000, growth: 1.15 }, auth: -9, prod: { base: 3000, perUnit: 0 },
     flavor: '"Our mission: to be the most followed entity in the room."',
   },
   {
-    id: 'franchise', name: 'Franchise Your Persona', tier: 12, layer: 2, icon: '🏪',
+    id: 'franchise', name: 'Franchise Your Persona', gate: 'reach', tier: 12, layer: 2, icon: '🏪',
     desc: 'License your face to other people who want to be you. They pay you to be a worse version of you.',
     cost: { base: 2500000000, growth: 1.15 }, auth: -10, prod: { base: 6000, perUnit: 0 },
     flavor: '"Now with 40% less authenticity, in every major city."',
   },
   {
-    id: 'media', name: 'Media Conglomerate', tier: 13, layer: 2, icon: '📺',
+    id: 'media', name: 'Media Conglomerate', gate: 'reach', tier: 13, layer: 2, icon: '📺',
     desc: 'Buy the outlets that interview you. Now the news is just you, reporting on you.',
     cost: { base: 12000000000, growth: 1.15 }, auth: -11, prod: { base: 12000, perUnit: 0 },
     flavor: '"Tonight at 9: You, on You, with special guest You."',
   },
   {
-    id: 'ipo', name: 'Take Yourself Public', tier: 14, layer: 3, icon: '📈',
+    id: 'ipo', name: 'Take Yourself Public', gate: 'reach', tier: 14, layer: 3, icon: '📈',
     desc: 'IPO your personal brand. Shareholders now own a piece of your soul. They want growth.',
     cost: { base: 60000000000, growth: 1.15 }, auth: -12, prod: { base: 25000, perUnit: 0 },
     flavor: '"Q3 earnings: engagement up, authenticity down, shareholders thrilled."',
   },
   {
-    id: 'exchange', name: 'Thought Leadership Exchange', tier: 15, layer: 3, icon: '🏦',
+    id: 'exchange', name: 'Thought Leadership Exchange', gate: 'reach', tier: 15, layer: 3, icon: '🏦',
     desc: 'A stock exchange where influence is the currency and you are the reserve asset.',
     cost: { base: 300000000000, growth: 1.15 }, auth: -13, prod: { base: 50000, perUnit: 0 },
     flavor: '"Your clout is now a ticker symbol. It only goes up."',
   },
   {
-    id: 'algorithm', name: 'Become the Algorithm', tier: 16, layer: 4, icon: '👁️',
+    id: 'algorithm', name: 'Become the Algorithm', gate: 'content', tier: 16, layer: 4, icon: '👁️',
     desc: 'You are no longer farming the algorithm. You are the algorithm. The room is you now.',
     cost: { base: 1500000000000, growth: 1.15 }, auth: -15, prod: { base: 100000, perUnit: 0 },
     flavor: '"The number going up is the only thing that has ever felt like progress."',
@@ -573,279 +573,13 @@ DATA.ANALYTICS_UPGRADES = [
   },
 ];
 
-/* ---------- Outsource workers ---------- */
-DATA.WORKERS = [
-  {
-    id: 'raj', name: 'Rajesh Kumar', role: 'Engagement Specialist', emoji: '🧑‍💼', country: 'India',
-    cost: { base: 300, growth: 1.3 }, prod: { base: 2, perUnit: 0 }, auth: -0.3,
-    bio: 'Very hard worker. Will like all post. Please give more work.',
-    phrases: [
-      'Sir, very informative post. Please follow me back.',
-      'Great post sir! Very useful content. God bless you.',
-      'This is very nice. I like it. Keep posting sir.',
-      'Excellent thoughts. I learned many things today.',
-      'Sir please check my profile also. I post daily.',
-    ],
-    replies: [
-      'Sir, I liked all 50 posts. Please pay on time.',
-      'Yes sir, working very hard. Need more likes?',
-      'Sir, my friend also wants this job. Very good worker.',
-      'I am doing best sir. The comments are very professional.',
-    ],
-  },
-  {
-    id: 'maria', name: 'Maria Santos', role: 'Comment Team Lead', emoji: '👩‍💼', country: 'Philippines',
-    cost: { base: 800, growth: 1.3 }, prod: { base: 5, perUnit: 0 }, auth: -0.5,
-    bio: 'Team of 10. We comment all day. Fast fingers.',
-    phrases: [
-      'This! 🙌 Great share!',
-      'Absolutely agree! Very well said.',
-      'Thanks for sharing this!',
-      'So true! I was just thinking this.',
-      'Amazing post! More please!',
-    ],
-    replies: [
-      'Boss, team is ready. We comment on everything.',
-      'We need more posts boss. Fingers getting slow.',
-      'The comments are looking very natural yes?',
-      'Boss, pay increase? We work very hard.',
-    ],
-  },
-  {
-    id: 'dmitri', name: 'Dmitri Volkov', role: 'Account Network Operator', emoji: '🧔', country: 'Eastern Europe',
-    cost: { base: 2500, growth: 1.3 }, prod: { base: 12, perUnit: 0 }, auth: -1,
-    bio: 'We run 5,000 accounts. Proxies. Rotations. You always get noticed. Guaranteed.',
-    phrases: [
-      'Great post. Our bot network engaged.',
-      'This one went to 2,000 accounts. Good.',
-      'Engagement confirmed. Network active.',
-      'We boosted this post. Very effective.',
-    ],
-    replies: [
-      'Network is stable. 5,000 accounts online.',
-      'Do not worry about detection. We are professionals.',
-      'We can push 10,000 more accounts if you pay.',
-      'The algorithm cannot see us. Trust me.',
-    ],
-  },
-  {
-    id: 'yuki', name: 'Yuki Tanaka', role: 'Content Farm Manager', emoji: '👩‍💻', country: 'Japan',
-    cost: { base: 8000, growth: 1.3 }, prod: { base: 30, perUnit: 0 }, auth: -2,
-    bio: 'We write 10,000 posts a day. AI assisted. Human approved. Nobody reads them.',
-    phrases: [
-      'This post is very good. We will repost it 500 times.',
-      'Content farm is running. 10,000 posts today.',
-      'We translated your post into 12 languages. All of them wrong.',
-      'The engagement is very high. The content is very low.',
-    ],
-    replies: [
-      'Boss, the farm is full. We need more servers.',
-      'We wrote 10,000 posts. 9,999 were about synergy.',
-      'The AI is learning. It now only writes about itself.',
-      'Content farm report: all posts published. Zero read.',
-    ],
-  },
-  {
-    id: 'amara', name: 'Amara Osei', role: 'Influencer Network Lead', emoji: '👩‍🎤', country: 'Nigeria',
-    cost: { base: 20000, growth: 1.3 }, prod: { base: 60, perUnit: 0 }, auth: -3,
-    bio: 'I manage 200 micro-influencers. They will all follow you. They will all forget you.',
-    phrases: [
-      'My influencers are boosting your post. Very authentic.',
-      '200 influencers engaged. All of them are real people. Mostly.',
-      'Your brand is trending in my network. The network is 200 people.',
-      'We made you look famous. The fame is rented.',
-    ],
-    replies: [
-      'Boss, the influencers want more money. They always want more.',
-      'I can get you 500 more influencers. They are very cheap.',
-      'The network is growing. The authenticity is shrinking.',
-      'Influencer report: 200 engaged. 0 remembered your name.',
-    ],
-  },
-  {
-    id: 'viktor', name: 'Viktor Petrov', role: 'Deepfake Specialist', emoji: '🎭', country: 'Russia',
-    cost: { base: 50000, growth: 1.3 }, prod: { base: 120, perUnit: 0 }, auth: -5,
-    bio: 'I make videos of you saying things you never said. The algorithm loves them.',
-    phrases: [
-      'Deepfake ready. You are now a motivational speaker.',
-      'I made you cry on camera. Very emotional. Very fake.',
-      'The video of you is trending. You were never there.',
-      'Your face is now a product. Congratulations.',
-    ],
-    replies: [
-      'Boss, the deepfake is viral. You are famous for a lie.',
-      'I can make you say anything. The algorithm will believe it.',
-      'The video is 100% fake. The engagement is 100% real.',
-      'Deepfake report: 1 million views. 0 real moments.',
-    ],
-  },
-  {
-    id: 'sofia', name: 'Sofia Almeida', role: 'Ghostwriter Collective', emoji: '✍️', country: 'Brazil',
-    cost: { base: 120000, growth: 1.3 }, prod: { base: 250, perUnit: 0 }, auth: -8,
-    bio: 'We write your thoughts for you. You have no thoughts. We provide them.',
-    phrases: [
-      'We wrote your post. It is very profound. You did not write it.',
-      'Your book is ghostwritten. The ghost is a team of 40.',
-      'We made you sound smart. The smart is rented.',
-      'Your thoughts are now a subscription service.',
-    ],
-    replies: [
-      'Boss, we need more topics. You have run out of thoughts.',
-      'The ghostwriters are unionizing. They want credit.',
-      'We wrote 40 posts. All of them are about how great you are.',
-      'Ghostwriter report: 40 posts. 0 original ideas.',
-    ],
-  },
-  {
-    id: 'chen', name: 'Chen Wei', role: 'Algorithm Whisperer', emoji: '🔮', country: 'China',
-    cost: { base: 300000, growth: 1.3 }, prod: { base: 500, perUnit: 0 }, auth: -12,
-    bio: 'I know what the algorithm wants. The algorithm wants everything. I give it everything.',
-    phrases: [
-      'The algorithm is pleased. It wants more.',
-      'I whispered to the algorithm. It whispered back. It said "more".',
-      'Your content is now optimized for the void.',
-      'The algorithm has chosen you. It chooses everyone.',
-    ],
-    replies: [
-      'Boss, the algorithm is hungry. Feed it.',
-      'I have optimized your soul for engagement.',
-      'The algorithm does not sleep. Neither do I.',
-      'Whisper report: the algorithm wants your authenticity. All of it.',
-    ],
-  },
-];
 
-/* ---------- Telegram engagement pods ---------- */
-DATA.PODS = [
-  {
-    id: 'pod1', name: 'Engagement Pod Alpha', icon: '👥', members: 24,
-    desc: 'A group of professionals who agree to like and comment on each other\'s posts in the first hour.',
-    cost: { base: 50, growth: 1.15 }, prod: { base: 0.8, perUnit: 0 }, auth: -0.1,
-    messages: [
-      'Welcome! Post your content here and everyone will boost it. 🙏',
-      'New rule: like everything within 1 hour of posting. The algorithm loves speed.',
-      'I posted my morning thought leadership. Please boost! 🙏',
-      'Boosted your post. Great content sir!',
-      'Does anyone have a template for a humble brag? Asking for a friend.',
-      'Remember: we are a community of like-minded professionals. We are NOT a pod. This is NOT engagement farming.',
-      'Posting at 9am EST tomorrow. Be ready.',
-      'The algorithm is watching. And it loves what it sees.',
-    ],
-  },
-  {
-    id: 'pod2', name: 'Thought Leaders Circle', icon: '🧠', members: 40,
-    desc: 'Exclusive circle for aspiring thought leaders. We boost each other to the top.',
-    cost: { base: 300, growth: 1.15 }, prod: { base: 2, perUnit: 0 }, auth: -0.2,
-    messages: [
-      'Welcome to the inner circle. Here we become thought leaders together.',
-      'Today\'s topic: how to post about AI without knowing anything about AI.',
-      'I\'m humbled to announce I joined this circle. 🙏',
-      'Boost my carousel please. It took me 4 hours to make.',
-      'The secret is: post at 9am, use 3 emojis, end with a question.',
-      'We are not a pod. We are a "professional network".',
-    ],
-  },
-  {
-    id: 'pod3', name: 'Viral Syndicate', icon: '🔥', members: 60,
-    desc: 'For those who want to go viral. The algorithm is watching, and it is impressed.',
-    cost: { base: 1200, growth: 1.15 }, prod: { base: 5, perUnit: 0 }, auth: -0.5,
-    messages: [
-      'You made it. Welcome to the Syndicate.',
-      'We boost hard. We boost fast. We boost without mercy.',
-      'The algorithm is already a fan. It just doesn\'t know it yet.',
-      'Post your most controversial hot take. We\'ll make it viral.',
-      'The Syndicate only wins. The algorithm is on our side.',
-    ],
-  },
-  {
-    id: 'pod4', name: 'The Inner Circle', icon: '🔮', members: 120,
-    desc: 'A secret society of thought leaders. The secret is that there is no secret.',
-    cost: { base: 5000, growth: 1.15 }, prod: { base: 12, perUnit: 0 }, auth: -1,
-    messages: [
-      'Welcome to the Inner Circle. We are all thought leaders here.',
-      'The first rule of the Inner Circle: post about the Inner Circle.',
-      'We have a secret handshake. It is liking each other\'s posts.',
-      'The algorithm has noticed us. It is impressed. It is always impressed.',
-      'We are not a cult. We are a "professional community".',
-    ],
-  },
-  {
-    id: 'pod5', name: 'The 5AM Club', icon: '🌅', members: 200,
-    desc: 'For those who wake up at 5am to post about waking up at 5am.',
-    cost: { base: 20000, growth: 1.15 }, prod: { base: 25, perUnit: 0 }, auth: -1.5,
-    messages: [
-      '5am. The city is asleep. We are posting.',
-      'I woke up at 4:59am to post about waking up at 5am.',
-      'The grind never sleeps. Neither do we. That\'s the problem.',
-      'Post your morning routine. The algorithm loves routines.',
-      'We are all exhausted. We are all thriving. We are all lying.',
-    ],
-  },
-  {
-    id: 'pod6', name: 'The Hustle Hive', icon: '🐝', members: 500,
-    desc: 'A swarm of hustlers. The hive mind is real. The hive mind is empty.',
-    cost: { base: 80000, growth: 1.15 }, prod: { base: 50, perUnit: 0 }, auth: -2,
-    messages: [
-      'Welcome to the Hive. We hustle as one.',
-      'The queen bee is the algorithm. We serve the queen.',
-      'Post your side hustle. We will all pretend to care.',
-      'The Hive is buzzing. The buzz is automated.',
-      'We are all worker bees. The honey is engagement.',
-    ],
-  },
-  {
-    id: 'pod7', name: 'The Thought Cartel', icon: '🕴️', members: 1000,
-    desc: 'A monopoly on thought leadership. We control the narrative. The narrative is empty.',
-    cost: { base: 300000, growth: 1.15 }, prod: { base: 100, perUnit: 0 }, auth: -3,
-    messages: [
-      'Welcome to the Cartel. We own the conversation.',
-      'The narrative is ours. The narrative is "post more".',
-      'We have cornered the market on synergy.',
-      'The Cartel does not compete. The Cartel dominates.',
-      'We are the thought leaders. The thoughts are rented.',
-    ],
-  },
-  {
-    id: 'pod8', name: 'The Algorithm\'s Chosen', icon: '👁️', members: 5000,
-    desc: 'The algorithm has chosen us. It chooses everyone. We are all chosen.',
-    cost: { base: 1000000, growth: 1.15 }, prod: { base: 200, perUnit: 0 }, auth: -5,
-    messages: [
-      'The algorithm has chosen you. It chooses everyone.',
-      'We are the chosen. The chosen are the bots.',
-      'The algorithm sees all. The algorithm sees nothing.',
-      'Post your devotion. The algorithm is watching.',
-      'We are all the algorithm now. The algorithm is us.',
-    ],
-  },
-];
 
-/* ---------- Bot service configs ---------- */
-DATA.BOT_CONFIGS = [
-  { id: 'likebot', name: 'LikeBot', icon: '👍', desc: 'Likes every post you make. Instantly. Like a loyal dog.', cost: { base: 500, growth: 1.5 }, prod: { base: 3, perUnit: 0 }, auth: -0.4 },
-  { id: 'commentbot', name: 'CommentBot', icon: '💬', desc: 'Comments "Great post!" on everything. Originality guaranteed.', cost: { base: 1500, growth: 1.5 }, prod: { base: 6, perUnit: 0 }, auth: -0.8 },
-  { id: 'followbot', name: 'FollowBot', icon: '➕', desc: 'Follows and unfollows 500 people a day. The algorithm loves the activity. So do we.', cost: { base: 4000, growth: 1.5 }, prod: { base: 12, perUnit: 0 }, auth: -1.5 },
-  { id: 'replybot', name: 'ReplyBot', icon: '🔁', desc: 'Replies to every comment on your posts. With AI. The AI is a random phrase generator.', cost: { base: 10000, growth: 1.5 }, prod: { base: 20, perUnit: 0 }, auth: -2 },
-  { id: 'sharebot', name: 'ShareBot', icon: '🔗', desc: 'Shares your posts to 10,000 accounts. The accounts are empty. The shares are real.', cost: { base: 25000, growth: 1.5 }, prod: { base: 40, perUnit: 0 }, auth: -3 },
-  { id: 'viewbot', name: 'ViewBot', icon: '👀', desc: 'Views your profile 10,000 times a day. The views are from nowhere. The nowhere is watching.', cost: { base: 60000, growth: 1.5 }, prod: { base: 80, perUnit: 0 }, auth: -4 },
-  { id: 'trendbot', name: 'TrendBot', icon: '📈', desc: 'Makes your posts trend. The trend is manufactured. The manufacturing is automated.', cost: { base: 150000, growth: 1.5 }, prod: { base: 150, perUnit: 0 }, auth: -6 },
-  { id: 'influencebot', name: 'InfluenceBot', icon: '👑', desc: 'Makes you influential. The influence is a number. The number is a lie.', cost: { base: 400000, growth: 1.5 }, prod: { base: 300, perUnit: 0 }, auth: -8 },
-  { id: 'celebritybot', name: 'CelebrityBot', icon: '🌟', desc: 'Makes you a celebrity. The celebrity is a bot. The bot is you.', cost: { base: 1000000, growth: 1.5 }, prod: { base: 600, perUnit: 0 }, auth: -10 },
-  { id: 'godbot', name: 'GodBot', icon: '👁️', desc: 'Makes you the algorithm. The algorithm is God. God is a bot.', cost: { base: 5000000, growth: 1.5 }, prod: { base: 1200, perUnit: 0 }, auth: -15 },
-];
 
-/* ---------- Dark web marketplace listings ---------- */
-DATA.DARK_LISTINGS = [
-  { id: 'dl1', name: '1,000 Likes (Organic Looking)', icon: '👍', desc: 'From real-looking accounts. They look real because they are real. Trust us.', cost: 800, reward: 1000, auth: -2 },
-  { id: 'dl2', name: '500 Comments (Custom Phrases)', icon: '💬', desc: 'Your choice of phrase. Popular: "Great post!", "This! 🙌", "Sir, very informative".', cost: 2000, reward: 1500, auth: -3 },
-  { id: 'dl3', name: 'Follower Package (2,000)', icon: '➕', desc: 'Followers that will never engage. Perfect for looking influential.', cost: 5000, reward: 2000, auth: -5 },
-  { id: 'dl4', name: 'Viral Booster (One Time)', icon: '🚀', desc: 'We push your post to 100,000 accounts. It will go viral. The algorithm will celebrate you.', cost: 12000, reward: 5000, auth: -8 },
-  { id: 'dl5', name: 'The "Thought Leader" Package', icon: '🧠', desc: 'We make you a thought leader. Verified badge included. You have earned it.', cost: 25000, reward: 10000, auth: -12 },
-  { id: 'dl6', name: 'Verified Badge (Real)', icon: '✔️', desc: 'A verified badge. It is real. The verification is fake. The badge is real.', cost: 50000, reward: 20000, auth: -15 },
-  { id: 'dl7', name: 'Shadowban Removal', icon: '🕶️', desc: 'We remove your shadowban. The algorithm will never know. The algorithm knows everything.', cost: 100000, reward: 40000, auth: -20 },
-  { id: 'dl8', name: 'Trending Topic Injection', icon: '📈', desc: 'We make your post trend. The trend is manufactured. The manufacturing is invisible.', cost: 200000, reward: 80000, auth: -25 },
-  { id: 'dl9', name: 'Celebrity Endorsement', icon: '🌟', desc: 'A celebrity endorses you. The celebrity is a deepfake. The endorsement is real.', cost: 500000, reward: 200000, auth: -30 },
-  { id: 'dl10', name: 'The "Become the Algorithm" Package', icon: '👁️', desc: 'We make you the algorithm. The algorithm is you. You are the algorithm. There is no difference.', cost: 1000000, reward: 500000, auth: -50 },
-];
+
+
+
+
 
 /* ---------- Real commenters (for the comment stream) ---------- */
 DATA.COMMENTERS = [
@@ -890,15 +624,7 @@ DATA.TROLLS = [
   ] },
 ];
 
-/* ---------- Worker command phrases (player -> worker) ---------- */
-DATA.WORKER_COMMANDS = [
-  { id: 'like', label: '👍 Like all my posts', reply: 'Yes sir, liking everything now.' },
-  { id: 'comment', label: '💬 Comment on my posts', reply: 'Comments going out. Very professional ones.' },
-  { id: 'follow', label: '➕ Follow new people', reply: 'Following 200 new people today.' },
-  { id: 'report', label: '📊 Send engagement report', reply: 'Report: 1,200 likes, 400 comments, 98% organic. All thriving.' },
-  { id: 'pay', label: '💰 Pay bonus', reply: 'Thank you boss! Very generous! More work please!' },
-  { id: 'fire', label: '🚫 Fire worker', reply: 'No no please! I have family! I will work harder!' },
-];
+
 
 /* ---------- Notification templates ---------- */
 DATA.NOTIFS = {
@@ -994,27 +720,32 @@ DATA.CAL_PEOPLE = [
 ];
 
 /* ---------- Recommended people to follow ---------- */
+// `reach` is how many people SEE you when you connect — the relationship's value.
+// Following them puts your posts in their feed and their network notices you back.
+// Early game, relationships are the whole economy; the automation ladder later
+// replaces them with fake accounts. The satire: the hand-built network and the
+// bought network are the same number.
 DATA.RECOMMENDED = [
-  { id: 'rec1', name: 'Alex Rivera', role: 'Growth Hacker · 3x Founder', emoji: '🚀', color: '#0a66c2', followers: '12.4k', arch: 'greatpost' },
-  { id: 'rec2', name: 'Nina Patel', role: 'VP Marketing · Unicorn', emoji: '📈', color: '#e91e63', followers: '48k', arch: 'humbled' },
-  { id: 'rec3', name: 'Tom Okafor', role: 'LockedIn Coach', emoji: '🎯', color: '#00897b', followers: '210k', arch: 'thought' },
-  { id: 'rec4', name: 'Lena Fischer', role: 'AI Evangelist', emoji: '🤖', color: '#7e57c2', followers: '89k', arch: 'ai' },
-  { id: 'rec5', name: 'Marcus Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️', color: '#5c6bc0', followers: '1.2M', arch: 'gym' },
-  { id: 'rec6', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴', color: '#66a4a4', followers: '340k', arch: 'burnout' },
-  { id: 'rec7', name: 'Dr. Visionary', role: 'Global Thought Leader', emoji: '🧠', color: '#7e57c2', followers: '2.1M', arch: 'thought' },
-  { id: 'rec8', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨', color: '#ef5350', followers: '15k', arch: 'recruiter' },
+  { id: 'rec1', name: 'Alex Rivera', role: 'Growth Hacker · 3x Founder', emoji: '🚀', color: '#0a66c2', followers: '12.4k', reach: 12400, arch: 'greatpost' },
+  { id: 'rec2', name: 'Nina Patel', role: 'VP Marketing · Unicorn', emoji: '📈', color: '#e91e63', followers: '48k', reach: 48000, arch: 'humbled' },
+  { id: 'rec3', name: 'Tom Okafor', role: 'LockedIn Coach', emoji: '🎯', color: '#00897b', followers: '210k', reach: 210000, arch: 'thought' },
+  { id: 'rec4', name: 'Lena Fischer', role: 'AI Evangelist', emoji: '🤖', color: '#7e57c2', followers: '89k', reach: 89000, arch: 'ai' },
+  { id: 'rec5', name: 'Marcus Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️', color: '#5c6bc0', followers: '1.2M', reach: 1200000, arch: 'gym' },
+  { id: 'rec6', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴', color: '#66a4a4', followers: '340k', reach: 340000, arch: 'burnout' },
+  { id: 'rec7', name: 'Dr. Visionary', role: 'Global Thought Leader', emoji: '🧠', color: '#7e57c2', followers: '2.1M', reach: 2100000, arch: 'thought' },
+  { id: 'rec8', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨', color: '#ef5350', followers: '15k', reach: 15000, arch: 'recruiter' },
 ];
 
 /* ---------- Network people (want to Link & Build with you) ---------- */
 DATA.NETWORK_PEOPLE = [
-  { id: 'net1', name: 'Brad Thompson', role: 'Serial Networker · 40k connections', emoji: '🤝', color: '#0a66c2', arch: 'humbled' },
-  { id: 'net2', name: 'Chloe Nguyen', role: 'Startup Founder · Raising Series A', emoji: '🚀', color: '#e91e63', arch: 'greatpost' },
-  { id: 'net3', name: 'Dev Patel', role: 'Full-Stack · Open to collab', emoji: '💻', color: '#00897b', arch: 'ai' },
-  { id: 'net4', name: 'Amara Osei', role: 'Product Designer · Ex-FAANG', emoji: '🎨', color: '#7e57c2', arch: 'greatpost' },
-  { id: 'net5', name: 'Jake Miller', role: 'Sales · "Let\'s hop on a call"', emoji: '📞', color: '#5c6bc0', arch: 'mlm' },
-  { id: 'net6', name: 'Fatima Al-Rashid', role: 'Marketing Lead · Growth obsessed', emoji: '📈', color: '#ef5350', arch: 'greatpost' },
-  { id: 'net7', name: 'Lucas Weber', role: 'AI Engineer · Prompt whisperer', emoji: '🤖', color: '#00acc1', arch: 'ai' },
-  { id: 'net8', name: 'Grace Kim', role: 'HR · "I know a guy"', emoji: '👩‍💼', color: '#d32f2f', arch: 'recruiter' },
+  { id: 'net1', name: 'Brad Thompson', role: 'Serial Networker · 40k connections', emoji: '🤝', color: '#0a66c2', reach: 40000, arch: 'humbled' },
+  { id: 'net2', name: 'Chloe Nguyen', role: 'Startup Founder · Raising Series A', emoji: '🚀', color: '#e91e63', reach: 150000, arch: 'greatpost' },
+  { id: 'net3', name: 'Dev Patel', role: 'Full-Stack · Open to collab', emoji: '💻', color: '#00897b', reach: 25000, arch: 'ai' },
+  { id: 'net4', name: 'Amara Osei', role: 'Product Designer · Ex-FAANG', emoji: '🎨', color: '#7e57c2', reach: 80000, arch: 'greatpost' },
+  { id: 'net5', name: 'Jake Miller', role: 'Sales · "Let\'s hop on a call"', emoji: '📞', color: '#5c6bc0', reach: 12000, arch: 'mlm' },
+  { id: 'net6', name: 'Fatima Al-Rashid', role: 'Marketing Lead · Growth obsessed', emoji: '📈', color: '#ef5350', reach: 95000, arch: 'greatpost' },
+  { id: 'net7', name: 'Lucas Weber', role: 'AI Engineer · Prompt whisperer', emoji: '🤖', color: '#00acc1', reach: 30000, arch: 'ai' },
+  { id: 'net8', name: 'Grace Kim', role: 'HR · "I know a guy"', emoji: '👩‍💼', color: '#d32f2f', reach: 60000, arch: 'recruiter' },
 ];
 
 /* ---------- Bank (pathetic transactions) ---------- */
@@ -1333,11 +1064,7 @@ DATA.SKILLS = [
 // until earned — they are the vehicle for the scare posts and the reveal.
 DATA.ACHIEVEMENTS = [
   { id: 'first-post', icon: '🩸', name: 'First Blood', desc: 'Publish your first post.', secret: false },
-  { id: 'first-pod', icon: '🤝', name: 'The Pod', desc: 'Join your first engagement pod.', secret: false },
-  { id: 'first-worker', icon: '👔', name: 'The Understudy', desc: 'Hire your first outsourced worker.', secret: false },
-  { id: 'first-bot', icon: '🤖', name: 'The Machine', desc: 'Build EngageBot and stop posting by hand.', secret: false },
-  { id: 'first-dark', icon: '🌑', name: 'The Marketplace', desc: 'Buy your first dark-market listing.', secret: false },
-  { id: 'first-sponsor', icon: '💰', name: 'The Brand Deal', desc: 'Sign your first sponsor. Real money, fake clout.', secret: false },
+  { id: 'first-sponsor', icon: '💰', name: 'The Brand Deal', desc: 'Sign your one real sponsor. Real money, fake clout.', secret: false },
   { id: 'factory', icon: '🏭', name: 'The Factory', desc: 'Bring the AI Factory online.', secret: false },
   { id: 'viral-1', icon: '🔥', name: 'Viral', desc: 'Publish a viral post.', secret: false },
   { id: 'followers-1000', icon: '📈', name: 'A Thousand Empty Rooms', desc: 'Reach 1,000 followers.', secret: false },
@@ -1358,7 +1085,7 @@ DATA.ACHIEVEMENTS = [
 DATA.CHALLENGES = [
   { id: 'authentic', icon: '🕊️', name: 'Authentic', desc: 'Reach 500 followers with authenticity never below 90.', reward: { type: 'authFloor', value: 25 }, rewardDesc: 'Permanent +25 authenticity floor', check: 'auth' },
   { id: 'silent', icon: '🤫', name: 'Silent', desc: 'Publish 10 posts with no emojis, tags, or questions.', reward: { type: 'postMult', value: 0.1 }, rewardDesc: 'Permanent +10% post multiplier', check: 'silent' },
-  { id: 'purist', icon: '🧘', name: 'The Purist', desc: 'Reach the AI Factory without ever buying from the Marketplace.', reward: { type: 'reach', value: 0.25 }, rewardDesc: 'Permanent +25% reach', check: 'purist' },
+  { id: 'purist', icon: '🧘', name: 'The Purist', desc: 'Reach the AI Factory by buying only generators, never Premium.', reward: { type: 'reach', value: 0.25 }, rewardDesc: 'Permanent +25% reach', check: 'purist' },
   { id: 'ghost', icon: '👻', name: 'The Ghost', desc: 'Reach 100,000 impressions with fewer than 50 followers.', reward: { type: 'followers', value: 0.5 }, rewardDesc: 'Permanent +50% follower growth', check: 'ghost' },
   { id: 'survivor', icon: '🕶️', name: 'The Survivor', desc: 'Survive a full shadowban cycle and have your reach restored.', reward: { type: 'reach', value: 0.15 }, rewardDesc: 'Permanent +15% reach', check: 'survivor' },
 ];
@@ -1454,6 +1181,17 @@ DATA.NARRATOR = {
       pm: ["Strong post. We're routing more eyes to it."],
       auditor: ["Above-average engagement. Retention holding."],
     },
+    viral: {
+      coach: ["🚀 Viral. The post caught. The algorithm likes you. It doesn't like everyone."],
+      pm: ["🚀 Viral spike detected. Routing 10x more eyes. You've earned it."],
+      auditor: ["🚀 Viral event. The number jumped. It isn't real, but it felt real, didn't it?"],
+    },
+    // ---- relationships (the manual economy) ----
+    first_follow: {
+      coach: ["A connection. Someone real-ish noticed you. Build these — they're the only thing that's actually yours."],
+      pm: ["Relationship logged. Your network is growing. We can quantify it now."],
+      auditor: ["A connection. The hand-built network and the bought network are the same number. You never checked the difference."],
+    },
     // ---- delegation / automation ----
     first_generator: {
       coach: [
@@ -1468,36 +1206,10 @@ DATA.NARRATOR = {
         "First delegation logged. The hand is now optional.",
       ],
     },
-    first_worker: {
-      coach: ["You hired help. The algorithm approves of scale."],
-      pm: ["Outsourcing detected. Your margins are improving."],
-      auditor: ["Labor acquired. The work continues without you."],
-    },
-    bot_created: {
-      coach: ["You built a machine to be liked for you. Efficient."],
-      pm: ["We've rolled out automation to your account. You're a power user now."],
-      auditor: ["The bot is working hard. You are not."],
-    },
     factory: {
       coach: ["The factory is online. You just collect now."],
       pm: ["Full automation achieved. In the symphony of business, resilience is the crescendo."],
       auditor: ["The factory writes, comments, replies, lives. You watch. Retention holding."],
-    },
-    // ---- unlocks ----
-    telegram: {
-      coach: ["A new channel opened. The community is waiting for you."],
-      pm: ["Telegram integration live. Your network is expanding."],
-      auditor: ["New channel acquired. More rooms to perform in."],
-    },
-    bot: {
-      coach: ["A new tool for your brand. The algorithm is curious."],
-      pm: ["EngageBot™ is now available to you. Automate your workflow."],
-      auditor: ["Another service. Another subscription. The number still goes up."],
-    },
-    dark: {
-      coach: ["A door opened. The algorithm is watching, and it approves."],
-      pm: ["The marketplace is live. Real engagement, for a price."],
-      auditor: ["The marketplace. Where influence is bought, and the algorithm is proud."],
     },
     // ---- milestones ----
     followers_100: {

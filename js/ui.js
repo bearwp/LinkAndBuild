@@ -4,6 +4,19 @@
    ============================================================ */
 
 const UI = {
+  /* ---------- post tiers (by impressions) ---------- */
+  // A post's "tier" is earned, not rolled: it is a function of lifetime
+  // impressions. The rarity draw stays the *odds*; the tier is the *score*.
+  // Tiers are the ladder the near-miss bar climbs — each threshold is a rung.
+  IMP_TIERS: [
+    { min: 0,      label: 'Nobody', icon: '👤', cls: 'tier-0' },
+    { min: 100,    label: 'Noticed', icon: '👀', cls: 'tier-1' },
+    { min: 1000,   label: 'Rising', icon: '📈', cls: 'tier-2' },
+    { min: 10000,  label: 'Thought Leader', icon: '🧠', cls: 'tier-3' },
+    { min: 100000, label: 'Viral', icon: '🔥', cls: 'tier-4' },
+    { min: 1000000,label: 'Legend', icon: '👑', cls: 'tier-5' },
+  ],
+
   /* ---------- modal helpers ---------- */
   showModal(id) { document.getElementById(id).classList.remove('hidden'); },
   hideModal(id) { document.getElementById(id).classList.add('hidden'); },
@@ -58,6 +71,19 @@ const UI = {
     popIfChanged(likesEl, likesEl.textContent);
     popIfChanged(gfolEl, gfolEl.textContent);
 
+    // casino coin feel: while impressions are actively earning, sprinkle a
+    // small coin payout from the counter on a throttle so it reads as a
+    // jackpot trickling in, not spam.
+    this._impPayoutAt = this._impPayoutAt || 0;
+    const nowImp = Date.now();
+    const taxing = Engine.totalIps();
+    if (s.impressions > 0 && taxing > 0 && nowImp - this._impPayoutAt > 2600) {
+      this._impPayoutAt = nowImp;
+      const rect = impEl.getBoundingClientRect();
+      Juice.coins(rect.left + rect.width, rect.top + rect.height / 2, 3);
+      Juice.coin();
+    }
+
     // influence bar (always climbing — you are the CEO of LockedIn)
     if (s.authenticity > 100) s.authenticity = 100;
     if (s.authenticity < 0) s.authenticity = 0;
@@ -108,6 +134,61 @@ const UI = {
     }
     if (s.verified) {
       $('profile-name').innerHTML = s.name + ' <span style="color:#0a66c2">✔</span>';
+    }
+    this.applyAura();
+  },
+
+  /* ---------- the pauper→god aura ---------- */
+  // One scalar (Engine.aura) drives how big you FEEL. It ornaments the avatar
+  // (ring → crown → halo), warms the profile banner, and desaturates the body
+  // when you're still nobody. The narrator's register shift is the story; this
+  // is the visible ascent — a fresh account is a gray dot in a cold room, and a
+  // thousand-follower account wears a crown and makes the room glow.
+  applyAura() {
+    const aura = Engine.aura();
+    const body = document.body;
+    body.classList.toggle('aura-pauper', aura < 0.1);
+    body.classList.toggle('aura-rising', aura >= 0.1 && aura < 0.5);
+    body.classList.toggle('aura-god', aura >= 0.5);
+
+    const av = document.getElementById('profile-avatar');
+    if (!av) return;
+
+    // avatar ornamentation — the "body" growing with you
+    const ORNAMENTS = [
+      { min: 0.00, ring: '#ffffff', glow: 'none', crown: false, halo: false },
+      { min: 0.10, ring: '#0a66c2', glow: '0 0 0 3px rgba(10,102,194,0.25)', crown: false, halo: false },
+      { min: 0.30, ring: '#b8860b', glow: '0 0 12px 2px rgba(184,134,11,0.35)', crown: false, halo: false },
+      { min: 0.55, ring: '#ffd700', glow: '0 0 16px 4px rgba(255,215,0,0.5)', crown: true, halo: false },
+      { min: 0.80, ring: '#ffd700', glow: '0 0 24px 8px rgba(255,215,0,0.65)', crown: true, halo: true },
+    ];
+    let o = ORNAMENTS[0];
+    for (const tier of ORNAMENTS) if (aura >= tier.min) o = tier;
+
+    if (av.dataset.aura !== o.min) {
+      av.dataset.aura = o.min;
+      av.style.setProperty('--aura-ring', o.ring);
+      av.style.setProperty('--aura-glow', o.glow);
+      // manage crown + halo children (kept separate from the avatar image)
+      if (o.crown && !av.querySelector('.aura-crown')) {
+        const crown = document.createElement('div');
+        crown.className = 'aura-crown';
+        crown.textContent = '👑';
+        av.appendChild(crown);
+      } else if (!o.crown) {
+        const crown = av.querySelector('.aura-crown');
+        if (crown) crown.remove();
+      }
+      if (o.halo && !av.querySelector('.aura-halo')) {
+        const halo = document.createElement('div');
+        halo.className = 'aura-halo';
+        halo.style.border = '2px solid rgba(255,215,0,0.7)';
+        halo.style.background = 'radial-gradient(circle, rgba(255,215,0,0.12), rgba(255,215,0,0) 70%)';
+        av.appendChild(halo);
+      } else if (!o.halo) {
+        const halo = av.querySelector('.aura-halo');
+        if (halo) halo.remove();
+      }
     }
   },
 
@@ -199,19 +280,13 @@ const UI = {
     const fill = document.getElementById('next-fill');
     const sub = document.getElementById('next-sub');
     if (!title) return;
-    // find the cheapest affordable-ish next purchase (generator or upgrade or worker)
+    // find the cheapest affordable-ish next purchase (generator or upgrade)
     let next = null;
     for (const g of DATA.GENERATORS) {
       if ((g.layer || 1) > s.prestige.layer) continue;
       if (Engine.genCount(g.id) === 0) {
         const cost = Engine.costOf(g, 0);
         if (!next || cost < next.cost) next = { name: g.name, cost, icon: g.icon, kind: 'generator' };
-      }
-    }
-    for (const w of DATA.WORKERS) {
-      if (Engine.workerCount(w.id) === 0) {
-        const cost = Engine.costOf(w, 0);
-        if (!next || cost < next.cost) next = { name: w.name, cost, icon: w.emoji, kind: 'worker' };
       }
     }
     for (const u of DATA.UPGRADES) {
@@ -348,13 +423,19 @@ const UI = {
     const likeNew = Engine.fmtTick(stats.likes);
     const comNew = Engine.fmtTick(stats.comments);
     if (impEl && impEl.textContent !== impNew) {
+      // how many impressions landed since the last paint — the amount we
+      // cascade into the "+N" float so every gain is legible, not just a blur
+      const delta = stats.impressions - (post._lastShownImp || 0);
+      post._lastShownImp = stats.impressions;
       impEl.textContent = impNew;
-      // milestone sound only, no scale pop
-      const imp = Math.floor(stats.impressions);
-      const next = this._nextImpMilestone(post);
-      if (next && imp >= next) {
-        post._impMilestone = next;
-        Juice.pop();
+      // each incoming impression reads as a small "win" on this post's
+      // counter; the big fanfare is reserved for tier-ups
+      this._impressionWin(post, delta);
+      const tier = this._impTier(post);
+      if ((post._tierMin || 0) !== tier.min) {
+        post._tierMin = tier.min;
+        this._firePost(post);
+        Juice.coin();
       }
     }
     if (likeEl && likeEl.textContent !== likeNew) {
@@ -408,19 +489,151 @@ const UI = {
     }
   },
 
-  _nextImpMilestone(post) {
-    const imp = Math.floor(post.stats.impressions);
-    const ms = [50, 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000];
-    // find the highest milestone already crossed
-    let crossed = 0;
-    for (const m of ms) {
-      if (imp >= m) crossed = m;
+  _impTier(post) {
+    const imp = post.stats.impressions;
+    let tier = this.IMP_TIERS[0];
+    for (const t of this.IMP_TIERS) {
+      if (imp >= t.min) tier = t;
     }
-    // if we've crossed a new milestone since last pop, fire it
-    if (crossed > (post._impMilestone || 0)) {
-      return crossed;
+    return tier;
+  },
+
+  // Tier up — the badge that latches to the post and relabels it as it climbs
+  // impressions. It is the "you've won" signal that stays instead of re-firing
+  // stimulus every frame, so the win reads once and then quiets down.
+  _firePost(post) {
+    const card = this._cards.get(post.id);
+    if (!card) return;
+    const tier = this._impTier(post);
+    if (!card._fireEl) {
+      card._fireEl = card.querySelector('.fire-post');
     }
-    return null;
+    if (!card._fireEl) {
+      card._fireEl = document.createElement('div');
+      card._fireEl.className = 'fire-post';
+      card.insertBefore(card._fireEl, card.firstChild);
+    }
+    card._fireEl.classList.remove('hidden');
+    card._fireEl.innerHTML = `<span>${tier.icon}</span> ${tier.label.toUpperCase()}`;
+    // clear any lower-tier class, apply the current one
+    for (const t of this.IMP_TIERS) card.classList.remove(t.cls);
+    card.classList.add(tier.cls);
+    post._tierMin = tier.min;
+  },
+
+  // An impression came in. The impression NUMBER is what earns — so that's
+  // what glows and bumps a little on every impression. The post itself stays
+  // still. The counter glows gold and bobs as it ticks up, giving one quiet
+  // hit per impression; the coin + pop are throttled per post so a flood reads
+  // as a steady rain of wins, not a wall of sound.
+  _impressionWin(post, delta) {
+    const card = this._cards.get(post.id);
+    if (!card) return;
+    const now = performance.now();
+    const impEl = card._statEls && card._statEls.imp;
+    const gained = Math.max(1, Math.round(delta || 1));
+    // aura scales the juice: at 0 followers the pop is small and the float is a
+    // whisper; at god tier the same +1 hits with a heavier squash and a louder
+    // thock. Identical action, but the *magnitude* of the win grows with you.
+    const aura = Engine.aura();
+    const popPower = 1 + aura * 0.6;      // up to 1.6x squash
+    const glowPower = 0.5 + aura;         // up to 1.5x glow
+    const floatSize = 13 + aura * 9;      // 13px → 22px float
+    if (impEl) {
+      impEl.classList.remove('imp-glow');
+      impEl.style.setProperty('--imp-dx', ((Math.random() - 0.5) * 10 * popPower).toFixed(1) + 'px');
+      impEl.style.setProperty('--imp-rot', ((Math.random() - 0.5) * 16 * popPower).toFixed(1) + 'deg');
+      impEl.style.setProperty('--imp-drift', (Math.random() * 90).toFixed(0) + 'ms');
+      impEl.style.setProperty('--imp-pop', popPower.toFixed(2));
+      impEl.style.setProperty('--imp-glow', glowPower.toFixed(2));
+      void impEl.offsetWidth;
+      impEl.classList.add('imp-glow');
+      const rect = impEl.getBoundingClientRect();
+      const cx = rect.left + rect.width + 4;
+      const cy = rect.top;
+      Juice.floatUp(cx, cy, '+' + Engine.fmt(gained), floatSize);
+    }
+    Juice.thock();
+    // coin fly-off stays on a per-post beat so the big piece never strobes
+    const BEAT = 700;
+    if (!post._lastBeat || now - post._lastBeat >= BEAT) {
+      post._lastBeat = now;
+      if (impEl) {
+        const rect = impEl.getBoundingClientRect();
+        Juice.coins(rect.left + rect.width, rect.top, 1);
+      }
+    }
+  },
+
+  // viral burst — the jackpot payoff. Before the big payday, the post's
+  // modifier chain fires left-to-right like a row of Jokers: each chip bounces,
+  // nudges the card, and steps the pitch up, building anticipation until the
+  // confetti + screen shake lands as the release. The win sets the post ON
+  // FIRE — real flames lick off its edges — the earned, persistent signal that
+  // this post caught, instead of a text label.
+  viralBurst(post) {
+    const card = this._cards.get(post.id);
+    if (card) {
+      this._ignite(post, card);
+      const rect = card.getBoundingClientRect();
+      // staggered combo cascade — the modifiers reveal one by one
+      const chips = Engine.comboChain(post);
+      chips.forEach((chip, i) => {
+        setTimeout(() => {
+          Juice.comboChip(
+            rect.left + rect.width / 2,
+            rect.top + 20 + i * 22,
+            chip.icon,
+            chip.label + ' ' + chip.text
+          );
+          Juice.kaChing(i);
+          const impEl = card._statEls && card._statEls.imp;
+          if (impEl) {
+            impEl.classList.remove('imp-glow');
+            void impEl.offsetWidth;
+            impEl.classList.add('imp-glow');
+          }
+        }, i * 140);
+      });
+      const totalDelay = chips.length * 140;
+      setTimeout(() => {
+        card.classList.add('viral-flash');
+        Juice.shake(card);
+        Juice.coins(rect.left + rect.width / 2, rect.top, 16);
+        Juice.confetti(rect.left + rect.width / 2, rect.top + 40, 60);
+        Juice.chime();
+      }, totalDelay + 120);
+    } else {
+      Juice.confetti(window.innerWidth / 2, window.innerHeight / 3, 60);
+      Juice.chime();
+    }
+    const flash = document.createElement('div');
+    flash.className = 'viral-screen-flash';
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+  },
+
+  // light a post on fire: flames flicker off its top edge and a warm glow
+  // wraps the card. Persistent — the post stays "on fire" as its earned state.
+  _ignite(post, card) {
+    post.onFire = true;
+    card.classList.add('on-fire');
+    if (!card._flames) {
+      card._flames = document.createElement('div');
+      card._flames.className = 'flames';
+      // a row of flame tongues, each flickering on its own beat
+      for (let i = 0; i < 7; i++) {
+        const f = document.createElement('span');
+        f.className = 'flame';
+        f.style.left = (i * 14.5 + 2) + '%';
+        f.style.animationDelay = (Math.random() * 0.6) + 's';
+        f.style.animationDuration = (0.7 + Math.random() * 0.5) + 's';
+        f.style.width = (12 + Math.random() * 8) + 'px';
+        f.style.height = (20 + Math.random() * 10) + 'px';
+        card._flames.appendChild(f);
+      }
+      card.appendChild(card._flames);
+    }
   },
 
   // Append more NPC posts as the player scrolls (infinite scroll)
@@ -462,14 +675,6 @@ const UI = {
     const isYou = post.authorId === 'you';
     const youTag = isYou ? '<span class="you-tag">• You</span>' : '';
 
-    const formatTag = post.format !== 'text'
-      ? `<div class="post-format-tag ${post.format === 'carousel' ? 'risky' : ''}">${post.format === 'carousel' ? '📑 Carousel' : post.format === 'poll' ? '📊 Poll' : post.format === 'photo' ? '🖼️ Photo' : '🎥 Video'}</div>`
-      : '';
-
-    const rarityTag = post.rarity !== 'common'
-      ? `<div class="post-format-tag">${post.rarity === 'legendary' ? '🔥' : post.rarity === 'epic' ? '✨' : post.rarity === 'rare' ? '💎' : '⭐'} ${post.rarity}</div>`
-      : '';
-
     const stats = post.stats;
     const likeBtn = isYou
       ? `<div class="pa-btn"><span class="thumb">👍</span> Like</div>`
@@ -502,6 +707,7 @@ const UI = {
     }
 
     card.innerHTML = `
+      <div class="fire-post hidden"></div>
       <div class="post-head">
         <div class="avatar" style="background:${post.authorColor}">${post.authorEmoji}</div>
         <div>
@@ -512,7 +718,6 @@ const UI = {
       <div class="post-body">${this.escapeHtml(post.content)}</div>
       ${post.reactionGif ? `<div class="post-gif"><img src="data:image/svg+xml;utf8,${encodeURIComponent(post.reactionGif.svg)}" alt="${post.reactionGif.label}" loading="lazy"></div>` : ''}
       ${post.image ? `<div class="post-image"><img src="${post.image}" alt="" loading="lazy"></div>` : ''}
-      ${formatTag}${rarityTag}
       <div class="post-stats">
         <span><b class="st-imp">${Engine.fmt(stats.impressions)}</b> impressions</span>
         <span><b class="st-like">${Engine.fmt(stats.likes)}</b> likes</span>
@@ -545,6 +750,11 @@ const UI = {
       post._showAllComments = true;
       this.renderFeed();
     });
+
+    // restore any earned tier badge (in case this card was rebuilt)
+    if (this._impTier(post).min > 0) this._firePost(post);
+    // restore the on-fire state so flames persist across feed rebuilds
+    if (post.onFire) this._ignite(post, card);
 
     return card;
   },
@@ -679,9 +889,8 @@ const UI = {
     const s = State.data;
     const paneG = document.getElementById('g-pane-generators');
     const paneU = document.getElementById('g-pane-upgrades');
-    const paneO = document.getElementById('g-pane-outsource');
 
-    // generators
+    // generators (the factory floor: each row is a machine slot)
     paneG.innerHTML = '';
     for (const g of DATA.GENERATORS) {
       if ((g.layer || 1) > s.prestige.layer) continue;
@@ -689,13 +898,17 @@ const UI = {
       const cost = Engine.costOf(g, owned);
       const affordable = s.impressions >= cost;
       const item = document.createElement('div');
-      item.className = 'g-item' + (owned > 0 ? ' owned' : '');
+      item.className = 'g-item' + (owned > 0 ? ' owned running' : ' idle');
       item.innerHTML = `
         <div class="g-item-icon">${g.icon}</div>
         <div class="g-item-info">
-          <div class="g-item-name">${g.name} <span style="color:#999;font-size:11px">${owned > 0 ? '×' + owned : ''}</span></div>
+          <div class="g-item-name">${g.name} <span class="g-item-count">${owned > 0 ? '×' + owned : ''}</span></div>
           <div class="g-item-desc">${g.desc}</div>
-          <div class="g-item-stats">+${Engine.fmt(Engine.prodOf(g, 1))} imp/s · +${Math.abs(g.auth)} influence/s · ${g.flavor}</div>
+          <div class="g-item-stats">
+            ${owned > 0
+              ? `<span class="g-output">+${Engine.fmt(Engine.prodOf(g, owned))} imp/s</span> <span class="g-per">(+${Engine.fmt(Engine.prodOf(g, 1))} each)</span>`
+              : `<span class="g-would">⚙️ +${Engine.fmt(Engine.prodOf(g, 1))} imp/s</span>`}
+          </div>
         </div>
         <button class="btn btn-primary g-item-btn" data-gen="${g.id}" ${affordable ? '' : 'disabled'}>
           ${owned > 0 ? 'Upgrade' : 'Acquire'} · ${Engine.fmt(cost)}
@@ -729,58 +942,90 @@ const UI = {
       item.querySelector('[data-upg]').addEventListener('click', () => Engine.buyUpgrade(u.id));
       paneU.appendChild(item);
     }
-
-    // outsource (hire workers)
-    paneO.innerHTML = '';
-    for (const w of DATA.WORKERS) {
-      const owned = Engine.workerCount(w.id);
-      const cost = Engine.costOf(w, owned);
-      const affordable = s.impressions >= cost;
-      const item = document.createElement('div');
-      item.className = 'g-item' + (owned > 0 ? ' owned' : '');
-      item.innerHTML = `
-        <div class="g-item-icon">${w.emoji}</div>
-        <div class="g-item-info">
-          <div class="g-item-name">${w.name} <span style="color:#999;font-size:11px">${owned > 0 ? '×' + owned : ''}</span></div>
-          <div class="g-item-desc">${w.role} · ${w.country}</div>
-          <div class="g-item-stats">+${Engine.fmt(Engine.prodOf(w, 1))} imp/s · +${Math.abs(w.auth)} influence/s · "${w.bio}"</div>
-          ${owned > 0 ? this.intensityControl(w.id) : ''}
-        </div>
-        <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-          <button class="btn btn-primary g-item-btn" data-hire="${w.id}" ${affordable ? '' : 'disabled'}>
-            ${owned > 0 ? 'Hire More' : 'Hire'} · ${Engine.fmt(cost)}
-          </button>
-          ${owned > 0 ? `<button class="btn btn-danger g-item-btn" data-fire="${w.id}" style="font-size:12px;padding:4px 10px">Fire</button>` : ''}
-          ${owned > 0 ? `<button class="btn g-item-btn" data-msg="${w.id}" style="border:1px solid #0a66c2;color:#0a66c2;font-size:12px;padding:4px 10px">💬 Message</button>` : ''}
-        </div>
-      `;
-      item.querySelector('[data-hire]').addEventListener('click', () => Engine.hireWorker(w.id));
-      const fireBtn = item.querySelector('[data-fire]');
-      if (fireBtn) fireBtn.addEventListener('click', () => Engine.fireWorker(w.id));
-      const msgBtn = item.querySelector('[data-msg]');
-      if (msgBtn) msgBtn.addEventListener('click', () => {
-        UI._activeWorker = w.id;
-        UI.openAlphaMail();
-      });
-      paneO.appendChild(item);
-    }
   },
 
-  intensityControl(id) {
-    const val = Engine.workerIntensity(id);
-    const labels = ['😴 Chill', '🙂 Normal', '🔥 High', '💥 MAX'];
-    let html = '<div style="margin-top:4px;display:flex;gap:4px;align-items:center">';
-    for (let i = 0; i < 4; i++) {
-      html += `<button class="btn" data-int="${id}" data-val="${i}" style="border:1px solid ${i === val ? '#0a66c2' : '#e0dfdc'};color:${i === val ? '#0a66c2' : '#666'};font-size:11px;padding:2px 8px">${labels[i]}</button>`;
-    }
-    html += '</div>';
-    // bind after insert
-    setTimeout(() => {
-      document.querySelectorAll(`[data-int="${id}"]`).forEach(b => {
-        b.addEventListener('click', () => Engine.setIntensity(id, parseInt(b.dataset.val, 10)));
-      });
-    }, 0);
-    return html;
+  // The assembly line — the factory's honest math as a conveyor. One input
+  // (your machines' impressions/sec) flows through coefficients to tangible
+  // The transparent factory — the distribution loop as a visible pipeline.
+  // Each gate shows WHO does it (🖐 you / 🤖 machine), the input flowing in,
+  // and the output flowing out. Buying a factory flips a gate from hand to
+  // machine, and you can always see both — the honest "do once, then delegate"
+  // arc, rendered. Generated in 4 gates:
+  //   content → audience → engage → schedule → (impressions)
+  factoryLineHtml() {
+    const s = State.data;
+    const p = Engine.pipeline();
+    const gates = Engine.gates();
+    const gens = Object.values(s.generators).reduce((a, b) => a + b, 0);
+
+    // the loop values (approximate each gate's throughput)
+    const flow = {
+      content: p.ips,
+      audience: p.ips,
+      engage: p.likes + p.comments + p.shares,
+      schedule: p.impressions,
+    };
+
+    const order = [
+      { key: 'content',  label: 'CONTENT',    desc: 'quality' },
+      { key: 'audience', label: 'AUDIENCE',   desc: 'network' },
+      { key: 'engage',   label: 'ENGAGE',     desc: 'resonance' },
+      { key: 'schedule', label: 'DISTRIBUTE', desc: 'timing' },
+    ];
+
+    const nodes = order.map(o => {
+      const g = gates[o.key] || { hand: true, name: o.key };
+      const val = Engine.fmtTick(flow[o.key]);
+      return `
+        <div class="gate ${g.hand ? 'hand' : 'machine'}">
+          <div class="gate-handler">${g.hand ? '🖐 You' : '🤖 ' + g.name}</div>
+          <div class="gate-flow" data-gate="${o.key}">${val}</div>
+          <div class="gate-label">${o.label} · ${o.desc}</div>
+        </div>`;
+    }).join('<div class="fl-arrow">→</div>');
+
+    return `
+      <div class="factory-line ${gens > 0 ? 'online' : 'offline'}">
+        <div class="fl-title">🏭 ${gens > 0 ? 'THE MACHINE IS RUNNING' : 'THE MACHINE IS IDLE'}</div>
+        <div class="fl-stages">${nodes}</div>
+        <div class="fl-sub">${gens > 0 ? 'Built by hand first. Delegate each step to a factory. The machine wires the rest.' : 'Every step is yours by hand. Buy a factory to automate it.'}</div>
+      </div>`;
+  },
+
+  // render (or create) the always-visible factory strip in the right rail
+  renderFactoryStrip() {
+    const strip = document.getElementById('factory-strip');
+    if (!strip) return;
+    strip.innerHTML = this.factoryLineHtml();
+  },
+
+  // Live-tick the factory strip in place while visible. Each gate's throughput
+  // rolls in real time so the machine visibly works even when you're idle.
+  factoryLive() {
+    const strip = document.getElementById('factory-strip');
+    if (!strip) return;
+    const line = strip.querySelector('.factory-line');
+    if (!line) { this.renderFactoryStrip(); return; }
+    const p = Engine.pipeline();
+    const s = State.data;
+    const gens = Object.values(s.generators).reduce((a, b) => a + b, 0);
+    line.classList.toggle('online', gens > 0);
+    const flow = {
+      content: p.ips,
+      audience: p.ips,
+      engage: p.likes + p.comments + p.shares,
+      schedule: p.impressions,
+    };
+    line.querySelectorAll('.gate-flow').forEach(el => {
+      const key = el.dataset.gate;
+      if (key && flow[key] !== undefined) {
+        const v = Engine.fmtTick(flow[key]);
+        if (el.textContent !== v) el.textContent = v;
+      }
+    });
+    // refresh handler badges when a gate's ownership changes
+    const title = line.querySelector('.fl-title');
+    if (title) title.textContent = '🏭 ' + (gens > 0 ? 'THE MACHINE IS RUNNING' : 'THE MACHINE IS IDLE');
   },
 
   /* ---------- analytics ---------- */
@@ -990,8 +1235,7 @@ const UI = {
     const list = document.getElementById('dm-list');
     const chat = document.getElementById('am-chat');
     if (list) list.classList.add('hidden');
-    if (chat) chat.classList.remove('hidden');
-    this.renderChat();
+    if (chat) chat.classList.add('hidden');
   },
 
   closeAlphaMail() {
@@ -999,40 +1243,6 @@ const UI = {
     const chat = document.getElementById('am-chat');
     if (list) list.classList.remove('hidden');
     if (chat) chat.classList.add('hidden');
-  },
-
-  renderChat() {
-    const s = State.data;
-    const chat = document.getElementById('am-chat');
-    const title = document.getElementById('am-chat-title');
-    const thread = document.getElementById('msg-thread');
-    const commands = document.getElementById('msg-commands');
-    if (!chat) return;
-    const w = DATA.WORKERS.find(x => x.id === this._activeWorker);
-    if (!w || Engine.workerCount(w.id) === 0) {
-      this.closeAlphaMail();
-      return;
-    }
-    title.textContent = w.emoji + ' ' + w.name;
-    // thread
-    thread.innerHTML = '';
-    const msgs = (s.workerChats[w.id] || []).slice(-50);
-    for (const m of msgs) {
-      const b = document.createElement('div');
-      b.className = 'msg-bubble ' + (m.from === 'me' ? 'me' : 'them');
-      const time = new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      b.innerHTML = m.text + `<span class="mb-time">${time}</span>`;
-      thread.appendChild(b);
-    }
-    thread.scrollTop = thread.scrollHeight;
-    // commands
-    commands.innerHTML = '';
-    for (const c of DATA.WORKER_COMMANDS) {
-      const btn = document.createElement('button');
-      btn.textContent = c.label;
-      btn.addEventListener('click', () => Engine.sendWorkerCommand(w.id, c.id));
-      commands.appendChild(btn);
-    }
   },
 
   /* ---------- side panel DMs (unified messaging) ---------- */
@@ -1043,16 +1253,11 @@ const UI = {
     const list = document.getElementById('dm-list');
     const count = document.getElementById('dm-count');
     if (!list) return;
-    const hired = DATA.WORKERS.filter(w => Engine.workerCount(w.id) > 0);
     const dms = s.dms.slice(0, 8);
-    if (count) count.textContent = hired.length + s.dms.length;
+    if (count) count.textContent = s.dms.length;
 
     // Build the desired item list in order, each with a stable key.
     const desired = [];
-    if (hired.length > 0) {
-      desired.push({ key: '__team-head', head: 'Your Team' });
-      for (const w of hired) desired.push({ key: 'team-' + w.id, worker: w });
-    }
     if (dms.length > 0) {
       desired.push({ key: '__inbox-head', head: 'Inbox' });
       for (const dm of dms) desired.push({ key: 'dm-' + dm.id, dm });
@@ -1105,22 +1310,6 @@ const UI = {
       el.textContent = item.head;
       return el;
     }
-    if (item.worker) {
-      const w = item.worker;
-      el.className = 'dm-item dm-team';
-      el.dataset.dmKey = item.key;
-      el.innerHTML = `
-        <div class="dm-avatar" style="background:#0a66c2">${w.emoji}</div>
-        <div class="dm-body">
-          <div class="dm-name">${this.escapeHtml(w.name)} <span class="dm-role">${w.count > 1 ? '×' + w.count + ' · ' : ''}${this.escapeHtml(w.role)}</span></div>
-          <div class="dm-text">${this.escapeHtml(this._lastWorkerText(w.id))}</div>
-        </div>`;
-      el.addEventListener('click', () => {
-        this._activeWorker = w.id;
-        this.openAlphaMail();
-      });
-      return el;
-    }
     const dm = item.dm;
     el.className = 'dm-item' + (dm.read ? '' : ' unread');
     el.dataset.dmKey = item.key;
@@ -1141,14 +1330,6 @@ const UI = {
     return el;
   },
 
-  _lastWorkerText(id) {
-    const s = State.data;
-    const msgs = s.workerChats[id] || [];
-    if (msgs.length === 0) return 'Ready to work.';
-    const last = msgs[msgs.length - 1];
-    return (last.from === 'me' ? 'You: ' : '') + last.text;
-  },
-
   /* ---------- network view ---------- */
   renderNetwork() {
     const s = State.data;
@@ -1164,6 +1345,7 @@ const UI = {
         <div class="network-body">
           <div class="network-name">${this.escapeHtml(p.name)}</div>
           <div class="network-role">${this.escapeHtml(p.role)}</div>
+          <div class="network-role" style="margin-top:2px;font-size:10px;color:#0a66c2">👀 ${Engine.fmt(p.reach)} people</div>
         </div>
         <button class="btn btn-primary network-btn" data-net="${p.id}" ${connected ? 'disabled' : ''}>${connected ? 'Connected' : 'Connect'}</button>`;
       const btn = el.querySelector('[data-net]');
@@ -1194,7 +1376,7 @@ const UI = {
         <div class="rec-body">
           <div class="rec-name">${this.escapeHtml(p.name)}</div>
           <div class="rec-role">${this.escapeHtml(p.role)}</div>
-          <div class="rec-followers">${p.followers} followers</div>
+          <div class="rec-followers">👀 ${Engine.fmt(p.reach)} people will see you</div>
         </div>
         <button class="rec-btn ${followed ? 'following' : ''}" data-rec="${p.id}">${followed ? 'Following' : '+ Follow'}</button>`;
       el.querySelector('[data-rec]').addEventListener('click', () => Engine.followPerson(p.id));
@@ -1286,7 +1468,7 @@ const UI = {
       const timeStr = time < 1 ? 'now' : time < 60 ? time + 'm ago' : Math.floor(time / 60) + 'h ago';
       let actionHtml = '';
       if (n.action) {
-        const label = n.action.type === 'unlock' ? '🔓 Open ' + (n.action.app === 'telegram' ? 'Telegram' : n.action.app) : 'Open';
+        const label = n.action.type === 'unlock' ? '🔓 Open ' + n.action.app : 'Open';
         actionHtml = `<button class="notif-action" data-action="${n.id}">${label}</button>`;
       }
       el.innerHTML = `<div class="n-icon">${n.icon}</div><div>${n.message}<span class="n-time">${timeStr}</span></div>${n.reward ? `<div class="n-reward">+${Engine.fmt(n.reward)}</div>` : ''}${actionHtml}`;

@@ -21,30 +21,16 @@ const GUIDE_STEPS = [
   {
     id: 'first-generator',
     title: 'Automate your first task',
-    hint: 'Open the Growth Console and buy the Engagement Pod.',
+    hint: 'Open the Growth Console and buy a generator.',
     done: s => Object.values(s.generators).reduce((a, b) => a + b, 0) >= 1,
     progress: s => Math.min(1, s.impressions / 50),
   },
   {
     id: 'followers-100',
     title: 'Reach 100 followers',
-    hint: 'Your pod is working. Watch the followers climb.',
+    hint: 'Your machine is working. Watch the followers climb.',
     done: s => s.followers >= 100,
     progress: s => Math.min(1, s.followers / 100),
-  },
-  {
-    id: 'join-pod',
-    title: 'Join an engagement pod',
-    hint: 'Open Telegram and join a pod. They boost each other.',
-    done: s => s.os.telegram.joinedPods.length >= 1,
-    progress: s => Math.min(1, s.os.telegram.joinedPods.length),
-  },
-  {
-    id: 'first-worker',
-    title: 'Hire your first worker',
-    hint: 'Delegate to an outsourced team. They work hard.',
-    done: s => Object.values(s.workers).reduce((a, w) => a + (w.count || 0), 0) >= 1,
-    progress: s => Math.min(1, s.impressions / 500),
   },
   {
     id: 'first-sponsor',
@@ -52,13 +38,6 @@ const GUIDE_STEPS = [
     hint: 'Big enough for a brand deal. Real money, fake clout.',
     done: s => s.sponsors.active.length >= 1,
     progress: s => Math.min(1, s.influence / 1000),
-  },
-  {
-    id: 'first-bot',
-    title: 'Build the bot',
-    hint: 'Stop posting by hand. Let the machine do it.',
-    done: s => !!s.os.bot.created,
-    progress: s => (s.os.bot.created ? 1 : 0),
   },
   {
     id: 'first-prestige',
@@ -137,9 +116,6 @@ const Guide = {
     // some state changes don't route through the engine tick; refresh on key events
     Bus.on('post:published', () => this.render());
     Bus.on('generator:bought', () => this.render());
-    Bus.on('worker:hired', () => this.render());
-    Bus.on('pod:joined', () => this.render());
-    Bus.on('bot:created', () => this.render());
     Bus.on('app:unlocked', () => this.render());
     Bus.on('prestige:reset', () => this.render());
     Bus.on('sponsor:activated', () => this.render());
