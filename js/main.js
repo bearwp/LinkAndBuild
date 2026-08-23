@@ -130,7 +130,7 @@
   Bus.on('upgrade:bought', () => { UI.renderGrowth(); UI.renderFactoryStrip(); UI.refresh(); });
   Bus.on('premium:bought', () => { UI.hideModal('premium-modal'); UI.refresh(); });
   Bus.on('tag:absorbed', () => { UI.renderBucket(); UI.refresh(); });
-  Bus.on('post:published', (post) => { UI.renderFeed(); UI.updatePostCard(post); UI.renderBucket(); });
+  Bus.on('post:published', (post) => { UI.renderFeed(); UI.updatePostCard(post); UI.renderBucket(); UI.renderRecommended(); });
   Bus.on('post:autoposted', (post) => { UI.renderFeedDebounced(); UI.updatePostCard(post); UI.renderBucket(); });
   Bus.on('post:boosted', (post) => { UI.renderFeed(); UI.updatePostCard(post); });
   Bus.on('person:followed', () => { UI.renderRecommended(); UI.renderBucket(); UI.refresh(); });

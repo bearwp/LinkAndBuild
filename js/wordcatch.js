@@ -55,7 +55,7 @@
   const pointer = { x: -9999, y: -9999, active: false };
   const carried = [];      // words riding the cursor
   const caught = [];       // topics locked onto the composer shelf (unique)
-  let tSec = 0;            // clock for pulsing gold
+  let tSec = 0;            // clock for pop-in animations
   let isVisible = true;    // only draw while the bucket is on screen
 
   const FONT = '600 11px -apple-system, Segoe UI, sans-serif';
@@ -67,8 +67,8 @@
   const DROP_BAND = 60;    // release within this many px of the bottom edge = drop
   const MAX_CATCH = 5;     // shelf capacity (unique tags)
 
-  const COL = { content: 'hsla(210, 70%, 50%, 0.92)', gold: 'hsla(42, 95%, 52%, 0.95)' };
-  function styleOf(w) { return w.rare ? 'gold' : 'content'; }
+  const COL = { content: 'hsla(210, 70%, 50%, 0.92)' };
+  function styleOf(w) { return 'content'; }
 
   function textSize(t) {
     ctx.font = FONT;
@@ -77,8 +77,11 @@
   }
 
   function resize() {
+    // The canvas fills the bucket card's remaining space via flexbox (CSS), so
+    // its actual rendered size is controlled by layout, not JS. We just sync the
+    // backing buffer to whatever the element ended up as, so nothing clips.
     W = canvas.clientWidth;
-    H = canvas.clientHeight || 160;
+    H = canvas.clientHeight || 200;
     canvas.width = W * devicePixelRatio;
     canvas.height = H * devicePixelRatio;
     ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
@@ -112,7 +115,8 @@
     const sz = textSize(d.name);
     const spot = centered ? freeSpot(sz.w, sz.h) : null;
     return {
-      id: d.id, t: d.name, emoji: d.emoji, v: d.q, rare: d.q >= 0.9 ? 1 : 0, phr: d.phr, strength: c,
+      id: d.id, t: d.name, emoji: d.emoji,
+      setup: d.setup || [], escalate: d.escalate || [], confess: d.confess || [],
       x: centered ? spot.x : 20 + Math.random() * (W - 40),
       y: centered ? spot.y : 20 + Math.random() * (H - 40),
       vx: (Math.random() - 0.5) * 30, vy: (Math.random() - 0.5) * 30,
@@ -121,45 +125,49 @@
   }
 
   // The field mirrors the bucket exactly: every tag absorbed from scrolling is
-  // a word here, and nothing appears that didn't come from a post. Tags never
-  // grow on their own — only absorbing posts (or the scroll bot) adds words.
+  // a word here, and nothing appears that didn't come from a post. Each copy is
+  // its own floating word — tags never combine while sitting in the bucket;
+  // they only merge when hovered together and dropped into the post.
   function syncField() {
     const tags = State.data.bucket.tags;
     const want = new Map();
     for (const id in tags) if (tags[id] > 0) want.set(id, tags[id]);
-    // refresh strength + drop words for tags that were spent
+
+    // copies currently held in hand (carried) or on the shelf (caught) — these
+    // are copies borrowed from the bucket, so they don't float in the field.
+    // A caught chip's strength is how many copies it swallowed (combining the
+    // same tag), so it counts that many copies.
+    const held = new Map();
+    for (const w of carried) held.set(w.id, (held.get(w.id) || 0) + 1);
+    for (const w of caught) held.set(w.id, (held.get(w.id) || 0) + w.strength);
+
+    const fieldCount = new Map();
+    for (const w of field) fieldCount.set(w.id, (fieldCount.get(w.id) || 0) + 1);
+
+    // drop words whose tag is spent, or extra copies beyond what the bucket holds
     for (let i = field.length - 1; i >= 0; i--) {
-      if (!want.has(field[i].id)) field.splice(i, 1);
-      else field[i].strength = want.get(field[i].id);
+      const id = field[i].id;
+      const need = (want.get(id) || 0) - (held.get(id) || 0);
+      const have = fieldCount.get(id);
+      if (need <= 0 || have > need) { field.splice(i, 1); fieldCount.set(id, have - 1); }
     }
-    // add words for tags not yet shown / carried. Tags already on the shelf
-    // (caught) are in hand — being composed into a post — so they leave the
-    // field until the post is made. Posting spends them; if any copies remain
-    // the word re-appears automatically.
-    const present = new Set(field.map(w => w.id));
-    for (const w of carried) present.add(w.id);
-    for (const w of caught) present.add(w.id);
+    // add one word per missing copy so the count matches the bucket
     for (const [id, st] of want) {
-      if (present.has(id)) continue;
-      // new tags pop in at the center so they're easy to see and grab
-      const w = makeWordFromId(id, true);
-      if (w) { w.strength = st; field.push(w); }
+      const need = st - (held.get(id) || 0);
+      const have = fieldCount.get(id) || 0;
+      for (let k = have; k < need; k++) {
+        const w = makeWordFromId(id, true);
+        if (w) { w.strength = 1; field.push(w); }
+      }
     }
   }
 
   // carrying words converge under the cursor and combine
   /* ---------- physics ---------- */
-  // Visible height of the canvas: the right rail clips the bottom, so the
-  // physical H can exceed what the player actually sees. Words must never
-  // settle in the hidden strip.
-  let vH = H;
   function update(dt) {
     // Tags never grow on their own: the field mirrors the bucket. Words only
     // appear when a post's tags are absorbed (or the scroll bot collects them).
     syncField();
-    // measure how much of the canvas is actually on screen this frame
-    const b = canvas.getBoundingClientRect();
-    vH = Math.min(H, Math.max(0, window.innerHeight - b.top));
 
     // repulsion among field words
     for (let i = 0; i < field.length; i++) {
@@ -182,9 +190,7 @@
       if (w.x < w.w / 2) { w.x = w.w / 2; w.vx *= -0.6; }
       if (w.x > W - w.w / 2) { w.x = W - w.w / 2; w.vx *= -0.6; }
       if (w.y < w.h / 2) { w.y = w.h / 2; w.vy *= -0.6; }
-      // the canvas can be taller than what the right rail shows (the bottom is
-      // clipped), so keep words inside the on-screen area — never below it.
-      if (w.y > vH - w.h / 2) { w.y = vH - w.h / 2; w.vy *= -0.6; }
+      if (w.y > H - w.h / 2) { w.y = H - w.h / 2; w.vy *= -0.6; }
     }
 
     if (pointer.active) {
@@ -195,7 +201,7 @@
         const d = Math.hypot(dx, dy) || 1;
         if (d < STICK_R && carried.length + caught.length < MAX_CATCH) {
           field.splice(i, 1);
-          carried.push({ id: w.id, t: w.t, emoji: w.emoji, v: w.v, rare: w.rare || 0, phr: w.phr, strength: w.strength, x: w.x, y: w.y, vx: 0, vy: 0, w: w.w, h: w.h });
+          carried.push({ id: w.id, t: w.t, emoji: w.emoji, setup: w.setup, escalate: w.escalate, confess: w.confess, strength: w.strength, x: w.x, y: w.y, vx: 0, vy: 0, w: w.w, h: w.h });
           if (Juice && Juice.pop) Juice.pop();
           continue;
         }
@@ -207,27 +213,11 @@
         }
       }
       // carried words converge right under the cursor — they meet and pile up.
+      // They stay as separate copies while hovering; they only combine into one
+      // stronger tag when dropped into the post.
       for (const w of carried) {
         w.x += (pointer.x - w.x) * Math.min(1, FOLLOW * dt);
         w.y += (pointer.y - w.y) * Math.min(1, FOLLOW * dt);
-      }
-      // when two carried words touch they COMBINE into one stronger (bigger)
-      // same-tag words that touch COMBINE into one stronger (bigger) tag.
-      // Different tags never merge — each unique tag is its own growth.
-      for (let i = carried.length - 1; i >= 0; i--) {
-        for (let j = i - 1; j >= 0; j--) {
-          const a = carried[i], b = carried[j];
-          if (a.id !== b.id) continue;               // unique tags stay separate
-          if (Math.hypot(a.x - b.x, a.y - b.y) < (a.w + b.w) / 2 + 4) {
-            a.strength += b.strength;
-            if (!a.subs) a.subs = [a.id];
-            if (!b.subs) b.subs = [b.id];
-            a.subs = a.subs.concat(b.subs);
-            if (Juice && Juice.pop) Juice.pop();
-            carried.splice(j, 1);
-            i--;
-          }
-        }
       }
     }
   }
@@ -242,14 +232,15 @@
     if (!carried.length) return;
     const cr = canvas.getBoundingClientRect();
     const dropped = carried.map(w => ({
-      id: w.id, t: w.t, emoji: w.emoji, v: w.v, rare: w.rare || 0, phr: w.phr, strength: w.strength,
+      id: w.id, t: w.t, emoji: w.emoji, setup: w.setup, escalate: w.escalate, confess: w.confess, strength: 1,
       x: pointer.x, y: pointer.y, w: w.w, h: w.h,
     }));
 
     // page coords of the pointer (canvas-space + canvas offset)
     const gx = cr.left + pointer.x, gy = cr.top + pointer.y;
     if (overComposer(gx, gy)) {
-      // tags fly from where they were dropped (over the post box) into the shelf
+      // dropping on the post COMBINES same-id copies into one stronger chip.
+      // Each unique tag is one shelf slot; repeating it deepens it.
       for (const w of dropped) {
         const existing = caught.find(c => c.id === w.id);
         if (existing) {
@@ -259,7 +250,7 @@
             Juice.floatUp(sr.left + sr.width / 2, sr.top + 20, '⚡ stronger', '#b8860b');
           }
         } else if (caught.length < MAX_CATCH) {
-          caught.push({ id: w.id, t: w.t, emoji: w.emoji, v: w.v, rare: w.rare || 0, phr: w.phr, strength: w.strength || 1, x: 0, y: 0 });
+          caught.push({ id: w.id, t: w.t, emoji: w.emoji, setup: w.setup, escalate: w.escalate, confess: w.confess, strength: 1, x: 0, y: 0 });
         }
       }
       renderShelf({ x: gx, y: gy, count: dropped.length });
@@ -271,10 +262,11 @@
         Juice.floatUp(cr.left + cr.width / 2, cr.top, '+' + dropped.length, '#0a66c2');
       }
     } else {
-      // scatter back into the field
+      // dropped back in the bucket: every copy SPLITS back into its own word,
+      // scattered around the drop point.
       for (const w of dropped) {
-        const sx = (Math.random() - 0.5) * 120, sy = (Math.random() - 0.5) * 120;
-        field.push({ id: w.id, t: w.t, emoji: w.emoji, v: w.v, rare: w.rare || 0, phr: w.phr, strength: w.strength, x: pointer.x, y: pointer.y, vx: sx, vy: sy, w: w.w, h: w.h });
+        const sx = (Math.random() - 0.5) * 160, sy = (Math.random() - 0.5) * 160;
+        field.push({ id: w.id, t: w.t, emoji: w.emoji, setup: w.setup, escalate: w.escalate, confess: w.confess, strength: 1, x: pointer.x, y: pointer.y, vx: sx, vy: sy, w: w.w, h: w.h });
       }
     }
     carried.length = 0;
@@ -294,7 +286,7 @@
       ctx.fillRect(0, 0, W, H);
     }
 
-    // field words (gold pulses so you aim for it)
+    // field words
     for (const w of field) {
       const x = w.x - w.w / 2, y = w.y - w.h / 2, r = 6;
       // new tags pop in with a ring + growing size so you notice them arrive
@@ -320,11 +312,6 @@
           continue;
         }
       }
-      if (w.rare) {
-        const p = 0.5 + 0.5 * Math.sin(tSec * 4 + w.x);
-        ctx.fillStyle = 'rgba(255, 196, 0, ' + (0.14 + 0.18 * p) + ')';
-        rounded(ctx, x - 5, y - 5, w.w + 10, w.h + 10, r + 4); ctx.fill();
-      }
       ctx.fillStyle = COL[styleOf(w)];
       rounded(ctx, x, y, w.w, w.h, r); ctx.fill();
       ctx.fillStyle = '#fff';
@@ -339,10 +326,10 @@
       }
     }
 
-    // carried words: big, solid, clearly in hand — they GROW as they combine
-    // (reusing the same tag adds strength), so a stronger word reads bigger.
+    // carried words: individual copies riding the cursor, big and solid. They
+    // stay separate here; combining into a stronger chip happens on the shelf.
     for (const w of carried) {
-      const scale = 1.3 + Math.min(1.1, (w.strength - 1) * 0.16);
+      const scale = 1.3;
       const bw = w.w * scale, bh = w.h * scale, r = 10;
       const x = w.x - bw / 2, y = w.y - bh / 2;
       ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 8;
@@ -397,10 +384,10 @@
 
   function quality() {
     if (!caught.length) return 0;
-    const avg = caught.reduce((a, f) => a + f.v, 0) / caught.length;
-    // strength rewards focus: repeating one topic beats spreading thin
-    const focus = caught.reduce((a, f) => a + Math.min(2, f.strength), 0) / caught.length;
-    return Math.min(2.0, avg * (1 + caught.length * 0.06) * (1 + focus * 0.1));
+    const focus = caught.reduce((a, f) => a + Math.min(3, f.strength), 0) / caught.length;
+    // no pre-ranked tiers: quality is authored. Distinct tags = richer post;
+    // repeating the same tag = a focused, stronger bit.
+    return Math.min(2.0, 0.45 + (caught.length - 1) * 0.16 + focus * 0.35);
   }
 
   function updateQuality() {
@@ -436,52 +423,41 @@
   canvas.addEventListener('pointerleave', () => { pointer.active = false; });
 
   /* ---------- generator: weave caught topics into one related sentence ---------- */
-  const OPENERS = [
-    "Grateful doesn't cover what the last few weeks have been.",
-    "I almost didn't post this.",
-    "Nobody talks enough about the messy middle.",
-    "I keep getting DMs asking how I'm doing it. Honest answer:",
-    "This isn't a brag. It's a note to my past self.",
-  ];
-  const CLOSERS = [
-    "Sharing in case it helps one person going through it.",
-    "What's been working for you lately?",
-    "If you're in the same season, you're not alone.",
-    "Stay stubborn. Stay kind. Keep going.",
-    "I'd love to hear your take in the comments.",
-  ];
-  const JOINERS = [
-    ' and, honestly, ',
-    ' — which is really about ',
-    ' while',
-    ' — and underneath that, ',
-  ];
   function pick(arr) { return arr[(Math.random() * arr.length) | 0]; }
 
-  // weave the caught topics into a sentence that *relates* them, rather than
-  // just concatenating unrelated phrases.
+  // Build a post from the tags on the shelf. Each tag is a committed persona
+  // with three moves (setup / escalate / confess). The generator assembles an
+  // arc: introduce, over-claim, then undercut. Repeated tags make a move land
+  // harder; mixed personas collide for comedic effect.
   function generatePost() {
     const items = caught.filter(w => w.id);
-    const phrs = items.map(w => pick(w.phr));
-    let body;
-    if (phrs.length === 1) {
-      body = phrs[0];
-    } else if (phrs.length === 2) {
-      body = phrs[0] + pick(JOINERS) + ' ' + phrs[1];
-    } else {
-      body = phrs.slice(0, -1).join(', ') + ' — and ' + phrs[phrs.length - 1];
+    if (!items.length) return '';
+    const uniq = Array.from(new Map(items.map(w => [w.id, w])).values());
+
+    // if one persona dominates, give it the mic (a focused bit)
+    if (uniq.length === 1) {
+      const w = uniq[0];
+      const setup = pick(w.setup.length ? w.setup : [w.t]);
+      const escal = pick(w.escalate.length ? w.escalate : [w.t]);
+      const conf = pick(w.confess.length ? w.confess : [w.t]);
+      return setup + ' ' + escal + ' ' + conf;
     }
-    return pick(OPENERS) + ' ' + body + ' ' + pick(CLOSERS);
+
+    // otherwise spread the arc across the mixed personas so each voice lands
+    const order = uniq.slice().sort(() => Math.random() - 0.5);
+    const a = order[0], b = order[1], c = order[2] || order[0];
+    const sa = pick(a.setup.length ? a.setup : [a.t]);
+    const eb = pick(b.escalate.length ? b.escalate : [b.t]);
+    const cc = pick(c.confess.length ? c.confess : [c.t]);
+    return sa + ' ' + eb + ' ' + cc;
   }
 
-  // resonance: topic quality, rare spikes, richness from more topics, and
-  // a strong boost from repeating a topic (strength).
+  // resonance: richness from more distinct tags and a boost from repeating a
+  // topic (strength). No tiered tag values — quality is what you compose.
   function tagMult() {
     if (!caught.length) return 0.5;
-    const avg = caught.reduce((a, w) => a + w.v, 0) / caught.length;
-    let m = avg;
-    if (caught.some(w => w.rare)) m *= 1.4;
-    m *= 1 + (caught.length - 1) * 0.15;
+    let m = 0.9;
+    m *= 1 + (caught.length - 1) * 0.14;
     // strength: repeating the same topic deepens it instead of spreading thin
     const focus = caught.reduce((a, w) => a + Math.min(3, w.strength), 0);
     m *= 1 + (focus - caught.length) * 0.12;

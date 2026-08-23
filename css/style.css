@@ -555,7 +555,6 @@ body.first-run .opp-card { display: none; }
   animation: tagFly 0.6s cubic-bezier(0.3, 0.6, 0.4, 1) both;
   will-change: transform, opacity;
 }
-.tag-fly.high { background: #b8860b; box-shadow: 0 2px 8px rgba(184, 134, 11, 0.4); }
 @keyframes tagFly {
   0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0; }
   8% { opacity: 1; }
@@ -730,9 +729,10 @@ body.first-run .opp-card { display: none; }
 .wc-quality { height: 4px; background: #f0f0f0; opacity: 0; transition: opacity 0.25s ease; }
 .wc-quality.show { opacity: 1; }
 .wc-quality-fill { height: 100%; width: 0; transition: width 0.3s ease, background 0.3s ease; }
-#wc-canvas { display: block; width: 100%; height: 380px; background: #f7f9fb; cursor: crosshair; touch-action: none; }
-/* the inline catch window inside the bucket card */
-.wc-canvas-inline { display: block; width: 100%; height: clamp(140px, 26vh, 320px); background: #f7f9fb; cursor: grab; touch-action: none; border-radius: 8px; margin-bottom: 6px; }
+/* the inline catch window inside the bucket card. A fixed, modest height that
+   always fits within the right rail's visible fold, so the whole canvas is
+   always on screen and never clipped by the card/rail. */
+.wc-canvas-inline { display: block; width: 100%; height: 150px; background: #f7f9fb; cursor: grab; touch-action: none; border-radius: 8px; margin-bottom: 6px; }
 .wc-canvas-inline:active { cursor: grabbing; }
 .wc-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid #e0dfdc; background: #fbfcfd; }
 .wc-sentence { flex: 1; min-height: 40px; line-height: 2; padding: 0 6px; cursor: default; }

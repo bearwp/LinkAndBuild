@@ -753,10 +753,20 @@ const Engine = {
     const followed = s.followedAuthors || [];
     if (!followed.length) return;
     for (const authorId of followed) {
-      const at = this._followPostAt[authorId];
-      if (at !== undefined && now < at) continue;
-      // random gap per person, so the feed flows without flooding
-      this._followPostAt[authorId] = now + 6000 + Math.random() * 9000;
+      let at = this._followPostAt[authorId];
+      if (at === undefined) {
+        // First tick of a session: don't dump everyone at once. Stagger each
+        // person's next post across the next couple of minutes so new posts
+        // arrive naturally, one at a time, instead of all together.
+        const idx = followed.indexOf(authorId);
+        at = now + 8000 + idx * 6000 + Math.random() * 9000;
+        this._followPostAt[authorId] = at;
+      }
+      if (now < at) continue;
+      // random gap per person, so the feed flows without flooding — slow and
+      // natural, not a firehose. New posts arrive one at a time on their own
+      // cadence instead of all at once.
+      this._followPostAt[authorId] = now + 18000 + Math.random() * 22000;
       const person = this.personForArch(authorId);
       const post = this.makeNPCPost(authorId, person);
       s.posts.unshift(post);
@@ -1046,13 +1056,11 @@ const Engine = {
     const rec = DATA.RECOMMENDED.find(p => p.id === id) || DATA.NETWORK_PEOPLE.find(p => p.id === id);
     if (rec && rec.arch && !s.followedAuthors.includes(rec.arch)) {
       s.followedAuthors.push(rec.arch);
-      // following someone is the manual act that fills the feed: their posts
-      // stream in now that you've chosen to see them. Each post is attributed
-      // to the actual person, so shared archetypes stay distinct people.
-      for (let i = 0; i < 2; i++) {
-        s.posts.unshift(this.makeNPCPost(rec.arch, rec));
-      }
-      this.trimPosts();
+      // Their posts arrive naturally through the streamer — one at a time, on
+      // the person's own cadence — rather than dumping a whole backlog onto
+      // the feed the moment you follow. Set an initial "first post" delay so
+      // the feed isn't flooded all at once.
+      this._followPostAt[rec.arch] = Date.now() + 4000 + Math.random() * 8000;
     }
     s.connections += 1;
     s.followers += 1;
@@ -1071,12 +1079,9 @@ const Engine = {
     const rec = DATA.NETWORK_PEOPLE.find(p => p.id === id);
     if (rec && rec.arch && !s.followedAuthors.includes(rec.arch)) {
       s.followedAuthors.push(rec.arch);
-      // connecting fills YOUR feed, same as following — it does not put you in
-      // front of their network. Engagement only comes from your own posts.
-      for (let i = 0; i < 2; i++) {
-        s.posts.unshift(this.makeNPCPost(rec.arch, rec));
-      }
-      this.trimPosts();
+      // Same as following: their posts arrive naturally, one at a time, on the
+      // person's own cadence — not as a backlog dump the moment you connect.
+      this._followPostAt[rec.arch] = Date.now() + 4000 + Math.random() * 8000;
     }
     s.connections += 1;
     s.authenticity = Math.min(100, s.authenticity + 1);

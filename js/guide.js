@@ -12,9 +12,16 @@
 
 const GUIDE_STEPS = [
   {
+    id: 'first-post',
+    title: 'Publish your first post',
+    hint: 'Open the composer and say something. Anything.',
+    done: s => s.analytics.postsPublished >= 1,
+    progress: s => Math.min(1, s.analytics.postsPublished),
+  },
+  {
     id: 'first-follow',
     title: 'Follow someone',
-    hint: 'Your feed is empty. Follow people from "People you may know" to fill it.',
+    hint: 'Now that you\'re posting, follow people from "People you may know" to fill your feed.',
     done: s => (s.followedAuthors || []).length >= 1,
     progress: s => Math.min(1, (s.followedAuthors || []).length),
   },
@@ -24,13 +31,6 @@ const GUIDE_STEPS = [
     hint: 'Scroll the feed. Each post you scroll drops its tags into your bucket.',
     done: s => (s.bucket && s.bucket.total) >= 1,
     progress: s => Math.min(1, (s.bucket && s.bucket.total) || 0),
-  },
-  {
-    id: 'first-post',
-    title: 'Publish your first post',
-    hint: 'Open the composer and say something. Anything.',
-    done: s => s.analytics.postsPublished >= 1,
-    progress: s => Math.min(1, s.analytics.postsPublished),
   },
   {
     id: 'first-catch',

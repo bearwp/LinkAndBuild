@@ -9,7 +9,7 @@ const DATA = {};
 DATA.ARCHETYPES = [
   {
     id: 'gym', name: 'Marcus "Discipline" Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️',
-    color: '#5c6bc0', tags: ['discipline', 'grindset', 'momentum', 'hustle'],
+    color: '#5c6bc0', tags: ['corporate', 'hr', 'marketing', 'gatekeeping'],
     posts: [
       "Discipline is a muscle. Train it daily. I wake up at 4am, I close 3 deals before breakfast, and I don't need motivation. Motivation is for amateurs. Consistency is for CEOs. 🏋️",
       "Your network is your net worth. I've said it before and I'll say it again. If you're not in the gym at 5am, you're not in the boardroom at 9. 💪",
@@ -21,7 +21,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'humbled', name: 'Brad Thompson', role: 'VP of Synergy · BigCorp', emoji: '🙏',
-    color: '#26a69a', tags: ['humbled', 'grateful', 'journey', 'growth'],
+    color: '#26a69a', tags: ['corporate', 'family', 'nothing-burger', 'marketing'],
     posts: [
       "I'm humbled to announce that after 3 years of relentless effort, I've been promoted to VP of Synergy. To everyone who doubted me: thank you for the fuel. To my mentor: this is for you. 🙏",
       "I'm humbled to share that my team just shipped the most impactful quarter in company history. None of this would be possible without the amazing people I work with. #humbled #blessed",
@@ -33,7 +33,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'ai', name: 'Synergy Bot 9000', role: 'AI Thought Leader', emoji: '🤖',
-    color: '#9e9e9e', tags: ['ai-slop', 'synergy', 'viral', 'overnight'],
+    color: '#9e9e9e', tags: ['ai', 'corporate', 'shill', 'nothing-burger'],
     posts: [
       "In the symphony of business, resilience is the crescendo. 🎶 Embrace the chaos, for within it lies the harmony of growth. #ThoughtLeadership",
       "The future belongs to those who innovate at the intersection of disruption and synergy. Let's redefine the paradigm of possibility. 🚀✨",
@@ -45,7 +45,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'recruiter', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨',
-    color: '#ef5350', tags: ['hiring', 'hustle', 'overnight', 'synergy'],
+    color: '#ef5350', tags: ['hr', 'corporate', 'family', 'nothing-burger'],
     posts: [
       "URGENT!! We are hiring 5 Senior Engineers!! 🚨 Fully remote, unlimited PTO, free snacks. If you know someone, tag them! We need to fill these roles YESTERDAY. #hiring #remote",
       "HIRING ALERT 🚨 My client is looking for a 'Growth Hacker' with 10+ years experience. Pay: competitive. Culture: like a family. DM me for details!!",
@@ -57,7 +57,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'mlm', name: 'Karen "BossBabe" Mitchell', role: 'CEO of My Own Life · MLM Queen', emoji: '💅',
-    color: '#ec4070', tags: ['bossbabe', 'hustle', 'overnight', 'grindset'],
+    color: '#ec4070', tags: ['pyramid', 'crypto', 'shill', 'beg'],
     posts: [
       "Ready to build your own empire?? 💅 I quit my 9-5 and now I make $10k/month working from my phone. The system does the work, YOU just share it. DM me 'YES' to learn how!",
       "My downline income just hit $15,000 this month!! 💅 All from from my 'lifestyle business'. If you're tired of trading time for money, this is your sign. Comment 'MORE' below!",
@@ -69,7 +69,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'burnout', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴',
-    color: '#66a4a4', tags: ['wellness', 'mindset', 'journey', 'grateful'],
+    color: '#66a4a4', tags: ['family', 'hr', 'corporate', 'marketing'],
     posts: [
       "Unpopular opinion: hustle culture is toxic. I burned out twice before I learned to prioritize my wellbeing. Now I meditate 2 hours a day... from my yacht in the Maldives. 🌴",
       "I'm taking a mental health day today. Instead of emails, I'll be doing breathwork on a beach in Bali. Remember: you can't pour from an empty cup. 🌴",
@@ -81,7 +81,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'greatpost', name: 'Comment King', role: 'Engagement Enthusiast', emoji: '👑',
-    color: '#ffb300', tags: ['great-post', 'great-post', 'great-post', 'great-post'],
+    color: '#ffb300', tags: ['nothing-burger', 'beg', 'beg', 'beg'],
     posts: [
       "Great post! 🙌",
       "This! 🙌",
@@ -95,7 +95,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'thought', name: 'Dr. Visionary', role: 'Global Thought Leader · Keynote Speaker', emoji: '🧠',
-    color: '#7e57c2', tags: ['vision', 'deep-work', 'story', 'mentorship'],
+    color: '#7e57c2', tags: ['gatekeeping', 'ai', 'shill', 'nothing-burger'],
     posts: [
       "I've spoken at 300 conferences on the future of work. The future of work is... you. Yes, you reading this. Let that sink in. 🧠",
       "Leaders don't create followers. They create more leaders. I wrote a book about it. It's on my profile. Buy it. 🧠",
@@ -108,66 +108,60 @@ DATA.ARCHETYPES = [
 ];
 
 /* ---------- Tags (the vocabulary of the feed) ---------- */
-// Every post is made of tags. Tags carry a quality value (0..1). High-quality
-// tags come from high-quality users; low-quality tags come from slop. When you
-// scroll a post you absorb its tags into your bucket, and you spend bucket tags
-// to write posts. Post quality = the tags you spend. This is the whole loop.
+// Every post is made of tags. A tag is a committed LinkedIn persona: each one
+// is dead serious about its own bit. When you scroll a post you absorb its
+// tags into your bucket, then spend them to write posts. There are no quality
+// tiers — every persona believes it's crushing it. Post quality comes from how
+// you COMBINE them: same persona = a focused bit; clashing personas = a comedy
+// collision. Each tag carries three moves so the composer can build an arc:
+//   setup    -> how the persona opens
+//   escalate -> the over-the-top claim they're proud of
+//   confess  -> the "humble" line that only the audience hears as a tell
 DATA.TAGS = [
-  // high quality — the "good" users (thought leaders, honest craftspeople)
-  { id: 'beg', name: 'beg', emoji: '🙏', q: 0.95, theme: 'craft',
-    phr: ['I didn\'t start with a network. I started by asking.', 'The whole game began when I stopped waiting to be noticed and just begged for a chance.', 'If you want the help, you have to ask for it. Begging is the underrated first step.'] },
-  { id: 'resilience', name: 'resilience', emoji: '🌱', q: 0.95, theme: 'craft',
-    phr: ['Resilience is a muscle, and it has to be trained.', 'What looked like failure was resilience in disguise.', 'Resilience isn\'t bouncing back. It\'s growing through.'] },
-  { id: 'vision', name: 'vision', emoji: '🔭', q: 0.92, theme: 'craft',
-    phr: ['Vision is just resilience with a destination.', 'Write the vision down, or it\'s only a wish.', 'A clear vision made every hard day easier.'] },
-  { id: 'craft', name: 'craft', emoji: '🛠️', q: 0.9, theme: 'craft',
-    phr: ['The craft is the point. The rest is noise.', 'I stopped optimizing and started making.', 'Craft compounds when you stop chasing the algorithm.'] },
-  { id: 'honesty', name: 'honesty', emoji: '🪞', q: 0.9, theme: 'craft',
-    phr: ['Honesty is the only content that ages well.', 'I\'m done performing. Here\'s the real version.', 'The honest post is the one that actually lands.'] },
-  { id: 'systems', name: 'systems', emoji: '⚙️', q: 0.85, theme: 'craft',
-    phr: ['Systems beat motivation every single time.', 'I built a system so I don\'t have to be brave.', 'The system is the discipline.'] },
-  { id: 'deep-work', name: 'deep work', emoji: '🧠', q: 0.85, theme: 'craft',
-    phr: ['Deep work is the most underrated skill in 2026.', 'I protect four hours of deep work like it\'s sacred.', 'Depth is the new status symbol.'] },
-  { id: 'mentorship', name: 'mentorship', emoji: '🤝', q: 0.82, theme: 'craft',
-    phr: ['Mentorship is the only growth that compounds both ways.', 'I owe my career to one honest mentor.', 'Teach what you know, and you\'ll learn it twice.'] },
-  { id: 'story', name: 'story', emoji: '📖', q: 0.8, theme: 'craft',
-    phr: ['The story is the strategy.', 'People remember the story, not the slide deck.', 'Every good post is a story with a lesson.'] },
-  // medium quality — the "fine" users (gym bros, humble-braggers, burnout)
-  { id: 'discipline', name: 'discipline', emoji: '🏋️', q: 0.7, theme: 'hustle',
-    phr: ['Discipline is a muscle. Train it daily.', 'Motivation is for amateurs. Consistency is for CEOs.', 'Discipline is doing the thing when you don\'t want to.'] },
-  { id: 'growth', name: 'growth', emoji: '📈', q: 0.68, theme: 'hustle',
-    phr: ['Growth is never the straight line you expect.', 'Three months of relentless growth changed how I operate.', 'I stopped chasing growth and started trusting the work.'] },
-  { id: 'mindset', name: 'mindset', emoji: '🧘', q: 0.66, theme: 'hustle',
-    phr: ['A calm mindset beats raw talent every time.', 'I rebuilt my mindset before I rebuilt anything else.', 'Your mindset sets the ceiling on everything else.'] },
-  { id: 'journey', name: 'journey', emoji: '🛤️', q: 0.64, theme: 'hustle',
-    phr: ['This journey has been harder and better than I expected.', 'The journey taught me more than the win did.', 'Nobody sees the journey, only the result.'] },
-  { id: 'momentum', name: 'momentum', emoji: '🚀', q: 0.62, theme: 'hustle',
-    phr: ['Momentum forgives a thousand small mistakes.', 'Once you have momentum, protect it fiercely.', 'Momentum starts with one embarrassingly small step.'] },
-  { id: 'grateful', name: 'grateful', emoji: '🙏', q: 0.6, theme: 'hustle',
-    phr: ['I\'m genuinely grateful for the people who stayed.', 'Grateful doesn\'t cover how this chapter feels.', 'Gratitude is the discipline that keeps me going.'] },
-  { id: 'humbled', name: 'humbled', emoji: '🙇', q: 0.58, theme: 'hustle',
-    phr: ['I\'ve never been more humbled by a process.', 'This season has kept me humbled and hungry.', 'Stay humbled, or the game will humble you.'] },
-  { id: 'wellness', name: 'wellness', emoji: '🌴', q: 0.55, theme: 'hustle',
-    phr: ['Burnout is real, and I\'m not afraid to say it.', 'You can\'t pour from an empty cup.', 'I took a mental health day. The work waited.'] },
-  // low quality — the "slop" users (AI bots, recruiters, MLM, comment kings)
-  { id: 'synergy', name: 'synergy', emoji: '🔗', q: 0.4, theme: 'slop',
-    phr: ['Synergy only appears when the team stops competing.', 'True synergy is boring and dependable.', 'I\'ve stopped chasing synergy and started building it.'] },
-  { id: 'hustle', name: 'hustle', emoji: '💪', q: 0.38, theme: 'slop',
-    phr: ['Hustle without direction is just exhaustion.', 'The hustle was real, but the systems mattered more.', 'I\'m done glorifying the hustle.'] },
-  { id: 'grindset', name: 'grindset', emoji: '⏰', q: 0.35, theme: 'slop',
-    phr: ['I wake up at 4am and close 3 deals before breakfast.', 'Sleep is for the weak. The market doesn\'t rest.', 'Nobody cares about your excuses. They care about results.'] },
-  { id: 'ai-slop', name: 'AI slop', emoji: '🤖', q: 0.3, theme: 'slop',
-    phr: ['In the symphony of business, resilience is the crescendo.', 'The future belongs to those who innovate at the intersection of disruption and synergy.', 'Success is a journey of continuous optimization.'] },
-  { id: 'viral', name: 'viral', emoji: '🔥', q: 0.28, theme: 'slop',
-    phr: ['Viral is a byproduct, never the goal.', 'The viral post was the least expected one.', 'You can\'t plan for viral, only for being ready.'] },
-  { id: 'overnight', name: 'overnight', emoji: '🌙', q: 0.25, theme: 'slop',
-    phr: ['There is no overnight success, only long nights.', 'The overnight story always had years of quiet work.', 'What looked overnight was years of showing up.'] },
-  { id: 'bossbabe', name: 'bossbabe', emoji: '💅', q: 0.2, theme: 'slop',
-    phr: ['Ready to build your own empire?', 'My downline income just hit $15,000 this month.', 'Not a pyramid. A triangle.'] },
-  { id: 'hiring', name: 'hiring', emoji: '🚨', q: 0.18, theme: 'slop',
-    phr: ['URGENT!! We are hiring 5 Senior Engineers!!', 'HIRING ALERT 🚨 My client is looking for a Growth Hacker.', 'Why is no one applying to our Chief Synergy Officer role?'] },
-  { id: 'great-post', name: 'great post', emoji: '👑', q: 0.1, theme: 'slop',
-    phr: ['Great post!', 'This!', 'Very informative!', 'Thanks for sharing!'] },
+  { id: 'crypto', name: 'crypto', emoji: '🪙',
+    setup: ['The traditional system is designed to keep you poor.', 'I was skeptical of crypto too, three years ago. Then I did the math.', 'Real ones already know where money is heading.'],
+    escalate: ['I turned $200 into a life-changing stack by holding through the dips.', 'Everyone laughed at me in 2023. Look at the chart now.', 'This isn\'t a get-rich-quick thing. It\'s a get-rich-eventually-and-then-quick thing.'],
+    confess: ['Not financial advice, but also, kind of yes.', 'Do your own research. But hurry.', 'The banks hate this one simple trick.'] },
+  { id: 'pyramid', name: 'pyramid', emoji: '🔺',
+    setup: ['People keep calling it a pyramid. Let me correct the record.', 'I was tired of trading time for money. So I stopped.', 'Ready to build your own empire?'],
+    escalate: ['My downline income just hit $15,000 this month.', 'The system does the work. YOU just share it.', 'I\'m building a team of hungry people who get it.'],
+    confess: ['Not a pyramid. A triangle. Stability at the top.', 'Comment "MORE" and I\'ll DM you the details.', 'Spots are filling fast. Fast means now.'] },
+  { id: 'shill', name: 'shill', emoji: '📣',
+    setup: ['I don\'t usually do these posts, but this one\'s different.', 'Full transparency: this is sponsored, and I mean every word.', 'A friend reached out about a tool I now can\'t live without.'],
+    escalate: ['It literally changed how I run my entire business.', 'The ROI spoke for itself in under a week.', 'I was skeptical too. Then I saw the numbers.'],
+    confess: ['Use my code for 10% off. Or don\'t. But use it.', 'This genuinely is the best thing I\'ve ever promoted.', 'Ok fine, they\'re paying me. But I\'d use it anyway.'] },
+  { id: 'ai', name: 'AI', emoji: '🤖',
+    setup: ['I asked ChatGPT to write this post. The results? Paradigm-shifting.', 'AI isn\'t coming for your job. It\'s coming for your excuses.', 'I used AI to plan my whole week and it\'s terrifyingly good.'],
+    escalate: ['In the symphony of business, resilience is the crescendo.', 'The future belongs to those who innovate at the intersection of disruption and synergy.', 'I\'ve automated 80% of my workflow. I just review the output and post it.'],
+    confess: ['This post was 100% written by an AI. And it\'s better than anything I\'ve written.', 'Prompt engineering is the new resume.', 'I don\'t know what half of it means, but the engagement is up.'] },
+  { id: 'family', name: 'family', emoji: '👪',
+    setup: ['We\'re not a company. We\'re a family.', 'I know it sounds cliché, but we genuinely care about each person here.', 'People ask why I stay. It\'s the culture. It\'s the family.'],
+    escalate: ['We celebrate every win together, from onboarding to IPO.', 'Our "family dinners" are quarterly offsites with unlimited kombucha.', 'I\'d take a pay cut to work with these people again. I did, actually.'],
+    confess: ['We\'re a family. Which is why the PIPs are so hard on everyone.', 'We do have to let people go sometimes, but we\'re family about it.', 'Everyone\'s so close. It\'s a bit much, honestly.'] },
+  { id: 'corporate', name: 'corporate', emoji: '🏢',
+    setup: ['Let\'s circle back on this. The optics need to align.', 'I\'m excited to align on our synergy going forward.', 'We need to pivot on the value proposition to move the needle.'],
+    escalate: ['This is a paradigm shift for the entire org.', 'We\'re optimizing for maximum stakeholder value.', 'I\'m confident we can leverage our core competencies.'],
+    confess: ['I have no idea what that means either, but it sounded good in the meeting.', 'Let\'s table that and regroup next quarter.', 'We\'ll synergy-ize it and circle back.'] },
+  { id: 'hr', name: 'hr', emoji: '🪪',
+    setup: ['Mental health is our absolute #1 priority this quarter.', 'We value every employee as a person, not a resource.', 'Our benefits are unmatched. We have a wellness budget.'],
+    escalate: ['We\'ve introduced mandatory mindfulness sessions and unlimited PTO.', 'Our open-door policy means no one has to feel unheard.', 'We surveyed employees and satisfaction is at an all-time high.'],
+    confess: ['Open door policy. Unless my door is closed. Or the office is.', 'Unlimited PTO. Everyone knows not to take it.', 'Mandatory wellness. You will be happy.'] },
+  { id: 'marketing', name: 'marketing', emoji: '🎯',
+    setup: ['People don\'t buy products. They buy stories.', 'Your brand is what people say about you when you\'re not in the room.', 'We\'re not selling a thing. We\'re selling a feeling.'],
+    escalate: ['This campaign grew our funnel by 400% using one emotional hook.', 'I unlocked virality with a single, perfectly-timed meme.', 'We turned a niche audience into a movement.'],
+    confess: ['Growth hack. Unlock your potential. DM me.', 'The hook is the whole job, honestly.', 'It\'s all just content until something sticks.'] },
+  { id: 'gatekeeping', name: 'gatekeeping', emoji: '🚪',
+    setup: ['I almost didn\'t post this.', 'The algorithm doesn\'t want you to know this.', 'This is the kind of thing I usually keep to myself.'],
+    escalate: ['This one trick got me more reach than my last 50 posts combined.', 'The platform literally buries this. Share before it\'s gone.', 'I\'ve cracked the code and I\'m about to share it with all of you.'],
+    confess: ['I post daily. Follow for more secrets I shouldn\'t share.', 'Save this. Screenshot it. It won\'t be up long.', 'Don\'t tell anyone I told you.'] },
+  { id: 'nothing-burger', name: 'nothing burger', emoji: '🍔',
+    setup: ['I\'m humbled to announce something big.', 'After much reflection, I have news.', 'I keep getting DMs asking, so here\'s the update.'],
+    escalate: ['This is going to change everything.', 'Trust me, this is bigger than it looks.', 'You\'re going to want to hear this.'],
+    confess: ['I can\'t share the details yet. But soon.', 'Stay tuned. That\'s all I can say.', 'It\'s happening. What is it? You\'ll see.'] },
+  { id: 'beg', name: 'begging', emoji: '🪙',
+    setup: ['hello. this is my first post on this app. i do not know if this is allowed but i really need help please', 'sorry if i am doing this wrong. i am not good at the internet. someone please see this', 'i dont know who to ask so i am asking all of you. please do not scroll past', 'hi everyone. i am new here and i have something very important to say. please read'],
+    escalate: ['please please share my post so other people see it. i do not know how the shares work but i am told it helps', 'i have been asking for three months now and nobody answers. i am begging you now', 'if you could just follow me or tell someone who can help i would be so so grateful', 'i will do anything honestly. i need this to work out i cannot lose this'],
+    confess: ['i do not even know if people can see this. maybe i did it wrong. but i have to try', 'my account has zero followers. this might not help at all but i have nowhere else to go', 'i have asked everywhere. this is my last hope please do not ignore it', 'sorry to bother you with this. please do not report me i am just trying. thank you'] },
 ];
 
 /* ---------- Post Templates ---------- */

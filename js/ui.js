@@ -323,6 +323,8 @@ const UI = {
   _cards: new Map(), // postId -> card element (O(1) lookup, no querySelector scans)
   _visiblePosts: new Set(), // postIds currently on screen (IntersectionObserver)
   _feedDebounceT: null,
+  _harvesting: false, // true while the player is holding a post to harvest it
+  _rerenderQueued: false, // a feed rebuild was deferred because a harvest was in progress
 
   // Track which post cards are on screen so the 60fps loop only updates
   // visible cards instead of every post in the feed.
@@ -364,7 +366,7 @@ const UI = {
     for (let i = 0; i < n; i++) {
       const d = Tags.def(fly[i]);
       const chip = document.createElement('div');
-      chip.className = 'tag-fly' + (d && d.q >= 0.8 ? ' high' : '');
+      chip.className = 'tag-fly';
       chip.textContent = (d ? d.emoji + ' ' + d.name : 'tag');
       // start scattered across the post's tag row (sweep the field)
       const sx = from.left + from.width * (0.15 + 0.7 * (n === 1 ? 0.5 : i / (n - 1)));
@@ -394,7 +396,19 @@ const UI = {
     }, 250);
   },
 
+  // Run a feed rebuild that was deferred because a harvest was in progress.
+  _flushQueuedRender() {
+    if (this._rerenderQueued) {
+      this._rerenderQueued = false;
+      this.renderFeed();
+    }
+  },
+
   renderFeed() {
+    // While the player is holding a post to harvest, don't rebuild the feed —
+    // a new post inserting would yank the card out from under their hold.
+    // Defer the rebuild and run it once the hold releases.
+    if (this._harvesting) { this._rerenderQueued = true; return; }
     const feed = document.getElementById('feed');
     const s = State.data;
     // Player posts appear first, but NPC posts always keep a reserved slice
@@ -415,6 +429,21 @@ const UI = {
       const id = c.dataset.postId;
       if (id) existing.set(id, c);
     });
+
+    // Scroll anchor: remember the topmost visible card and where it sits
+    // relative to the feed, so streaming a new post above it can be
+    // compensated and the reader isn't yanked away from what they're reading.
+    const feedRect = feed.getBoundingClientRect();
+    let anchor = null, anchorTop = null;
+    for (const c of feed.querySelectorAll('.post-card')) {
+      const r = c.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < window.innerHeight) {
+        anchor = c.dataset.postId;
+        anchorTop = r.top - feedRect.top;
+        break;
+      }
+    }
+
     const seen = new Set();
     // posts array is newest-first; iterate oldest-first so prepending
     // leaves the newest post at the top of the feed.
@@ -441,6 +470,22 @@ const UI = {
       }
     }
     this._feedIds = seen;
+
+    // Restore scroll position: if the anchored card survived and its position
+    // relative to the feed shifted (a new post was inserted above it), nudge
+    // the page scroll by exactly that delta so the post stays put.
+    if (anchor) {
+      const card = existing.get(anchor) || feed.querySelector('.post-card[data-post-id="' + anchor + '"]');
+      if (card) {
+        const r = card.getBoundingClientRect();
+        const newTop = r.top - feed.getBoundingClientRect().top;
+        const delta = newTop - anchorTop;
+        if (Math.abs(delta) > 1) {
+          const scroller = document.scrollingElement || document.documentElement;
+          scroller.scrollTop += delta;
+        }
+      }
+    }
 
     // empty-feed nudge: a fresh account has nothing to scroll until it follows
     // someone. Point at the rail instead of leaving a dead feed.
@@ -853,6 +898,7 @@ const UI = {
       if (harvested) return;
       startedAt = performance.now();
       card.classList.add('harvesting');
+      this._harvesting = true;
       const tick = (now) => {
         if (harvested) return;
         const p = Math.min(1, (now - startedAt) / HOLD_MS);
@@ -869,11 +915,14 @@ const UI = {
       if (timer) cancelAnimationFrame(timer);
       overlay.style.width = '0%';
       card.classList.remove('harvesting');
+      this._harvesting = false;
+      this._flushQueuedRender();
     };
     const harvest = () => {
       if (harvested) return;
       harvested = true;
       if (timer) cancelAnimationFrame(timer);
+      this._harvesting = false;
       post._absorbed = true;
       card.classList.remove('harvesting');
       card.classList.add('harvested');
@@ -885,6 +934,8 @@ const UI = {
       }
       // pop, then fade the card so it reads as "spent"
       setTimeout(() => card.classList.add('harvested-gone'), 450);
+      // any feed rebuilds deferred during the hold can run now
+      this._flushQueuedRender();
     };
 
     card.addEventListener('pointerdown', begin);
@@ -1343,6 +1394,10 @@ const UI = {
   renderRecommended() {
     const s = State.data;
     const list = document.getElementById('rec-list');
+    const card = document.getElementById('rec-card');
+    // Hidden until the player makes their first post, so a fresh account's
+    // rail isn't shouting "people you may know" at someone who hasn't posted.
+    if (card) card.style.display = (s.analytics.postsPublished > 0) ? '' : 'none';
     if (!list) return;
     list.innerHTML = '';
     for (const p of DATA.RECOMMENDED) {

@@ -23,12 +23,8 @@ const Tags = {
   // average quality of a list of tag ids (0..1)
   qualityOf(ids) {
     if (!ids || !ids.length) return 0;
-    let sum = 0;
-    for (const id of ids) {
-      const d = this.def(id);
-      if (d) sum += d.q;
-    }
-    return sum / ids.length;
+    // tiers are gone — tags are equal-weight personas. Neutral baseline.
+    return 0.5;
   },
 
   /* ---------- bucket ---------- */
@@ -43,13 +39,12 @@ const Tags = {
   // average quality of everything in the bucket (0..1)
   bucketQuality() {
     const s = State.data;
-    let sum = 0, n = 0;
-    for (const id in s.bucket.tags) {
-      const c = s.bucket.tags[id];
-      const d = this.def(id);
-      if (d) { sum += d.q * c; n += c; }
-    }
-    return n ? sum / n : 0;
+    // tiers are gone — every tag is a 0.5 neutral baseline. Quality comes
+    // from composition, not individual tag values, so the bucket bar just
+    // reflects how full the bucket is, not how "rare" its contents are.
+    let n = 0;
+    for (const id in s.bucket.tags) n += s.bucket.tags[id];
+    return n ? 0.5 : 0;
   },
 
   // absorb a post's tags into the bucket. Called when the player scrolls
@@ -82,7 +77,7 @@ const Tags = {
     return spent;
   },
 
-  // pick `n` tags from the bucket, weighted toward higher quality.
+  // pick `n` tags from the bucket, weighted toward the ones you hold more of.
   // Used by auto-post bots and the composer's "auto-fill" convenience.
   pick(n) {
     const s = State.data;
@@ -91,9 +86,8 @@ const Tags = {
       const c = s.bucket.tags[id];
       const d = this.def(id);
       if (!d) continue;
-      // weight by count and quality so good tags surface more
-      const w = c * (0.5 + d.q);
-      for (let i = 0; i < Math.ceil(w); i++) pool.push(id);
+      // tiers are gone — weight purely by how many copies you hold
+      for (let i = 0; i < c; i++) pool.push(id);
     }
     if (!pool.length) return [];
     const out = [];
@@ -118,8 +112,8 @@ const Tags = {
     const parts = [];
     for (const id of ids) {
       const d = this.def(id);
-      if (d && d.phr && d.phr.length) {
-        parts.push(d.phr[(Math.random() * d.phr.length) | 0]);
+      if (d && d.setup && d.setup.length) {
+        parts.push(d.setup[(Math.random() * d.setup.length) | 0]);
       }
     }
     if (!parts.length) return '';
