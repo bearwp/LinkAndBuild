@@ -134,7 +134,6 @@ const Prestige = {
     UI.refresh();
     UI.renderFeed();
     UI.renderGrowth();
-    UI.renderDMs();
     UI.renderRecommended();
     UI.renderNetwork();
     UI.updateBell();

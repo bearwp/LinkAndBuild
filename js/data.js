@@ -9,7 +9,7 @@ const DATA = {};
 DATA.ARCHETYPES = [
   {
     id: 'gym', name: 'Marcus "Discipline" Reed', role: 'CEO · Gym Bro Holdings', emoji: '🏋️',
-    color: '#5c6bc0',
+    color: '#5c6bc0', tags: ['discipline', 'grindset', 'momentum', 'hustle'],
     posts: [
       "Discipline is a muscle. Train it daily. I wake up at 4am, I close 3 deals before breakfast, and I don't need motivation. Motivation is for amateurs. Consistency is for CEOs. 🏋️",
       "Your network is your net worth. I've said it before and I'll say it again. If you're not in the gym at 5am, you're not in the boardroom at 9. 💪",
@@ -21,7 +21,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'humbled', name: 'Brad Thompson', role: 'VP of Synergy · BigCorp', emoji: '🙏',
-    color: '#26a69a',
+    color: '#26a69a', tags: ['humbled', 'grateful', 'journey', 'growth'],
     posts: [
       "I'm humbled to announce that after 3 years of relentless effort, I've been promoted to VP of Synergy. To everyone who doubted me: thank you for the fuel. To my mentor: this is for you. 🙏",
       "I'm humbled to share that my team just shipped the most impactful quarter in company history. None of this would be possible without the amazing people I work with. #humbled #blessed",
@@ -33,7 +33,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'ai', name: 'Synergy Bot 9000', role: 'AI Thought Leader', emoji: '🤖',
-    color: '#9e9e9e',
+    color: '#9e9e9e', tags: ['ai-slop', 'synergy', 'viral', 'overnight'],
     posts: [
       "In the symphony of business, resilience is the crescendo. 🎶 Embrace the chaos, for within it lies the harmony of growth. #ThoughtLeadership",
       "The future belongs to those who innovate at the intersection of disruption and synergy. Let's redefine the paradigm of possibility. 🚀✨",
@@ -45,7 +45,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'recruiter', name: 'Priya Patel', role: 'Talent Acquisition · Hiring!!', emoji: '🚨',
-    color: '#ef5350',
+    color: '#ef5350', tags: ['hiring', 'hustle', 'overnight', 'synergy'],
     posts: [
       "URGENT!! We are hiring 5 Senior Engineers!! 🚨 Fully remote, unlimited PTO, free snacks. If you know someone, tag them! We need to fill these roles YESTERDAY. #hiring #remote",
       "HIRING ALERT 🚨 My client is looking for a 'Growth Hacker' with 10+ years experience. Pay: competitive. Culture: like a family. DM me for details!!",
@@ -57,7 +57,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'mlm', name: 'Karen "BossBabe" Mitchell', role: 'CEO of My Own Life · MLM Queen', emoji: '💅',
-    color: '#ec4070',
+    color: '#ec4070', tags: ['bossbabe', 'hustle', 'overnight', 'grindset'],
     posts: [
       "Ready to build your own empire?? 💅 I quit my 9-5 and now I make $10k/month working from my phone. The system does the work, YOU just share it. DM me 'YES' to learn how!",
       "My downline income just hit $15,000 this month!! 💅 All from from my 'lifestyle business'. If you're tired of trading time for money, this is your sign. Comment 'MORE' below!",
@@ -69,7 +69,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'burnout', name: 'Sofia Reyes', role: 'Founder · Zen Startup', emoji: '🌴',
-    color: '#66a4a4',
+    color: '#66a4a4', tags: ['wellness', 'mindset', 'journey', 'grateful'],
     posts: [
       "Unpopular opinion: hustle culture is toxic. I burned out twice before I learned to prioritize my wellbeing. Now I meditate 2 hours a day... from my yacht in the Maldives. 🌴",
       "I'm taking a mental health day today. Instead of emails, I'll be doing breathwork on a beach in Bali. Remember: you can't pour from an empty cup. 🌴",
@@ -81,7 +81,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'greatpost', name: 'Comment King', role: 'Engagement Enthusiast', emoji: '👑',
-    color: '#ffb300',
+    color: '#ffb300', tags: ['great-post', 'great-post', 'great-post', 'great-post'],
     posts: [
       "Great post! 🙌",
       "This! 🙌",
@@ -95,7 +95,7 @@ DATA.ARCHETYPES = [
   },
   {
     id: 'thought', name: 'Dr. Visionary', role: 'Global Thought Leader · Keynote Speaker', emoji: '🧠',
-    color: '#7e57c2',
+    color: '#7e57c2', tags: ['vision', 'deep-work', 'story', 'mentorship'],
     posts: [
       "I've spoken at 300 conferences on the future of work. The future of work is... you. Yes, you reading this. Let that sink in. 🧠",
       "Leaders don't create followers. They create more leaders. I wrote a book about it. It's on my profile. Buy it. 🧠",
@@ -105,6 +105,69 @@ DATA.ARCHETYPES = [
     comments: ["Profound. 🙏", "This changed my life.", "Framework please!"],
     weight: 2, influence: 1500,
   },
+];
+
+/* ---------- Tags (the vocabulary of the feed) ---------- */
+// Every post is made of tags. Tags carry a quality value (0..1). High-quality
+// tags come from high-quality users; low-quality tags come from slop. When you
+// scroll a post you absorb its tags into your bucket, and you spend bucket tags
+// to write posts. Post quality = the tags you spend. This is the whole loop.
+DATA.TAGS = [
+  // high quality — the "good" users (thought leaders, honest craftspeople)
+  { id: 'beg', name: 'beg', emoji: '🙏', q: 0.95, theme: 'craft',
+    phr: ['I didn\'t start with a network. I started by asking.', 'The whole game began when I stopped waiting to be noticed and just begged for a chance.', 'If you want the help, you have to ask for it. Begging is the underrated first step.'] },
+  { id: 'resilience', name: 'resilience', emoji: '🌱', q: 0.95, theme: 'craft',
+    phr: ['Resilience is a muscle, and it has to be trained.', 'What looked like failure was resilience in disguise.', 'Resilience isn\'t bouncing back. It\'s growing through.'] },
+  { id: 'vision', name: 'vision', emoji: '🔭', q: 0.92, theme: 'craft',
+    phr: ['Vision is just resilience with a destination.', 'Write the vision down, or it\'s only a wish.', 'A clear vision made every hard day easier.'] },
+  { id: 'craft', name: 'craft', emoji: '🛠️', q: 0.9, theme: 'craft',
+    phr: ['The craft is the point. The rest is noise.', 'I stopped optimizing and started making.', 'Craft compounds when you stop chasing the algorithm.'] },
+  { id: 'honesty', name: 'honesty', emoji: '🪞', q: 0.9, theme: 'craft',
+    phr: ['Honesty is the only content that ages well.', 'I\'m done performing. Here\'s the real version.', 'The honest post is the one that actually lands.'] },
+  { id: 'systems', name: 'systems', emoji: '⚙️', q: 0.85, theme: 'craft',
+    phr: ['Systems beat motivation every single time.', 'I built a system so I don\'t have to be brave.', 'The system is the discipline.'] },
+  { id: 'deep-work', name: 'deep work', emoji: '🧠', q: 0.85, theme: 'craft',
+    phr: ['Deep work is the most underrated skill in 2026.', 'I protect four hours of deep work like it\'s sacred.', 'Depth is the new status symbol.'] },
+  { id: 'mentorship', name: 'mentorship', emoji: '🤝', q: 0.82, theme: 'craft',
+    phr: ['Mentorship is the only growth that compounds both ways.', 'I owe my career to one honest mentor.', 'Teach what you know, and you\'ll learn it twice.'] },
+  { id: 'story', name: 'story', emoji: '📖', q: 0.8, theme: 'craft',
+    phr: ['The story is the strategy.', 'People remember the story, not the slide deck.', 'Every good post is a story with a lesson.'] },
+  // medium quality — the "fine" users (gym bros, humble-braggers, burnout)
+  { id: 'discipline', name: 'discipline', emoji: '🏋️', q: 0.7, theme: 'hustle',
+    phr: ['Discipline is a muscle. Train it daily.', 'Motivation is for amateurs. Consistency is for CEOs.', 'Discipline is doing the thing when you don\'t want to.'] },
+  { id: 'growth', name: 'growth', emoji: '📈', q: 0.68, theme: 'hustle',
+    phr: ['Growth is never the straight line you expect.', 'Three months of relentless growth changed how I operate.', 'I stopped chasing growth and started trusting the work.'] },
+  { id: 'mindset', name: 'mindset', emoji: '🧘', q: 0.66, theme: 'hustle',
+    phr: ['A calm mindset beats raw talent every time.', 'I rebuilt my mindset before I rebuilt anything else.', 'Your mindset sets the ceiling on everything else.'] },
+  { id: 'journey', name: 'journey', emoji: '🛤️', q: 0.64, theme: 'hustle',
+    phr: ['This journey has been harder and better than I expected.', 'The journey taught me more than the win did.', 'Nobody sees the journey, only the result.'] },
+  { id: 'momentum', name: 'momentum', emoji: '🚀', q: 0.62, theme: 'hustle',
+    phr: ['Momentum forgives a thousand small mistakes.', 'Once you have momentum, protect it fiercely.', 'Momentum starts with one embarrassingly small step.'] },
+  { id: 'grateful', name: 'grateful', emoji: '🙏', q: 0.6, theme: 'hustle',
+    phr: ['I\'m genuinely grateful for the people who stayed.', 'Grateful doesn\'t cover how this chapter feels.', 'Gratitude is the discipline that keeps me going.'] },
+  { id: 'humbled', name: 'humbled', emoji: '🙇', q: 0.58, theme: 'hustle',
+    phr: ['I\'ve never been more humbled by a process.', 'This season has kept me humbled and hungry.', 'Stay humbled, or the game will humble you.'] },
+  { id: 'wellness', name: 'wellness', emoji: '🌴', q: 0.55, theme: 'hustle',
+    phr: ['Burnout is real, and I\'m not afraid to say it.', 'You can\'t pour from an empty cup.', 'I took a mental health day. The work waited.'] },
+  // low quality — the "slop" users (AI bots, recruiters, MLM, comment kings)
+  { id: 'synergy', name: 'synergy', emoji: '🔗', q: 0.4, theme: 'slop',
+    phr: ['Synergy only appears when the team stops competing.', 'True synergy is boring and dependable.', 'I\'ve stopped chasing synergy and started building it.'] },
+  { id: 'hustle', name: 'hustle', emoji: '💪', q: 0.38, theme: 'slop',
+    phr: ['Hustle without direction is just exhaustion.', 'The hustle was real, but the systems mattered more.', 'I\'m done glorifying the hustle.'] },
+  { id: 'grindset', name: 'grindset', emoji: '⏰', q: 0.35, theme: 'slop',
+    phr: ['I wake up at 4am and close 3 deals before breakfast.', 'Sleep is for the weak. The market doesn\'t rest.', 'Nobody cares about your excuses. They care about results.'] },
+  { id: 'ai-slop', name: 'AI slop', emoji: '🤖', q: 0.3, theme: 'slop',
+    phr: ['In the symphony of business, resilience is the crescendo.', 'The future belongs to those who innovate at the intersection of disruption and synergy.', 'Success is a journey of continuous optimization.'] },
+  { id: 'viral', name: 'viral', emoji: '🔥', q: 0.28, theme: 'slop',
+    phr: ['Viral is a byproduct, never the goal.', 'The viral post was the least expected one.', 'You can\'t plan for viral, only for being ready.'] },
+  { id: 'overnight', name: 'overnight', emoji: '🌙', q: 0.25, theme: 'slop',
+    phr: ['There is no overnight success, only long nights.', 'The overnight story always had years of quiet work.', 'What looked overnight was years of showing up.'] },
+  { id: 'bossbabe', name: 'bossbabe', emoji: '💅', q: 0.2, theme: 'slop',
+    phr: ['Ready to build your own empire?', 'My downline income just hit $15,000 this month.', 'Not a pyramid. A triangle.'] },
+  { id: 'hiring', name: 'hiring', emoji: '🚨', q: 0.18, theme: 'slop',
+    phr: ['URGENT!! We are hiring 5 Senior Engineers!!', 'HIRING ALERT 🚨 My client is looking for a Growth Hacker.', 'Why is no one applying to our Chief Synergy Officer role?'] },
+  { id: 'great-post', name: 'great post', emoji: '👑', q: 0.1, theme: 'slop',
+    phr: ['Great post!', 'This!', 'Very informative!', 'Thanks for sharing!'] },
 ];
 
 /* ---------- Post Templates ---------- */
@@ -169,97 +232,97 @@ DATA.GENERATORS = [
   {
     id: 'pod', name: 'Engagement Pod', gate: 'engage', tier: 1, layer: 1, icon: '👥',
     desc: 'Join a community of like-minded professionals who agree to boost each other in the critical first hour.',
-    cost: { base: 50, growth: 1.15 }, auth: -0.1, prod: { base: 0.8, perUnit: 0 },
+    cost: { base: 50, growth: 1.15 }, auth: -0.1, out: { imp: 0.8, like: 0.5 },
     flavor: '"We scratch each other\'s backs. Professionally."',
   },
   {
     id: 'scheduler', name: 'Scheduling & Analytics', gate: 'schedule', tier: 2, layer: 1, icon: '📅',
     desc: 'Maximize your reach with data-driven posting. Auto-posts at the optimal time. Shows you the curves.',
-    cost: { base: 250, growth: 1.15 }, auth: -0.15, prod: { base: 2.5, perUnit: 0 },
+    cost: { base: 250, growth: 1.15 }, auth: -0.15, out: { imp: 2.5, like: 1 },
     flavor: '"Post at 9am EST. The data demands it."',
   },
   {
     id: 'outsource', name: 'Outsourced Engagement', gate: 'engage', tier: 3, layer: 1, icon: '🌏',
     desc: 'Scale your engagement affordably. Cheap likes and comments from a global workforce with broken English.',
-    cost: { base: 1200, growth: 1.15 }, auth: -0.5, prod: { base: 7, perUnit: 0 },
+    cost: { base: 1200, growth: 1.15 }, auth: -0.5, out: { imp: 7, like: 6 },
     flavor: '"Sir, very informative. Please follow me back."',
   },
   {
     id: 'agency', name: 'Growth Agency', gate: 'reach', tier: 4, layer: 1, icon: '🏢',
     desc: 'Enterprise-grade personal branding. Networks of loyal accounts, proxy rotation, follow/unfollow bots, multiple clients.',
-    cost: { base: 6000, growth: 1.15 }, auth: -1.2, prod: { base: 18, perUnit: 0 },
+    cost: { base: 6000, growth: 1.15 }, auth: -1.2, out: { imp: 18, like: 10, follow: 1 },
     flavor: '"We run 40,000 accounts. Yours is one of them."',
   },
   {
     id: 'aifactory', name: 'AI Factory', gate: 'content', tier: 5, layer: 1, icon: '🏭',
     desc: 'Fully automated thought leadership. AI writes, AI comments, AI replies, AI lives your life. You just watch.',
-    cost: { base: 30000, growth: 1.15 }, auth: -3, prod: { base: 45, perUnit: 0 },
+    cost: { base: 30000, growth: 1.15 }, auth: -3, out: { imp: 45, like: 25, follow: 3 },
     flavor: '"In the symphony of business... (written by you, an AI)"',
   },
   {
     id: 'hashtag', name: 'Hashtag Farm', gate: 'schedule', tier: 6, layer: 1, icon: '#️⃣',
     desc: 'A server farm that generates trending hashtags and tags them onto everything you post.',
-    cost: { base: 150000, growth: 1.15 }, auth: -4, prod: { base: 90, perUnit: 0 },
+    cost: { base: 150000, growth: 1.15 }, auth: -4, out: { imp: 90, like: 40 },
     flavor: '"#grindset #hustle #synergy #blessed #thoughtleader"',
   },
   {
     id: 'newsletter', name: 'Newsletter Empire', gate: 'reach', tier: 7, layer: 1, icon: '📧',
     desc: 'A daily newsletter nobody reads, forwarded to 100,000 inboxes that mark it as spam.',
-    cost: { base: 750000, growth: 1.15 }, auth: -5, prod: { base: 180, perUnit: 0 },
+    cost: { base: 750000, growth: 1.15 }, auth: -5, out: { imp: 180, like: 80, follow: 8 },
     flavor: '"Issue #1,247: The same three paragraphs, reworded."',
   },
   {
     id: 'podcast', name: 'Podcast Network', gate: 'reach', tier: 8, layer: 1, icon: '🎙️',
     desc: 'A podcast where you interview other thought leaders about their thought leadership.',
-    cost: { base: 4000000, growth: 1.15 }, auth: -6, prod: { base: 360, perUnit: 0 },
+    cost: { base: 4000000, growth: 1.15 }, auth: -6, out: { imp: 360, like: 150, follow: 12 },
     flavor: '"Episode 89: How I Built My Brand (by talking about building my brand)."',
   },
   {
     id: 'course', name: 'Online Course Mill', gate: 'content', tier: 9, layer: 1, icon: '🎓',
     desc: 'Sell a $499 course on how to sell $499 courses. The funnel feeds itself.',
-    cost: { base: 20000000, growth: 1.15 }, auth: -7, prod: { base: 720, perUnit: 0 },
+    cost: { base: 20000000, growth: 1.15 }, auth: -7, out: { imp: 720, like: 300 },
     flavor: '"Module 1: Believe in yourself. Module 2: Charge for it."',
   },
   {
     id: 'conference', name: 'Thought Leadership Summit', gate: 'content', tier: 10, layer: 1, icon: '🏛️',
     desc: 'Host a conference where everyone pays to watch you talk about how you got here.',
-    cost: { base: 100000000, growth: 1.15 }, auth: -8, prod: { base: 1500, perUnit: 0 },
+    cost: { base: 100000000, growth: 1.15 }, auth: -8, out: { imp: 1500, like: 600 },
     flavor: '"Keynote: The Art of the Keynote."',
   },
   {
     id: 'brand', name: 'Personal Brand Inc.', gate: 'reach', tier: 11, layer: 2, icon: '💼',
     desc: 'Incorporate yourself. You are now a legal entity with a mission statement and a logo.',
-    cost: { base: 500000000, growth: 1.15 }, auth: -9, prod: { base: 3000, perUnit: 0 },
+    cost: { base: 500000000, growth: 1.15 }, auth: -9, out: { imp: 3000, like: 1200, follow: 25 },
     flavor: '"Our mission: to be the most followed entity in the room."',
   },
   {
     id: 'franchise', name: 'Franchise Your Persona', gate: 'reach', tier: 12, layer: 2, icon: '🏪',
     desc: 'License your face to other people who want to be you. They pay you to be a worse version of you.',
-    cost: { base: 2500000000, growth: 1.15 }, auth: -10, prod: { base: 6000, perUnit: 0 },
+    cost: { base: 2500000000, growth: 1.15 }, auth: -10, out: { imp: 6000, like: 2400 },
     flavor: '"Now with 40% less authenticity, in every major city."',
   },
   {
     id: 'media', name: 'Media Conglomerate', gate: 'reach', tier: 13, layer: 2, icon: '📺',
     desc: 'Buy the outlets that interview you. Now the news is just you, reporting on you.',
-    cost: { base: 12000000000, growth: 1.15 }, auth: -11, prod: { base: 12000, perUnit: 0 },
+    cost: { base: 12000000000, growth: 1.15 }, auth: -11, out: { imp: 12000, like: 5000 },
     flavor: '"Tonight at 9: You, on You, with special guest You."',
   },
   {
     id: 'ipo', name: 'Take Yourself Public', gate: 'reach', tier: 14, layer: 3, icon: '📈',
     desc: 'IPO your personal brand. Shareholders now own a piece of your soul. They want growth.',
-    cost: { base: 60000000000, growth: 1.15 }, auth: -12, prod: { base: 25000, perUnit: 0 },
+    cost: { base: 60000000000, growth: 1.15 }, auth: -12, out: { imp: 25000, like: 10000, follow: 15 },
     flavor: '"Q3 earnings: engagement up, authenticity down, shareholders thrilled."',
   },
   {
     id: 'exchange', name: 'Thought Leadership Exchange', gate: 'reach', tier: 15, layer: 3, icon: '🏦',
     desc: 'A stock exchange where influence is the currency and you are the reserve asset.',
-    cost: { base: 300000000000, growth: 1.15 }, auth: -13, prod: { base: 50000, perUnit: 0 },
+    cost: { base: 300000000000, growth: 1.15 }, auth: -13, out: { imp: 50000, like: 20000 },
     flavor: '"Your clout is now a ticker symbol. It only goes up."',
   },
   {
     id: 'algorithm', name: 'Become the Algorithm', gate: 'content', tier: 16, layer: 4, icon: '👁️',
     desc: 'You are no longer farming the algorithm. You are the algorithm. The room is you now.',
-    cost: { base: 1500000000000, growth: 1.15 }, auth: -15, prod: { base: 100000, perUnit: 0 },
+    cost: { base: 1500000000000, growth: 1.15 }, auth: -15, out: { imp: 100000, like: 40000, follow: 200 },
     flavor: '"The number going up is the only thing that has ever felt like progress."',
   },
 ];
@@ -667,58 +730,6 @@ DATA.NOTIFS = {
   ],
 };
 
-/* ---------- Incoming DMs (opportunities streaming in) ---------- */
-DATA.DM_SENDERS = [
-  { name: 'Sarah Chen', role: 'Talent Partner · Google', emoji: '👩‍💼', color: '#e91e63' },
-  { name: 'James O\'Brien', role: 'Head of Growth · ScaleUp', emoji: '👨‍💼', color: '#3f51b5' },
-  { name: 'Priya Sharma', role: 'Recruiter · FAANG', emoji: '👩‍💻', color: '#9c27b0' },
-  { name: 'Mike Johnson', role: 'Founder · Unicorn', emoji: '🧔', color: '#00acc1' },
-  { name: 'Emily Rodriguez', role: 'VP People · BigCorp', emoji: '👩‍🎤', color: '#d32f2f' },
-  { name: 'David Kim', role: 'Angel Investor', emoji: '👨‍💻', color: '#00897b' },
-  { name: 'Growth Expert', role: 'Engagement Consultant', emoji: '📈', color: '#0a66c2' },
-  { name: 'Anonymous CEO', role: 'Fortune 500', emoji: '🕴️', color: '#757575' },
-  { name: 'Karen Mitchell', role: 'MLM Queen', emoji: '💅', color: '#ec4070' },
-  { name: 'Dr. Visionary', role: 'Thought Leader', emoji: '🧠', color: '#7e57c2' },
-];
-
-DATA.DM_MESSAGES = [
-  'We\'ve been trying to reach you. Name your price. 💼',
-  'Your profile stood out. 10x engineer needed. Are you open?',
-  'A competitor wants to poach you. We\'ll beat their offer.',
-  'I saw your post. Want 10x engagement? I have a tool.',
-  'Join my "professional network". The algorithm loves it.',
-  'Are you open to a quick chat? 15 minutes. I promise.',
-  'Your content is fire. Let\'s collab on a carousel.',
-  'We\'re hiring a Chief Synergy Officer. You\'re perfect.',
-  'DM me "YES" to learn how I make $10k/month from my phone.',
-  'I endorsed you for Thought Leadership. Return the favor?',
-  'Your last post changed my life. Can I feature you?',
-  'Investors are circling. Are you raising?',
-  'We want you on our podcast. 1M listeners.',
-  'Free webinar on financial freedom. You\'re invited.',
-  'The algorithm showed me your profile. I\'m impressed.',
-  'Can you mentor me? I\'ll pay in exposure.',
-  'We\'re building the LockedIn of LockedIn. Join us.',
-  'Your engagement is unreal. What\'s your secret?',
-  'I have a once-in-a-lifetime opportunity. DM for details.',
-  'Congrats on the growth! Let\'s connect.',
-];
-
-/* ---------- Calendar (coffees & quick chats) ---------- */
-DATA.CAL_TYPES = [
-  { icon: '☕', label: 'Coffee Chat', reward: 15, auth: 1 },
-  { icon: '🤝', label: 'Quick Sync', reward: 10, auth: 0.5 },
-  { icon: '🍸', label: 'Networking Drinks', reward: 25, auth: 1.5 },
-  { icon: '💼', label: 'Intro Call', reward: 20, auth: 1 },
-  { icon: '🧠', label: 'Mentor Session', reward: 30, auth: 2 },
-];
-
-DATA.CAL_PEOPLE = [
-  'Sarah Chen', 'James O\'Brien', 'Priya Sharma', 'Mike Johnson',
-  'Emily Rodriguez', 'David Kim', 'Dr. Visionary', 'Karen Mitchell',
-  'Brad Thompson', 'Sofia Reyes', 'Marcus Reed', 'Anonymous CEO',
-];
-
 /* ---------- Recommended people to follow ---------- */
 // `reach` is how many people SEE you when you connect — the relationship's value.
 // Following them puts your posts in their feed and their network notices you back.
@@ -850,6 +861,29 @@ DATA.CLOUT_PACKAGES = [
   { id: 'cp3', name: 'Follower Package (500)', icon: '➕', cost: 100, impressions: 15000, followers: 500, auth: 4, label: 'Follower Package (500)' },
   { id: 'cp4', name: 'Viral Booster', icon: '🚀', cost: 500, impressions: 100000, followers: 2000, auth: 8, label: 'Viral Booster' },
   { id: 'cp5', name: 'Thought Leader Package', icon: '🧠', cost: 2500, impressions: 600000, followers: 10000, auth: 15, label: 'Thought Leader Package' },
+];
+
+/* ---------- Opportunities (influence -> money) ---------- */
+// The payoff of the whole loop. Influence unlocks opportunities; opportunities
+// pay real money. You can't automate money — you have to take the deal by hand.
+// Each opportunity has an influence threshold, a payout, and a satirical pitch.
+DATA.OPPORTUNITIES = [
+  { id: 'op1', name: 'Guest Blog Post', icon: '✍️', influence: 500, payout: 25,
+    pitch: 'A "thought leadership" blog wants a post about your journey. 500 words, no substance required. $25.' },
+  { id: 'op2', name: 'Webinar Appearance', icon: '🎤', influence: 2000, payout: 100,
+    pitch: 'Speak on a webinar about "The Future of Work". You will say nothing and be paid for it. $100.' },
+  { id: 'op3', name: 'Brand Deal', icon: '🤝', influence: 8000, payout: 500,
+    pitch: 'A wellness brand wants you to post about their "mindset water". One post, $500, no questions.' },
+  { id: 'op4', name: 'Keynote', icon: '🏛️', influence: 30000, payout: 2000,
+    pitch: 'A conference wants you to keynote. The topic is "How I Built My Brand". You will talk about yourself. $2,000.' },
+  { id: 'op5', name: 'Book Deal', icon: '📚', influence: 100000, payout: 10000,
+    pitch: 'A publisher wants your "memoir". You will dictate it to an AI. $10,000 advance.' },
+  { id: 'op6', name: 'Course Launch', icon: '🎓', influence: 400000, payout: 50000,
+    pitch: 'Launch a $499 course on how to launch $499 courses. The funnel feeds itself. $50,000.' },
+  { id: 'op7', name: 'Equity Stake', icon: '📈', influence: 1500000, payout: 250000,
+    pitch: 'A startup wants your "personal brand" as a co-founder. You bring the followers, they bring the product. $250,000.' },
+  { id: 'op8', name: 'Acquisition', icon: '🏦', influence: 5000000, payout: 1000000,
+    pitch: 'A conglomerate wants to acquire your personal brand. You are the asset. $1,000,000.' },
 ];
 
 /* ---------- Prestige (the reset / brand equity) ---------- */
@@ -1119,12 +1153,12 @@ DATA.NARRATOR = {
         "First post archived. This one will post into an empty room and call it a win.",
       ],
     },
-    // ---- the first-post arc: like -> comment -> nice comment -> unlock ----
+    // ---- the first-post arc: like -> comment -> follow-back -> unlock ----
     first_like: {
       coach: [
-        "Someone liked your post. See? The algorithm believes in you. Keep going.",
+        "You liked a post. Good. The algorithm sees you reaching out. Keep going.",
         "A like. The first of many. We're routing more eyes to you now.",
-        "Your first like just landed. The market is noticing. This is how it starts.",
+        "You liked something. That's how it starts — one hand reaching for another.",
       ],
       pm: [
         "First like logged. Engagement is forming. The funnel is warm.",
@@ -1136,30 +1170,30 @@ DATA.NARRATOR = {
     },
     first_comment: {
       coach: [
-        "A comment. Someone actually read it. Don't get comfortable — they're judging you.",
+        "You commented. Someone will read it. Don't get comfortable — they're judging you.",
         "Your first comment. Real engagement. Or at least, engagement-shaped.",
-        "A comment came in. The algorithm is watching how you handle it.",
+        "A comment from you. The algorithm is watching how you handle it.",
       ],
       pm: [
         "First comment logged. The thread is alive. Keep feeding it.",
         "A comment. We're routing more of them to you now.",
       ],
       auditor: [
-        "First comment recorded. Someone typed words at you. It felt like conversation.",
+        "First comment recorded. You typed words at someone. It felt like conversation.",
       ],
     },
     nice_comment: {
       coach: [
-        "A kind comment. That's the signal we were waiting for. You're ready for more.",
-        "Someone said something nice. The algorithm has decided: you're worth investing in.",
-        "A nice comment. Enough engagement to unlock the rest. Welcome to the machine.",
+        "They followed you back. That's the signal we were waiting for. You're ready for more.",
+        "Someone followed you back. The algorithm has decided: you're worth investing in.",
+        "A follow-back. Enough connection to unlock the rest. Welcome to the machine.",
       ],
       pm: [
         "Positive sentiment detected. Unlocking the full interface. You've earned it.",
-        "A kind comment. The market has spoken. The machine opens for you now.",
+        "A follow-back. The market has spoken. The machine opens for you now.",
       ],
       auditor: [
-        "A nice comment. The algorithm unlocked the rest. It was always going to.",
+        "A follow-back. The algorithm unlocked the rest. It was always going to.",
       ],
     },
     // ---- rarity reveals ----

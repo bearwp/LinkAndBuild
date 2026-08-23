@@ -45,9 +45,19 @@
 
   // seed initial feed
   if (State.data.posts.length === 0) {
+    // cold start: nothing. The feed is a ghost town until you manually follow
+    // someone from "People you may know" — that's the whole point. You trickle
+    // into the loop by hand, one follow at a time.
     for (let i = 0; i < 6; i++) {
       State.data.posts.push(Engine.makeNPCPost());
     }
+  }
+  // starter tags so you can write and post a first story immediately.
+  // Granted once on any existing save that doesn't have them yet, or any
+  // save whose bucket has been emptied — you always start (or restart) with beg.
+  if (!State.data.bucket.starterGranted || Tags.count() === 0) {
+    State.data.bucket.starterGranted = true;
+    if (!State.data.bucket.tags['beg']) State.data.bucket.tags['beg'] = 1;
   }
 
   // bound any pre-existing oversized save so the tick loops stay cheap
@@ -61,9 +71,10 @@
   UI.renderGrowth();
   UI.renderFactoryStrip();
   UI.renderAds();
-  UI.renderDMs();
-  UI.renderCalendar();
   UI.renderRecommended();
+  UI.renderBucket();
+  UI.renderOpportunities();
+  UI.renderBots();
   UI.refresh();
   UI.updateBell();
 
@@ -104,7 +115,6 @@
   // This is the seam that lets the narrator, scare posts, and achievements
   // be added later as pure listeners.
   Bus.on('notif:added', () => UI.updateBell());
-  Bus.on('dm:received', () => UI.renderDMs());
   Bus.on('post:autoposted', (post) => { UI.renderFeedDebounced(); UI.updatePostCard(post); });
   Bus.on('post:streamed', () => UI.renderFeedDebounced());
   Bus.on('fourthwall:posted', () => UI.renderFeedDebounced());
@@ -112,15 +122,21 @@
   Bus.on('detection:restored', () => UI.hideShadowban());
   Bus.on('detection:flag', () => UI.showFlag());
   Bus.on('detection:shadowban', () => UI.showShadowban());
-  Bus.on('post:published', (post) => { UI.renderFeed(); UI.updatePostCard(post); });
   Bus.on('post:liked', (post) => UI.updatePostCard(post));
   Bus.on('post:commented', (post) => UI.updatePostCard(post));
   Bus.on('post:viral', (post) => UI.viralBurst(post));
-  Bus.on('person:followed', () => { UI.renderRecommended(); UI.refresh(); });
   Bus.on('person:connected', () => { UI.renderNetwork(); UI.refresh(); });
   Bus.on('generator:bought', () => { UI.renderGrowth(); UI.renderFactoryStrip(); UI.refresh(); });
   Bus.on('upgrade:bought', () => { UI.renderGrowth(); UI.renderFactoryStrip(); UI.refresh(); });
   Bus.on('premium:bought', () => { UI.hideModal('premium-modal'); UI.refresh(); });
+  Bus.on('tag:absorbed', () => { UI.renderBucket(); UI.refresh(); });
+  Bus.on('post:published', (post) => { UI.renderFeed(); UI.updatePostCard(post); UI.renderBucket(); });
+  Bus.on('post:autoposted', (post) => { UI.renderFeedDebounced(); UI.updatePostCard(post); UI.renderBucket(); });
+  Bus.on('post:boosted', (post) => { UI.renderFeed(); UI.updatePostCard(post); });
+  Bus.on('person:followed', () => { UI.renderRecommended(); UI.renderBucket(); UI.refresh(); });
+  Bus.on('person:connected', () => { UI.renderNetwork(); UI.refresh(); });
+  Bus.on('bot:bought', () => { UI.renderBots(); UI.refresh(); });
+  Bus.on('opportunity:taken', () => { UI.renderOpportunities(); UI.refresh(); });
 
   // desktop icons
   document.querySelectorAll('.d-icon').forEach(icon => {
@@ -167,18 +183,14 @@
   // composer open
   $('open-growth').addEventListener('click', () => {
     UI.renderGrowth();
+    UI.renderBots();
     UI.showModal('growth-modal');
   });
 
-  // inline composer — "Start a post" types out a post for you, no modal
-  $('composer-open').addEventListener('click', () => UI.startInlinePost());
-  $('inline-send').addEventListener('click', () => UI.sendInlinePost());
-
-  // calendar
-  $('dcal-schedule').addEventListener('click', () => UI.scheduleCoffee());
-
-  // alphamail back button
-  $('am-back').addEventListener('click', () => UI.closeAlphaMail());
+  // composer — catch topics, machine writes the post (physics-based)
+  $('composer-open').addEventListener('click', () => {
+    if (window.Wordcatch) window.Wordcatch.open();
+  });
 
   // composer options
   $('opt-template').addEventListener('change', () => UI.updatePreview());

@@ -194,6 +194,37 @@ const DevState = {
       });
     });
 
+    // --- tag loop: seed the bucket, rapport, bots, opportunities ---
+    // A full bucket of mixed-quality tags so the post maker has plenty to
+    // catch and spend. High-quality craft tags + some slop to show the range.
+    s.bucket.tags = {
+      resilience: 5, vision: 3, craft: 4, honesty: 2, systems: 3, 'deep-work': 2,
+      mentorship: 2, story: 3, discipline: 4, growth: 3, mindset: 3, journey: 2,
+      momentum: 3, grateful: 2, humbled: 2, wellness: 2,
+      synergy: 4, hustle: 3, grindset: 2, 'ai-slop': 3, viral: 2, overnight: 2,
+      bossbabe: 2, hiring: 2, 'great-post': 2,
+    };
+    s.bucket.total = 0;
+    for (const k in s.bucket.tags) s.bucket.total += s.bucket.tags[k];
+    s.bucket.spent = 120;
+
+    // rapport with a few archetypes — some already followed you back
+    s.rapport = {
+      gym: { rapport: 7, liked: 4, commented: 2, connected: true, followed: true },
+      humbled: { rapport: 4, liked: 3, commented: 1, connected: false, followed: false },
+      ai: { rapport: 2, liked: 2, commented: 0, connected: false, followed: false },
+      burnout: { rapport: 6, liked: 3, commented: 2, connected: true, followed: true },
+    };
+
+    // a couple of opportunities already taken (money already banked)
+    s.opportunities.taken = ['op1', 'op2'];
+
+    // idle bots: automate everything except money
+    s.bots = { scroll: 2, post: 1, engage: 1, influence: 1 };
+
+    // follow a spread of archetypes so the feed is full of NPC posts
+    s.followedAuthors = ['gym', 'humbled', 'ai', 'recruiter', 'mlm', 'burnout', 'thought', 'greatpost'];
+
     return s;
   },
 };

@@ -7,10 +7,6 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<!-- ===== REAL WORLD TOGGLE ===== -->
-<button id="world-toggle" class="world-toggle" title="Enter/exit the real world">
-  <span>🌐</span> Enter Real World
-</button>
 <!-- ===== BOOT SCREEN ===== -->
 <div id="boot" class="boot hidden">
   <div class="boot-logo">🖥️</div>
@@ -157,13 +153,7 @@
       <div class="card composer" id="composer">
         <div class="composer-top" id="composer-open">
           <div class="avatar" id="composer-avatar">Y</div>
-          <div class="composer-input" id="inline-post-text">Start a post</div>
-        </div>
-        <div class="inline-composer hidden" id="inline-composer">
-          <div class="inline-text" id="inline-text"></div>
-          <div class="inline-actions">
-            <button class="btn btn-primary" id="inline-send" disabled>Send</button>
-          </div>
+          <div class="composer-input" id="inline-post-text">Catch topics to write a post</div>
         </div>
       </div>
 
@@ -201,6 +191,23 @@
         </div>
         <div class="factory-strip" id="factory-strip"></div>
         <button class="btn btn-primary" id="open-growth">Manage Growth</button>
+      </div>
+      <div class="card bucket-card" id="bucket-card">
+        <div class="bucket-head">
+          <span class="bucket-title">🎒 Tag Bucket</span>
+          <span class="bucket-count" id="bucket-count">0</span>
+        </div>
+        <div class="bucket-sub">Scroll posts to absorb their tags. Spend tags to write.</div>
+        <div class="bucket-quality">
+          <span>Quality</span>
+          <div class="bucket-qbar"><div class="bucket-qfill" id="bucket-qfill"></div></div>
+        </div>
+        <div class="bucket-tags" id="bucket-tags"></div>
+      </div>
+      <div class="card opp-card" id="opp-card">
+        <div class="opp-title">💼 Opportunities</div>
+        <div class="opp-sub">Influence unlocks deals. Real money. Take them by hand.</div>
+        <div class="opp-list" id="opp-list"></div>
       </div>
       <div class="card next-card" id="next-card">
         <div class="next-title" id="next-title">Next Unlock</div>
@@ -308,9 +315,11 @@
       <div class="growth-tabs">
         <button class="gtab active" data-gtab="generators">Automation</button>
         <button class="gtab" data-gtab="upgrades">Upgrades</button>
+        <button class="gtab" data-gtab="bots">Idle Bots</button>
       </div>
       <div class="growth-pane" id="g-pane-generators"></div>
       <div class="growth-pane hidden" id="g-pane-upgrades"></div>
+      <div class="growth-pane hidden" id="g-pane-bots"></div>
     </div>
   </div>
 
@@ -391,6 +400,17 @@
     </div>
   </div>
 
+  <!-- Rapport popup (click an author to see their profile) -->
+  <div class="modal-overlay hidden" id="rapport-modal">
+    <div class="modal rapport-modal">
+      <div class="modal-head">
+        <span class="modal-title">Profile</span>
+        <button class="modal-close" data-close="rapport-modal">✕</button>
+      </div>
+      <div class="rapport-body" id="rapport-body"></div>
+    </div>
+  </div>
+
   <!-- Flag warning -->
   <div class="modal-overlay hidden" id="flag-modal">
       <div class="flag-icon">👑</div>
@@ -422,31 +442,6 @@
 </div><!-- /browser -->
 
 <!-- ===== ALPHAMAIL (side software) ===== -->
-<div id="alphamail" class="alphamail hidden">
-  <div class="am-titlebar">
-    <span class="am-dot am-dot-r"></span><span class="am-dot am-dot-y"></span><span class="am-dot am-dot-g"></span>
-    <span class="am-title">📅 AlphaMail</span>
-  </div>
-  <div class="am-body">
-    <div class="dm-header">💬 Messages <span class="dm-count" id="dm-count">0</span></div>
-    <div class="dm-list" id="dm-list"></div>
-    <div class="am-chat hidden" id="am-chat">
-      <button class="am-back" id="am-back">← Back</button>
-      <div class="am-chat-title" id="am-chat-title"></div>
-      <div class="msg-thread" id="msg-thread"></div>
-      <div class="msg-commands" id="msg-commands"></div>
-    </div>
-    <div class="am-divider"></div>
-    <div class="dcal-header">
-      <span>Calendar</span>
-      <span class="dcal-date" id="dcal-date"></span>
-    </div>
-    <div class="dcal-sub">Link &amp; build. Book the coffees.</div>
-    <div class="dcal-list" id="dcal-list"></div>
-    <button class="dcal-btn" id="dcal-schedule">+ Schedule a Coffee</button>
-  </div>
-</div>
-
 <!-- ===== DEBUG BAR (always visible, togglable) ===== -->
 <div id="debug-bar" class="debug-bar">
   <button id="debug-toggle" class="db-toggle" title="Toggle debug panel">🛠️</button>
@@ -469,6 +464,7 @@
 <script src="js/bus.js"></script>
 <script src="js/juice.js"></script>
 <script src="js/dev.js"></script>
+<script src="js/tags.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/narrator.js"></script>
 <script src="js/os.js"></script>
@@ -480,16 +476,6 @@
 <script src="js/guide.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>
-<script src="js/vendor/three.min.js"></script>
-<script src="js/vendor/CSS3DRenderer.js"></script>
-<script src="js/vendor/shaders/CopyShader.js"></script>
-<script src="js/vendor/shaders/LuminosityHighPassShader.js"></script>
-<script src="js/vendor/postprocessing/EffectComposer.js"></script>
-<script src="js/vendor/postprocessing/RenderPass.js"></script>
-<script src="js/vendor/postprocessing/ShaderPass.js"></script>
-<script src="js/vendor/postprocessing/MaskPass.js"></script>
-<script src="js/vendor/postprocessing/UnrealBloomPass.js"></script>
-<script src="js/realworld.js"></script>
 <script src="js/wordcatch.js"></script>
 </body>
 </html>

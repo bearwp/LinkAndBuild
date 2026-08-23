@@ -26,7 +26,6 @@ const Sponsors = {
       sponsor: true,
     });
     if (s.dms.length > 200) s.dms.pop();
-    Bus.emit('dm:received');
   },
 
   // the one-shot deal: activate the first sponsor once clout crosses its

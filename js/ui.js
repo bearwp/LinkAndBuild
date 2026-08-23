@@ -223,7 +223,7 @@ const UI = {
       // right rail
       'growth-card': unlocked,           // after the arc: growth console
       'next-card': unlocked,             // next unlock nudge
-      'rec-card': followers >= 50,       // people you may know
+      'rec-card': true,                   // people you may know — follow to grow the feed
       'ads-card': followers >= 100,      // sponsored content
       'footer-card': followers >= 100,   // footer links
       // menu items
@@ -332,8 +332,11 @@ const UI = {
       for (const e of entries) {
         const id = e.target.dataset.postId;
         if (!id) continue;
-        if (e.isIntersecting) this._visiblePosts.add(id);
-        else this._visiblePosts.delete(id);
+        if (e.isIntersecting) {
+          this._visiblePosts.add(id);
+        } else {
+          this._visiblePosts.delete(id);
+        }
       }
     }, { rootMargin: '200px 0px' });
   },
@@ -341,6 +344,45 @@ const UI = {
   _observeCard(card) {
     this._initVisibility();
     this._visObserver.observe(card);
+  },
+
+  // When a post scrolls into view and its tags are absorbed, spawn little tag
+  // chips that sweep up from the post and gather into the bucket in the right
+  // rail. The bucket "harvests" the scroll — tags arc up and funnel in together.
+  flyTagsToBucket(post, added) {
+    const card = this._cards.get(post.id);
+    const bucket = document.getElementById('bucket-card');
+    if (!card || !bucket || !added) return;
+    const from = card.getBoundingClientRect();
+    const to = bucket.getBoundingClientRect();
+    const tags = Tags.postTags(post);
+    if (!tags.length) return;
+    // pick `added` tags (may repeat) to fly
+    const fly = [];
+    for (let i = 0; i < added; i++) fly.push(tags[i % tags.length]);
+    const n = fly.length;
+    for (let i = 0; i < n; i++) {
+      const d = Tags.def(fly[i]);
+      const chip = document.createElement('div');
+      chip.className = 'tag-fly' + (d && d.q >= 0.8 ? ' high' : '');
+      chip.textContent = (d ? d.emoji + ' ' + d.name : 'tag');
+      // start scattered across the post's tag row (sweep the field)
+      const sx = from.left + from.width * (0.15 + 0.7 * (n === 1 ? 0.5 : i / (n - 1)));
+      const sy = from.top + from.height * 0.75;
+      // funnel into a tight cluster near the bucket's center (a shared harvest)
+      const spread = n <= 1 ? 0 : 8;
+      const tx = to.left + to.width / 2 + (Math.random() - 0.5) * spread;
+      const ty = to.top + to.height * 0.4 + (Math.random() - 0.5) * spread;
+      chip.style.left = sx + 'px';
+      chip.style.top = sy + 'px';
+      chip.style.setProperty('--tx', (tx - sx) + 'px');
+      chip.style.setProperty('--ty', (ty - sy) + 'px');
+      // sweep upward (harvest) and funnel in, staggered so it reads as a wave
+      chip.style.animationDelay = (i * 0.045) + 's';
+      document.body.appendChild(chip);
+      // remove after the animation completes
+      setTimeout(() => chip.remove(), 720 + i * 45);
+    }
   },
 
   // Coalesce rapid feed changes (stream posts, auto posts) into one render.
@@ -399,6 +441,16 @@ const UI = {
       }
     }
     this._feedIds = seen;
+
+    // empty-feed nudge: a fresh account has nothing to scroll until it follows
+    // someone. Point at the rail instead of leaving a dead feed.
+    const feedEnd = document.getElementById('feed-end');
+    if (feedEnd) {
+      const empty = posts.length === 0;
+      feedEnd.textContent = empty
+        ? 'Your feed is empty. Follow people from "People you may know" to fill it.'
+        : "You're all caught up. Keep scrolling anyway.";
+    }
   },
 
   // Update a single post card's live numbers in place (no rebuild)
@@ -419,23 +471,27 @@ const UI = {
     const likeEl = card._statEls.like;
     const comEl = card._statEls.com;
     const shareEl = card._statEls.share;
+    // dopamine juice is reserved for your own posts — an NPC post ticking up
+    // is background noise, not a win, so it updates its number quietly while
+    // your own gains get the float, pop, and fanfare.
+    const mine = post.authorId === 'you';
     const impNew = Engine.fmtTick(stats.impressions);
     const likeNew = Engine.fmtTick(stats.likes);
     const comNew = Engine.fmtTick(stats.comments);
     if (impEl && impEl.textContent !== impNew) {
-      // how many impressions landed since the last paint — the amount we
-      // cascade into the "+N" float so every gain is legible, not just a blur
       const delta = stats.impressions - (post._lastShownImp || 0);
       post._lastShownImp = stats.impressions;
       impEl.textContent = impNew;
-      // each incoming impression reads as a small "win" on this post's
-      // counter; the big fanfare is reserved for tier-ups
-      this._impressionWin(post, delta);
-      const tier = this._impTier(post);
-      if ((post._tierMin || 0) !== tier.min) {
-        post._tierMin = tier.min;
-        this._firePost(post);
-        Juice.coin();
+      if (mine) {
+        // how many impressions landed since the last paint — the amount we
+        // cascade into the "+N" float so every gain is legible, not just a blur
+        this._impressionWin(post, delta);
+        const tier = this._impTier(post);
+        if ((post._tierMin || 0) !== tier.min) {
+          post._tierMin = tier.min;
+          this._firePost(post);
+          Juice.coin();
+        }
       }
     }
     if (likeEl && likeEl.textContent !== likeNew) {
@@ -724,7 +780,7 @@ const UI = {
         <span><b class="st-com">${Engine.fmt(stats.comments)}</b> comments</span>
         <span><b class="st-share">${Engine.fmt(stats.shares)}</b> reposts</span>
       </div>
-      <div class="post-actions">${likeBtn}${commentBtn}<div class="pa-btn"><span>↗</span> Repost</div><div class="pa-btn"><span>✈️</span> Send</div></div>
+      <div class="post-actions">${likeBtn}${commentBtn}<div class="pa-btn"><span>↗</span> Repost</div><div class="pa-btn"><span>✈️</span> Send</div>${post.authorId === 'you' ? `<div class="pa-btn boost" data-boost="${post.id}"><span>🚀</span> Boost</div>` : ''}</div>
       ${commentsHtml}
     `;
 
@@ -738,10 +794,28 @@ const UI = {
       this.updatePostCard(post);
     });
 
+    // click an NPC author's NAME to open their profile / rapport popup
+    if (post.isNPC) {
+      const nameEl = card.querySelector('.post-author');
+      if (nameEl) nameEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const person = post.authorPersonId
+          ? (DATA.RECOMMENDED.find(p => p.id === post.authorPersonId) || DATA.NETWORK_PEOPLE.find(p => p.id === post.authorPersonId))
+          : null;
+        this.openRapport(post.authorId, person);
+      });
+    }
+
     const commentBtnEl = card.querySelector('[data-comment]');
     if (commentBtnEl) commentBtnEl.addEventListener('click', (e) => {
       e.stopPropagation();
       this.openCommentPop(commentBtnEl, post);
+    });
+
+    const boostBtnEl = card.querySelector('[data-boost]');
+    if (boostBtnEl) boostBtnEl.addEventListener('click', () => {
+      Engine.boostPost(post.id);
+      this.updatePostCard(post);
     });
 
     // "Show all X comments" expand
@@ -756,7 +830,67 @@ const UI = {
     // restore the on-fire state so flames persist across feed rebuilds
     if (post.onFire) this._ignite(post, card);
 
+    // HOLD-TO-HARVEST: press and hold an NPC post to pull its tags into the
+    // bucket. It shakes while you hold; when the bar fills it pops and the
+    // tags fly out. Releasing early cancels with no gain.
+    if (post.isNPC && !post._absorbed) {
+      this._bindHarvest(card, post);
+    }
+
     return card;
+  },
+
+  _bindHarvest(card, post) {
+    const HOLD_MS = 700;                 // how long to hold for a full harvest
+    let timer = null, startedAt = 0;
+    let harvested = false;
+    const overlay = document.createElement('div');
+    overlay.className = 'harvest-bar';
+    card.appendChild(overlay);
+
+    const begin = (e) => {
+      e.preventDefault();
+      if (harvested) return;
+      startedAt = performance.now();
+      card.classList.add('harvesting');
+      const tick = (now) => {
+        if (harvested) return;
+        const p = Math.min(1, (now - startedAt) / HOLD_MS);
+        overlay.style.width = (p * 100) + '%';
+        // shake faster as it nears completion
+        card.style.animationDuration = (0.5 - p * 0.32) + 's';
+        if (p >= 1) { harvest(); return; }
+        timer = requestAnimationFrame(tick);
+      };
+      timer = requestAnimationFrame(tick);
+    };
+    const cancel = () => {
+      if (harvested) return;
+      if (timer) cancelAnimationFrame(timer);
+      overlay.style.width = '0%';
+      card.classList.remove('harvesting');
+    };
+    const harvest = () => {
+      if (harvested) return;
+      harvested = true;
+      if (timer) cancelAnimationFrame(timer);
+      post._absorbed = true;
+      card.classList.remove('harvesting');
+      card.classList.add('harvested');
+      const added = Tags.absorb(post);
+      this._bucketDirty = true;
+      if (added > 0) {
+        this.flyTagsToBucket(post, added);
+        Bus.emit('tag:absorbed', { post, added });
+      }
+      // pop, then fade the card so it reads as "spent"
+      setTimeout(() => card.classList.add('harvested-gone'), 450);
+    };
+
+    card.addEventListener('pointerdown', begin);
+    card.addEventListener('pointerup', cancel);
+    card.addEventListener('pointerleave', cancel);
+    card.addEventListener('pointercancel', cancel);
   },
 
   escapeHtml(str) {
@@ -819,71 +953,6 @@ const UI = {
     document.getElementById('post-text').focus();
   },
 
-  /* ---------- inline composer (AI writes the post, no modal) ---------- */
-  startInlinePost() {
-    const s = State.data;
-    const box = document.getElementById('inline-composer');
-    const textEl = document.getElementById('inline-text');
-    const sendBtn = document.getElementById('inline-send');
-    if (!box || this._typing) return;
-    // The first few posts are naive and honest — a real person who needs a
-    // job. Only once the player has posted a few times does the bait machine
-    // (templates) take over.
-    const naive = s.analytics.postsPublished < 3;
-    const t = naive ? null : Engine.pick(DATA.TEMPLATES);
-    const content = naive
-      ? Engine.pick(DATA.NAIVE_POSTS)
-      : (t.id === 'free' ? Engine.pick(DATA.ARCHETYPES).posts[0] : t.text);
-    this._inlineTemplate = t;
-    this._inlineContent = content;
-    this._typing = true;
-    box.classList.remove('hidden');
-    textEl.textContent = '';
-    sendBtn.disabled = true;
-    // type it out character by character
-    let i = 0;
-    const caret = document.createElement('span');
-    caret.className = 'typing-caret';
-    textEl.appendChild(caret);
-    const step = () => {
-      if (!this._typing) return;
-      i++;
-      const shown = content.slice(0, i);
-      textEl.textContent = shown;
-      textEl.appendChild(caret);
-      if (i < content.length) {
-        this._typeTimer = setTimeout(step, 18 + Math.random() * 40);
-      } else {
-        this._typing = false;
-        sendBtn.disabled = false;
-      }
-    };
-    step();
-  },
-
-  sendInlinePost() {
-    const s = State.data;
-    const box = document.getElementById('inline-composer');
-    const textEl = document.getElementById('inline-text');
-    const sendBtn = document.getElementById('inline-send');
-    if (!this._inlineContent || this._typing) return;
-    const opts = {
-      template: this._inlineTemplate ? this._inlineTemplate.id : 'free',
-      format: 'text',
-      emojis: 0,
-      tags: 0,
-      question: 0,
-    };
-    const post = Engine.publish(this._inlineContent, opts);
-    if (post) {
-      this._inlineContent = null;
-      this._inlineTemplate = null;
-      textEl.textContent = '';
-      box.classList.add('hidden');
-      sendBtn.disabled = true;
-    }
-  },
-
   /* ---------- growth console ---------- */
   renderGrowth() {
     const s = State.data;
@@ -897,6 +966,15 @@ const UI = {
       const owned = s.generators[g.id] || 0;
       const cost = Engine.costOf(g, owned);
       const affordable = s.impressions >= cost;
+      const out = g.out || {};
+      const parts = [];
+      if (out.imp) parts.push('+' + Engine.fmt(out.imp * owned) + ' imp/s');
+      if (out.like) parts.push('+' + Engine.fmt(out.like * owned) + ' likes/s');
+      if (out.follow) parts.push('+' + Engine.fmt(out.follow * owned) + ' followers/s');
+      const each = [];
+      if (out.imp) each.push('+' + Engine.fmt(out.imp) + ' imp/s');
+      if (out.like) each.push('+' + Engine.fmt(out.like) + ' likes/s');
+      if (out.follow) each.push('+' + Engine.fmt(out.follow) + ' followers/s');
       const item = document.createElement('div');
       item.className = 'g-item' + (owned > 0 ? ' owned running' : ' idle');
       item.innerHTML = `
@@ -906,8 +984,8 @@ const UI = {
           <div class="g-item-desc">${g.desc}</div>
           <div class="g-item-stats">
             ${owned > 0
-              ? `<span class="g-output">+${Engine.fmt(Engine.prodOf(g, owned))} imp/s</span> <span class="g-per">(+${Engine.fmt(Engine.prodOf(g, 1))} each)</span>`
-              : `<span class="g-would">⚙️ +${Engine.fmt(Engine.prodOf(g, 1))} imp/s</span>`}
+              ? `<span class="g-output">${parts.join(' ')}</span> <span class="g-per">(each: ${each.join(', ')})</span>`
+              : `<span class="g-would">⚙️ ${each.join(', ')}</span>`}
           </div>
         </div>
         <button class="btn btn-primary g-item-btn" data-gen="${g.id}" ${affordable ? '' : 'disabled'}>
@@ -1230,106 +1308,6 @@ const UI = {
     this.renderAnalytics();
   },
 
-  /* ---------- messaging (inside AlphaMail) ---------- */
-  openAlphaMail() {
-    const list = document.getElementById('dm-list');
-    const chat = document.getElementById('am-chat');
-    if (list) list.classList.add('hidden');
-    if (chat) chat.classList.add('hidden');
-  },
-
-  closeAlphaMail() {
-    const list = document.getElementById('dm-list');
-    const chat = document.getElementById('am-chat');
-    if (list) list.classList.remove('hidden');
-    if (chat) chat.classList.add('hidden');
-  },
-
-  /* ---------- side panel DMs (unified messaging) ---------- */
-  // Incremental render: reuse existing DOM nodes, only insert new items.
-  // Prevents the whole list from flashing/rebuilding on every incoming DM.
-  renderDMs() {
-    const s = State.data;
-    const list = document.getElementById('dm-list');
-    const count = document.getElementById('dm-count');
-    if (!list) return;
-    const dms = s.dms.slice(0, 8);
-    if (count) count.textContent = s.dms.length;
-
-    // Build the desired item list in order, each with a stable key.
-    const desired = [];
-    if (dms.length > 0) {
-      desired.push({ key: '__inbox-head', head: 'Inbox' });
-      for (const dm of dms) desired.push({ key: 'dm-' + dm.id, dm });
-    }
-
-    // Empty state
-    if (desired.length === 0) {
-      if (!list.querySelector('.dm-empty')) {
-        list.innerHTML = '<div class="dm-empty">No messages yet. Post something and they\'ll come.</div>';
-      }
-      return;
-    }
-
-    // Index existing nodes by key
-    const existing = new Map();
-    list.querySelectorAll('[data-dm-key]').forEach(el => existing.set(el.dataset.dmKey, el));
-
-    // Reconcile: walk desired order, reusing or creating nodes.
-    const seen = new Set();
-    let prev = null;
-    for (const item of desired) {
-      seen.add(item.key);
-      let el = existing.get(item.key);
-      if (el) {
-        // move to correct position if needed
-        if (prev && prev.nextSibling !== el) {
-          list.insertBefore(el, prev.nextSibling);
-        } else if (!prev && list.firstChild !== el) {
-          list.insertBefore(el, list.firstChild);
-        }
-      } else {
-        el = this._buildDMNode(item);
-        if (prev) list.insertBefore(el, prev.nextSibling);
-        else list.insertBefore(el, list.firstChild);
-      }
-      prev = el;
-    }
-
-    // Remove nodes no longer present
-    for (const [key, el] of existing) {
-      if (!seen.has(key)) el.remove();
-    }
-  },
-
-  _buildDMNode(item) {
-    const el = document.createElement('div');
-    if (item.head) {
-      el.className = 'dm-section-head';
-      el.dataset.dmKey = item.key;
-      el.textContent = item.head;
-      return el;
-    }
-    const dm = item.dm;
-    el.className = 'dm-item' + (dm.read ? '' : ' unread');
-    el.dataset.dmKey = item.key;
-    const time = Math.floor((Date.now() - dm.time) / 60000);
-    const timeStr = time < 1 ? 'now' : time < 60 ? time + 'm' : Math.floor(time / 60) + 'h';
-    el.innerHTML = `
-      <div class="dm-avatar" style="background:${dm.color}">${dm.emoji}</div>
-      <div class="dm-body">
-        <div class="dm-name">${this.escapeHtml(dm.name)} <span class="dm-role">${this.escapeHtml(dm.role)}</span></div>
-        <div class="dm-text">${this.escapeHtml(dm.text)}</div>
-        <div class="dm-time">${timeStr} ago</div>
-      </div>`;
-    el.addEventListener('click', () => {
-      dm.read = true;
-      this.renderDMs();
-      Juice.toast('You replied: "Let\'s talk." The opportunity is yours.');
-    });
-    return el;
-  },
-
   /* ---------- network view ---------- */
   renderNetwork() {
     const s = State.data;
@@ -1382,74 +1360,6 @@ const UI = {
       el.querySelector('[data-rec]').addEventListener('click', () => Engine.followPerson(p.id));
       list.appendChild(el);
     }
-  },
-
-  /* ---------- calendar ---------- */
-  renderCalendar() {
-    const s = State.data;
-    const list = document.getElementById('dcal-list');
-    const dateEl = document.getElementById('dcal-date');
-    if (!list) return;
-    if (dateEl) {
-      dateEl.textContent = new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
-    }
-    list.innerHTML = '';
-    if (s.calendar.length === 0) {
-      list.innerHTML = '<div class="dcal-empty">No coffees booked. Your network is waiting.</div>';
-      return;
-    }
-    for (const ev of s.calendar) {
-      const el = document.createElement('div');
-      el.className = 'dcal-item' + (ev.done ? ' done' : '');
-      el.innerHTML = `
-        <div class="dcal-icon">${ev.icon}</div>
-        <div class="dcal-body">
-          <div class="dcal-name">${this.escapeHtml(ev.person)}</div>
-          <div class="dcal-type">${this.escapeHtml(ev.label)} · ${ev.time}</div>
-        </div>
-        ${ev.done ? '<div class="dcal-check">✓</div>' : `<button class="dcal-done" data-cal="${ev.id}">✓</button>`}`;
-      const doneBtn = el.querySelector('[data-cal]');
-      if (doneBtn) doneBtn.addEventListener('click', () => this.completeCalendar(ev.id));
-      list.appendChild(el);
-    }
-  },
-
-  completeCalendar(id) {
-    const s = State.data;
-    const ev = s.calendar.find(x => x.id === id);
-    if (!ev || ev.done) return;
-    ev.done = true;
-    // the coffee pays off: impressions + influence
-    s.impressions += ev.reward * 10;
-    s.connections += 1;
-    s.authenticity = Math.min(100, s.authenticity + ev.auth);
-    Juice.chime();
-    Juice.toast('☕ Coffee done! +' + Engine.fmt(ev.reward * 10) + ' impressions, +1 connection.');
-    this.renderCalendar();
-    this.refresh();
-  },
-
-  scheduleCoffee() {
-    const s = State.data;
-    const type = Engine.pick(DATA.CAL_TYPES);
-    const person = Engine.pick(DATA.CAL_PEOPLE);
-    const hour = 9 + Math.floor(Math.random() * 9); // 9am–5pm
-    const min = Math.random() < 0.5 ? '00' : '30';
-    const ev = {
-      id: 'cal' + Date.now() + Math.floor(Math.random() * 9999),
-      person: person,
-      label: type.label,
-      icon: type.icon,
-      reward: type.reward,
-      auth: type.auth,
-      time: hour + ':' + min,
-      done: false,
-    };
-    s.calendar.unshift(ev);
-    if (s.calendar.length > 12) s.calendar.pop();
-    Juice.chime();
-    Juice.toast('☕ Booked a ' + type.label + ' with ' + person + '.');
-    this.renderCalendar();
   },
 
   /* ---------- notifications ---------- */
@@ -1629,6 +1539,155 @@ const UI = {
       Reveal.becomeAlgorithm();
       this.renderAlgorithm();
     });
+  },
+
+  /* ---------- tag bucket (right rail) ---------- */
+  renderBucket() {
+    const s = State.data;
+    const countEl = document.getElementById('bucket-count');
+    const qfill = document.getElementById('bucket-qfill');
+    if (!countEl) return;
+    const n = Tags.count();
+    countEl.textContent = n;
+    const q = Tags.bucketQuality();
+    if (qfill) {
+      qfill.style.width = Math.round(q * 100) + '%';
+      qfill.style.background = q >= 0.8 ? 'linear-gradient(90deg,#b8860b,#ffd700)' : q >= 0.5 ? 'linear-gradient(90deg,#0a66c2,#7fb8e8)' : 'linear-gradient(90deg,#9e9e9e,#c0c0c0)';
+    }
+    // The catch window (canvas) shows each tag as a floating word, so we no
+    // longer render chip duplicates here. The bucket-sub hint tells the player
+    // to drag words into the post box.
+    const sub = document.querySelector('.bucket-card .bucket-sub');
+    if (sub) sub.textContent = n > 0 ? 'Catch topics to write. Drag them into the post box.' : 'Scroll the feed to absorb tags.';
+    const tagsEl = document.getElementById('bucket-tags');
+    if (tagsEl && !tagsEl.dataset.painted) {
+      tagsEl.dataset.painted = '1';
+      tagsEl.className = 'bucket-tags wc-bucket-hint';
+      tagsEl.innerHTML = '<div class="wc-bar-ph">hold a word, drag it into the post box</div>';
+    }
+  },
+
+  /* ---------- opportunities (right rail) ---------- */
+  renderOpportunities() {
+    const s = State.data;
+    const list = document.getElementById('opp-list');
+    if (!list) return;
+    const avail = Engine.availableOpportunities();
+    list.innerHTML = '';
+    if (!avail.length) {
+      const next = DATA.OPPORTUNITIES.find(o => !s.opportunities.taken.includes(o.id));
+      if (next) {
+        list.innerHTML = `<div class="opp-item locked">
+          <div class="opp-icon">${next.icon}</div>
+          <div class="opp-info">
+            <div class="opp-name">${next.name}</div>
+            <div class="opp-pitch">${next.pitch}</div>
+            <div class="opp-req">🔒 ${Engine.fmt(next.influence)} influence</div>
+          </div>
+        </div>`;
+      } else {
+        list.innerHTML = '<div class="opp-empty">All deals taken. The loop is yours.</div>';
+      }
+      return;
+    }
+    for (const o of avail) {
+      const item = document.createElement('div');
+      item.className = 'opp-item';
+      item.innerHTML = `
+        <div class="opp-icon">${o.icon}</div>
+        <div class="opp-info">
+          <div class="opp-name">${o.name}</div>
+          <div class="opp-pitch">${o.pitch}</div>
+          <div class="opp-pay">💰 +$${o.payout.toLocaleString()}</div>
+        </div>
+        <button class="btn btn-primary opp-take" data-opp="${o.id}">Take</button>`;
+      item.querySelector('[data-opp]').addEventListener('click', () => {
+        Engine.takeOpportunity(o.id);
+        this.renderOpportunities();
+        this.refresh();
+      });
+      list.appendChild(item);
+    }
+  },
+
+  /* ---------- rapport popup (click an author) ---------- */
+  openRapport(authorId, person) {
+    const s = State.data;
+    const arch = DATA.ARCHETYPES.find(a => a.id === authorId);
+    if (!arch) return;
+    const r = s.rapport[authorId] || { rapport: 0, liked: 0, commented: 0, connected: false, followed: false };
+    const body = document.getElementById('rapport-body');
+    if (!body) return;
+    const level = r.rapport >= 5 ? 'Following you back' : r.rapport >= 3 ? 'Warm' : r.rapport >= 1 ? 'Noticing you' : 'Stranger';
+    // show the actual person when we know them, not the shared archetype
+    const p = person || null;
+    const name = p ? p.name : arch.name;
+    const role = p ? p.role : arch.role;
+    const emoji = p ? p.emoji : arch.emoji;
+    const color = p ? p.color : arch.color;
+    body.innerHTML = `
+      <div class="rapport-avatar" style="background:${color}">${emoji}</div>
+      <div class="rapport-name">${this.escapeHtml(name)}</div>
+      <div class="rapport-role">${this.escapeHtml(role)}</div>
+      <div class="rapport-stats">
+        <div class="r-stat"><span>Influence</span><b>${Engine.fmt(arch.influence)}</b></div>
+        <div class="r-stat"><span>Rapport</span><b>${r.rapport}</b></div>
+        <div class="r-stat"><span>Status</span><b>${level}</b></div>
+      </div>
+      <div class="rapport-bar"><div class="rapport-fill" style="width:${Math.min(100, r.rapport / 5 * 100)}%"></div></div>
+      <div class="rapport-hint">${r.followed ? 'They follow you back. Their posts reach you now.' : 'Like and comment on their posts to build rapport. At 5 rapport they follow you back.'}</div>
+      <div class="rapport-actions">
+        <button class="btn btn-primary" data-rp-follow>${r.followed ? 'Following' : 'Follow'}</button>
+        <button class="btn" data-rp-connect>${r.connected ? 'Connected' : 'Connect'}</button>
+      </div>`;
+    const followBtn = body.querySelector('[data-rp-follow]');
+    if (followBtn && !r.followed) followBtn.addEventListener('click', () => {
+      Engine.followPerson(arch.id);
+      this.openRapport(authorId);
+    });
+    const connectBtn = body.querySelector('[data-rp-connect]');
+    if (connectBtn && !r.connected) connectBtn.addEventListener('click', () => {
+      Engine.connectPerson(arch.id);
+      this.openRapport(authorId);
+    });
+    this.showModal('rapport-modal');
+  },
+
+  /* ---------- idle bots (growth modal pane) ---------- */
+  renderBots() {
+    const s = State.data;
+    const pane = document.getElementById('g-pane-bots');
+    if (!pane) return;
+    const defs = {
+      scroll: { name: 'Scroll Bot', icon: '🖱️', cost: 100, desc: 'Automatically scrolls the feed and absorbs tags.' },
+      post: { name: 'Post Bot', icon: '✍️', cost: 500, desc: 'Automatically writes posts from your bucket tags.' },
+      engage: { name: 'Engage Bot', icon: '🤖', cost: 250, desc: 'Automatically likes and comments, building rapport.' },
+      influence: { name: 'Influence Bot', icon: '📈', cost: 1000, desc: 'Automatically converts your reach into influence.' },
+    };
+    pane.innerHTML = '<div class="bots-note">Bots automate the manual loops. They can never take money — opportunities are yours by hand.</div>';
+    for (const kind in defs) {
+      const d = defs[kind];
+      const owned = s.bots[kind] || 0;
+      const affordable = s.impressions >= d.cost;
+      const item = document.createElement('div');
+      item.className = 'g-item' + (owned > 0 ? ' owned running' : ' idle');
+      item.innerHTML = `
+        <div class="g-item-icon">${d.icon}</div>
+        <div class="g-item-info">
+          <div class="g-item-name">${d.name} <span class="g-item-count">${owned > 0 ? '×' + owned : ''}</span></div>
+          <div class="g-item-desc">${d.desc}</div>
+          <div class="g-item-stats">${owned > 0 ? 'Running · ' + owned + ' active' : 'Idle'}</div>
+        </div>
+        <button class="btn btn-primary g-item-btn" data-bot="${kind}" ${affordable ? '' : 'disabled'}>
+          ${owned > 0 ? 'Buy another' : 'Buy'} · ${Engine.fmt(d.cost)}
+        </button>`;
+      item.querySelector('[data-bot]').addEventListener('click', () => {
+        Engine.buyBot(kind);
+        this.renderBots();
+        this.refresh();
+      });
+      pane.appendChild(item);
+    }
   },
 
   /* ---------- tab switching ---------- */

@@ -33,6 +33,22 @@ function defaultState() {
     followed: [],            // ids of recommended people the player follows
     followedAuthors: [],     // archetype ids whose posts appear in the feed
     network: [],             // ids of network people the player connected with
+    bucket: {                // the tag bucket: tags absorbed from scrolling
+      tags: {},              // tagId -> count held
+      total: 0,              // total tags ever absorbed (lifetime)
+      spent: 0,              // total tags ever spent on posts
+      starterGranted: false, // one-time starting topics given to the player
+    },
+    rapport: {},             // authorId -> { rapport, liked, commented, connected, followed }
+    opportunities: {         // influence -> money deals
+      taken: [],             // opportunity ids claimed (one-time)
+    },
+    bots: {                  // idle automation: automate everything except money
+      scroll: 0,             // auto-scroll bot count (absorbs tags)
+      post: 0,               // auto-post bot count (writes posts from bucket)
+      engage: 0,             // auto-engage bot count (likes/comments, builds rapport)
+      influence: 0,          // auto-influence bot count (reach -> influence)
+    },
     milestonesSeen: {},      // id -> true
     fourthWallShown: false,
     onboarding: {            // the first-post arc: like -> comment -> nice comment -> unlock
@@ -179,6 +195,12 @@ const State = {
     merged.achievements = Object.assign({}, base.achievements, save.achievements || {});
     merged.challenges = Object.assign({}, base.challenges, save.challenges || {});
     merged.challenges.stats = Object.assign({}, base.challenges.stats, (save.challenges && save.challenges.stats) || {});
+    merged.bucket = Object.assign({}, base.bucket, save.bucket || {});
+    merged.bucket.tags = Object.assign({}, base.bucket.tags, (save.bucket && save.bucket.tags) || {});
+    merged.rapport = Object.assign({}, base.rapport, save.rapport || {});
+    merged.opportunities = Object.assign({}, base.opportunities, save.opportunities || {});
+    merged.opportunities.taken = (save.opportunities && save.opportunities.taken) || [];
+    merged.bots = Object.assign({}, base.bots, save.bots || {});
     merged.version = this.VERSION;
     return merged;
   },

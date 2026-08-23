@@ -80,8 +80,6 @@ const OS = {
   showBrowser() {
     document.getElementById('desktop').classList.add('hidden');
     document.getElementById('browser').classList.remove('hidden');
-    document.getElementById('alphamail').classList.remove('hidden');
-    document.body.classList.add('has-alphamail');
     this.syncAppIcons();
     this.switchApp(State.data.os.activeApp || 'linkedin');
   },
@@ -89,8 +87,6 @@ const OS = {
   showDesktop() {
     document.getElementById('browser').classList.add('hidden');
     document.getElementById('desktop').classList.remove('hidden');
-    document.getElementById('alphamail').classList.add('hidden');
-    document.body.classList.remove('has-alphamail');
     this.syncAppIcons();
   },
 

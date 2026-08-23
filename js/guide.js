@@ -12,6 +12,20 @@
 
 const GUIDE_STEPS = [
   {
+    id: 'first-follow',
+    title: 'Follow someone',
+    hint: 'Your feed is empty. Follow people from "People you may know" to fill it.',
+    done: s => (s.followedAuthors || []).length >= 1,
+    progress: s => Math.min(1, (s.followedAuthors || []).length),
+  },
+  {
+    id: 'first-absorb',
+    title: 'Absorb your first tags',
+    hint: 'Scroll the feed. Each post you scroll drops its tags into your bucket.',
+    done: s => (s.bucket && s.bucket.total) >= 1,
+    progress: s => Math.min(1, (s.bucket && s.bucket.total) || 0),
+  },
+  {
     id: 'first-post',
     title: 'Publish your first post',
     hint: 'Open the composer and say something. Anything.',
@@ -19,25 +33,36 @@ const GUIDE_STEPS = [
     progress: s => Math.min(1, s.analytics.postsPublished),
   },
   {
-    id: 'first-generator',
-    title: 'Automate your first task',
-    hint: 'Open the Growth Console and buy a generator.',
-    done: s => Object.values(s.generators).reduce((a, b) => a + b, 0) >= 1,
-    progress: s => Math.min(1, s.impressions / 50),
+    id: 'first-catch',
+    title: 'Write a post from your bucket',
+    hint: 'Open "Catch topics", grab tags from your bucket, and post.',
+    done: s => (s.bucket && s.bucket.spent) >= 2,
+    progress: s => Math.min(1, ((s.bucket && s.bucket.spent) || 0) / 2),
   },
   {
-    id: 'followers-100',
-    title: 'Reach 100 followers',
-    hint: 'Your machine is working. Watch the followers climb.',
-    done: s => s.followers >= 100,
-    progress: s => Math.min(1, s.followers / 100),
+    id: 'first-rapport',
+    title: 'Get someone to follow you back',
+    hint: 'Like and comment on a post. At 5 rapport they follow you back.',
+    done: s => Object.values(s.rapport || {}).some(r => r.followed),
+    progress: s => {
+      const vals = Object.values(s.rapport || {});
+      if (!vals.length) return 0;
+      return Math.min(1, Math.max.apply(null, vals.map(r => r.rapport / 5)));
+    },
   },
   {
-    id: 'first-sponsor',
-    title: 'Sign your first sponsor',
-    hint: 'Big enough for a brand deal. Real money, fake clout.',
-    done: s => s.sponsors.active.length >= 1,
-    progress: s => Math.min(1, s.influence / 1000),
+    id: 'first-bot',
+    title: 'Buy your first idle bot',
+    hint: 'Open the Growth Console → Idle Bots. Bots automate everything except money.',
+    done: s => Object.values(s.bots || {}).reduce((a, b) => a + b, 0) >= 1,
+    progress: s => Math.min(1, s.impressions / 100),
+  },
+  {
+    id: 'first-opportunity',
+    title: 'Take your first opportunity',
+    hint: 'Build influence until a deal unlocks. Take it by hand for real money.',
+    done: s => (s.opportunities && s.opportunities.taken.length) >= 1,
+    progress: s => Math.min(1, s.influence / 500),
   },
   {
     id: 'first-prestige',

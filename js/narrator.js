@@ -52,7 +52,6 @@ const Narrator = {
       narrator: true,
     });
     if (s.dms.length > 200) s.dms.pop();
-    Bus.emit('dm:received');
   },
 
   // a notification (the bell — the narrator *is* the bell)

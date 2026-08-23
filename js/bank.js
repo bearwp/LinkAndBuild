@@ -38,8 +38,8 @@ const Bank = {
       return;
     }
     this.deposit(-pkg.cost, pkg.label, pkg.icon);
-    s.impressions += pkg.impressions * Engine.scale();
-    s.followers += pkg.followers * Engine.scale();
+    s.impressions += pkg.impressions;
+    s.followers += pkg.followers;
     s.authenticity = Math.max(0, s.authenticity - pkg.auth);
     Juice.chime();
     Juice.toast('Purchased ' + pkg.name + '. Your clout just grew.');

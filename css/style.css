@@ -26,6 +26,7 @@ button { font: inherit; cursor: pointer; border: none; background: none; }
 /* ============ Layout ============ */
 .layout { max-width: 1128px; margin: 24px auto 0; display: grid; grid-template-columns: 216px 1fr 312px; gap: 24px; padding: 0 16px; }
 .left-rail, .right-rail { display: flex; flex-direction: column; gap: 12px; }
+.right-rail { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 88px); overflow-y: auto; }
 .center { display: flex; flex-direction: column; gap: 12px; }
 
 .card { background: #fff; border-radius: 8px; border: 1px solid #e0dfdc; overflow: hidden; }
@@ -120,17 +121,19 @@ body.aura-pauper .profile-banner { background: linear-gradient(135deg, #9e9e9e, 
 
 /* ============ First-run minimal mode ============ */
 /* Before the first post, hide everything that isn't the one obvious
-   action: the composer. The guide and composer stay front and center. */
+   action: the composer. The guide and composer stay front and center.
+   The tag bucket always stays on the side so you can see your topics. */
 body.first-run .left-rail,
-body.first-run .right-rail,
 body.first-run .feed,
 body.first-run .feed-end,
 body.first-run .topnav .nav-search,
 body.first-run .topnav .nav-icons { display: none; }
-body.first-run .layout { grid-template-columns: 1fr; max-width: 640px; }
+body.first-run .layout { grid-template-columns: 1fr 312px; max-width: 900px; }
 body.first-run .center { gap: 16px; }
 body.first-run .guide-card { border-left-width: 4px; }
 body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
+body.first-run .growth-card,
+body.first-run .opp-card { display: none; }
 
 /* ============ Signup ============ */
 .signup { position: fixed; inset: 0; background: #f3f2ef; display: grid; place-items: center; z-index: 200; padding: 16px; }
@@ -150,8 +153,11 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .composer { padding: 12px 16px; }
 .composer-highlight { animation: composerPulse 1.5s ease 3; }
 @keyframes composerPulse { 0%, 100% { box-shadow: 0 0 0 0 #0a66c2; } 50% { box-shadow: 0 0 0 6px rgba(10,102,194,0.35); } }
-.composer-top { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.composer-top { display: flex; align-items: center; gap: 12px; }
 .composer-input { flex: 1; text-align: left; border: 1px solid #e0dfdc; border-radius: 8px; padding: 10px 12px; color: #666; font-size: 14px; background: #fff; resize: none; font-family: inherit; line-height: 1.4; min-height: 40px; }
+/* composer is the drop target: subtle cue on hover */
+#composer.wc-dropcue { border: 1px dashed #0a66c2; background: #f7fbfe; }
+#composer .wc-bar { padding: 8px 0 0; border-top: 1px solid #e0dfdc; margin-top: 10px; justify-content: flex-end; }
 .composer-input:focus { outline: none; border-color: #0a66c2; }
 .composer-input::placeholder { color: #999; }
 .inline-options { display: none; margin-top: 10px; border-top: 1px solid #e0dfdc; padding-top: 10px; }
@@ -316,6 +322,37 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 }
 .post-stats { margin-top: 10px; font-size: 12px; color: #666; display: flex; gap: 14px; }
 .post-stats b { color: rgba(0,0,0,0.75); }
+
+/* HOLD-TO-HARVEST: a post shakes while you harvest its tag, then pops */
+.post-card { position: relative; }
+.post-card.harvesting { animation: harvestShake 0.4s linear infinite; cursor: grabbing; }
+@keyframes harvestShake {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-3px, 1px); }
+  50% { transform: translate(3px, -1px); }
+  75% { transform: translate(-2px, 0); }
+  100% { transform: translate(2px, 1px); }
+}
+.harvest-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 4px;
+  width: 0%;
+  background: linear-gradient(90deg, #0a66c2, #7fb8e8);
+  border-radius: 0 0 8px 8px;
+  pointer-events: none;
+  z-index: 3;
+  transition: width 0.05s linear;
+}
+.post-card.harvested { animation: harvestPop 0.4s cubic-bezier(0.25, 1, 0.4, 1) both; }
+@keyframes harvestPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.05); box-shadow: 0 0 0 4px rgba(10,102,194,0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(10,102,194,0); }
+}
+.post-card.harvested-gone { opacity: 0.35; filter: saturate(0.4); transition: opacity 0.4s ease, filter 0.4s ease; }
+.post-card.harvested-gone .post-body { text-decoration: line-through; }
 .post-actions { display: flex; margin-top: 8px; border-top: 1px solid #e0dfdc; padding-top: 4px; }
 .pa-btn { flex: 1; padding: 8px; border-radius: 4px; color: #666; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .pa-btn:hover { background: #f3f2ef; }
@@ -411,25 +448,6 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .footer-copy { font-size: 11px; color: #999; margin-top: 8px; }
 
 /* ============ Side panel DMs ============ */
-.dm-card { padding: 12px 0; }
-.dm-header { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; padding: 0 16px 8px; }
-.dm-count { background: #d11124; color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px; }
-.dm-list { max-height: 360px; overflow-y: auto; }
-.dm-section-head { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #999; padding: 8px 16px 4px; }
-.dm-item { display: flex; gap: 8px; padding: 8px 16px; cursor: pointer; border-top: 1px solid #f3f2ef; animation: dmIn 0.3s ease; }
-.dm-item.dm-team { border-left: 3px solid #0a66c2; }
-.dm-item:hover { background: #f3f2ef; }
-.dm-item.unread { background: #eef3f8; }
-.dm-item.unread:hover { background: #e2ecf5; }
-.dm-avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; flex-shrink: 0; }
-.dm-body { flex: 1; min-width: 0; }
-.dm-name { font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.85); }
-.dm-role { font-size: 10px; font-weight: 400; color: #666; }
-.dm-text { font-size: 12px; color: rgba(0,0,0,0.7); line-height: 1.35; margin-top: 1px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.dm-time { font-size: 10px; color: #999; margin-top: 2px; }
-.dm-empty { padding: 12px 16px; font-size: 12px; color: #666; }
-@keyframes dmIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: translateX(0); } }
-
 /* ============ Recommended people ============ */
 .rec-card { padding: 12px 0; }
 .rec-title { font-size: 13px; font-weight: 700; padding: 0 16px 8px; }
@@ -445,27 +463,8 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .rec-btn:hover { background: #eef3f8; }
 .rec-btn.following { border-color: #999; color: #666; background: #f3f2ef; }
 
-/* ============ Desktop Calendar ============ */
-.cal-card { padding: 12px 14px; }
-.dcal-header { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 700; }
-.dcal-date { font-size: 11px; font-weight: 400; color: #666; }
-.dcal-sub { font-size: 11px; color: #666; margin: 2px 0 8px; }
-.dcal-list { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; }
-.dcal-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; background: #f3f2ef; animation: dmIn 0.3s ease; }
-.dcal-item.done { opacity: 0.55; }
-.dcal-icon { font-size: 18px; }
-.dcal-body { flex: 1; min-width: 0; }
-.dcal-name { font-size: 12px; font-weight: 700; color: rgba(0,0,0,0.85); }
-.dcal-type { font-size: 11px; color: #666; }
-.dcal-check { color: #2e7d32; font-weight: 700; }
-.dcal-done { width: 22px; height: 22px; border-radius: 50%; border: 1px solid #0a66c2; color: #0a66c2; font-size: 12px; display: grid; place-items: center; background: #fff; }
-.dcal-done:hover { background: #0a66c2; color: #fff; }
-.dcal-empty { font-size: 12px; color: #666; padding: 4px 0; }
-.dcal-btn { width: 100%; margin-top: 10px; background: #0a66c2; color: #fff; border: none; border-radius: 6px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-.dcal-btn:hover { background: #0a4f8f; }
-
 /* ============ Modals ============ */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 300; display: grid; place-items: center; padding: 16px; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000; display: grid; place-items: center; padding: 16px; }
 .modal { background: #fff; border-radius: 8px; width: 100%; max-width: 520px; max-height: 85vh; overflow-y: auto; animation: modalIn 0.2s ease; }
 @keyframes modalIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #e0dfdc; position: sticky; top: 0; background: #fff; }
@@ -526,6 +525,79 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .fl-sub { font-size: 9px; color: #999; margin-top: 8px; font-style: italic; }
 @keyframes nodePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
 @keyframes arrowFlow { 0% { opacity: 0.35; transform: translateX(-2px); } 50% { opacity: 1; transform: translateX(2px); } 100% { opacity: 0.35; transform: translateX(-2px); } }
+
+/* ============ Tag bucket (right rail) ============ */
+.bucket-card { padding: 12px 16px; }
+.bucket-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.bucket-title { font-weight: 700; font-size: 14px; }
+.bucket-count { background: #0a66c2; color: #fff; font-size: 12px; font-weight: 700; border-radius: 12px; padding: 2px 9px; }
+.bucket-sub { font-size: 11px; color: #666; margin-bottom: 8px; }
+.bucket-quality { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #666; margin-bottom: 8px; }
+.bucket-qbar { flex: 1; height: 6px; background: #e0dfdc; border-radius: 3px; overflow: hidden; }
+.bucket-qfill { height: 100%; background: linear-gradient(90deg, #0a66c2, #7fb8e8); border-radius: 3px; transition: width 0.3s ease, background 0.3s ease; }
+.bucket-tags { display: flex; flex-wrap: wrap; gap: 4px; max-height: 120px; overflow-y: auto; }
+.bucket-tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: #eef3f8; color: #0a66c2; }
+.bucket-tag.high { background: #fff7e0; color: #b8860b; }
+.bucket-tag.low { background: #f3f2ef; color: #888; }
+
+/* tags flying from a scrolled post into the bucket */
+.tag-fly {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: #0a66c2;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(10, 102, 194, 0.35);
+  animation: tagFly 0.6s cubic-bezier(0.3, 0.6, 0.4, 1) both;
+  will-change: transform, opacity;
+}
+.tag-fly.high { background: #b8860b; box-shadow: 0 2px 8px rgba(184, 134, 11, 0.4); }
+@keyframes tagFly {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 0; }
+  8% { opacity: 1; }
+  45% { transform: translate(calc(var(--tx) * 0.65), calc(var(--ty) * 0.2 - 40px)) scale(1.05) rotate(-4deg); }
+  70% { opacity: 1; transform: translate(var(--tx), var(--ty)) scale(0.95) rotate(2deg); }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0.5); opacity: 0; }
+}
+.bucket-empty { font-size: 11px; color: #999; font-style: italic; }
+
+/* ============ Opportunities (right rail) ============ */
+.opp-card { padding: 12px 16px; }
+.opp-title { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+.opp-sub { font-size: 11px; color: #666; margin-bottom: 8px; }
+.opp-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; }
+.opp-item { border: 1px solid #e0dfdc; border-radius: 8px; padding: 10px; display: flex; gap: 10px; align-items: center; }
+.opp-item.locked { opacity: 0.7; }
+.opp-icon { font-size: 24px; flex-shrink: 0; }
+.opp-info { flex: 1; min-width: 0; }
+.opp-name { font-weight: 700; font-size: 13px; }
+.opp-pitch { font-size: 11px; color: #666; line-height: 1.3; }
+.opp-pay { font-size: 12px; font-weight: 700; color: #2e7d32; margin-top: 2px; }
+.opp-req { font-size: 11px; color: #999; margin-top: 2px; }
+.opp-take { flex-shrink: 0; padding: 5px 12px; font-size: 12px; }
+.opp-empty { font-size: 11px; color: #999; font-style: italic; }
+
+/* ============ Rapport popup ============ */
+.rapport-modal { max-width: 420px; }
+.rapport-body { padding: 20px 24px; text-align: center; }
+.rapport-avatar { width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 30px; margin: 0 auto 8px; }
+.rapport-name { font-weight: 700; font-size: 18px; }
+.rapport-role { font-size: 13px; color: #666; margin-bottom: 12px; }
+.rapport-stats { display: flex; gap: 8px; margin-bottom: 10px; }
+.r-stat { flex: 1; background: #f3f2ef; border-radius: 6px; padding: 8px; }
+.r-stat span { display: block; font-size: 10px; color: #666; }
+.r-stat b { font-size: 14px; color: #0a66c2; }
+.rapport-bar { height: 6px; background: #e0dfdc; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+.rapport-fill { height: 100%; background: linear-gradient(90deg, #0a66c2, #7fb8e8); border-radius: 3px; transition: width 0.3s ease; }
+.rapport-hint { font-size: 12px; color: #666; margin-bottom: 12px; }
+.rapport-actions { display: flex; gap: 8px; justify-content: center; }
+
+/* ============ Idle bots (growth modal) ============ */
+.bots-note { font-size: 12px; color: #666; background: #f3f2ef; border-radius: 6px; padding: 8px 10px; }
 .g-item-btn.owned-btn { background: #eef3f8; color: #666; }
 
 /* bell modal */
@@ -575,22 +647,7 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .an-bench { font-size: 12px; color: #666; padding: 4px 0; }
 .an-bench b { color: rgba(0,0,0,0.75); }
 
-/* messaging modal */
-/* messaging (inside AlphaMail) */
-.am-chat { display: flex; flex-direction: column; height: 100%; }
-.am-chat.hidden { display: none; }
-.am-back { align-self: flex-start; padding: 4px 10px; border: 1px solid #e0dfdc; border-radius: 6px; font-size: 12px; color: #0a66c2; background: #fff; margin-bottom: 8px; }
-.am-chat-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-.msg-thread { flex: 1; overflow-y: auto; padding: 4px 0; display: flex; flex-direction: column; gap: 6px; }
-.msg-bubble { max-width: 85%; padding: 8px 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; }
-.msg-bubble.me { align-self: flex-end; background: #0a66c2; color: #fff; border-bottom-right-radius: 2px; }
-.msg-bubble.them { align-self: flex-start; background: #f3f2ef; color: rgba(0,0,0,0.9); border-bottom-left-radius: 2px; }
-.msg-bubble .mb-time { display: block; font-size: 10px; opacity: 0.7; margin-top: 3px; }
-.msg-commands { padding: 8px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
-.msg-commands button { padding: 6px 10px; border: 1px solid #e0dfdc; border-radius: 999px; font-size: 12px; color: #0a66c2; background: #fff; }
-.msg-commands button:hover { background: #eef3f8; }
-
-/* premium modal */
+/* ============ Premium ============ */
 .premium-modal { text-align: center; }
 .premium-body { padding: 24px 20px; }
 .premium-hero { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
@@ -663,28 +720,46 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 .fourthwall { background: #0a0a0a !important; color: #e0e0e0; border-color: #333; }
 .fourthwall .post-body { color: #e0e0e0; }
 
-/* word catch composer (prototype, ?words=1) */
-#wordcomposer { position: fixed; right: 24px; top: 24px; width: 720px; max-width: calc(100vw - 32px); z-index: 950; background: #fff; border: 1px solid #e0dfdc; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.18); overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+/* word catch composer — docked in the bucket card (no modal) */
+.wordcatch-modal { max-width: 760px; overflow: hidden; }
+#wordcomposer { display: flex; flex-direction: column; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 .wc-head { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid #e0dfdc; background: #fafafa; }
 .wc-title { font-weight: 700; color: #0a66c2; font-size: 14px; }
-.wc-badge { font-size: 10px; font-weight: 700; color: #666; background: #eef3f8; padding: 3px 8px; border-radius: 999px; }
+.wc-close { font-size: 18px; color: #666; padding: 4px; border-radius: 50%; line-height: 1; }
+.wc-close:hover { background: #f3f2ef; }
 .wc-quality { height: 4px; background: #f0f0f0; opacity: 0; transition: opacity 0.25s ease; }
 .wc-quality.show { opacity: 1; }
 .wc-quality-fill { height: 100%; width: 0; transition: width 0.3s ease, background 0.3s ease; }
-#wc-canvas { display: block; width: 100%; height: 420px; background: #f7f9fb; cursor: crosshair; touch-action: none; }
+#wc-canvas { display: block; width: 100%; height: 380px; background: #f7f9fb; cursor: crosshair; touch-action: none; }
+/* the inline catch window inside the bucket card */
+.wc-canvas-inline { display: block; width: 100%; height: clamp(140px, 26vh, 320px); background: #f7f9fb; cursor: grab; touch-action: none; border-radius: 8px; margin-bottom: 6px; }
+.wc-canvas-inline:active { cursor: grabbing; }
 .wc-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid #e0dfdc; background: #fbfcfd; }
-.wc-sentence { flex: 1; min-height: 40px; line-height: 2; padding: 0 6px; }
+.wc-sentence { flex: 1; min-height: 40px; line-height: 2; padding: 0 6px; cursor: default; }
 .wc-bar-ph { color: #aaa; font-style: italic; font-size: 12px; }
 .wc-chip { display: inline-block; padding: 3px 9px; margin: 1px 3px; border-radius: 9px; font-weight: 600; color: #fff; background: hsla(210, 70%, 50%, 0.92); }
-.wc-chip.first { background: #0a66c2; }
 .wc-chip.content { background: hsla(210, 70%, 50%, 0.92); }
-.wc-chip.glue { background: hsla(0, 0%, 66%, 0.85); font-weight: 400; }
 .wc-chip.gold { background: hsla(42, 95%, 48%, 0.95); }
 .wc-chip.wc-fly { animation: wcFly 0.32s cubic-bezier(0.25, 1, 0.4, 1) both; }
+/* bucket tags become the hint under the catch window */
+.bucket-tags.wc-bucket-hint { max-height: none; overflow: visible; padding-top: 2px; }
+
 @keyframes wcFly {
-  0% { transform: translate(var(--fx), var(--fy)) scale(1.3); opacity: 0; }
-  60% { opacity: 1; }
+  0% { transform: translate(var(--fx), var(--fy)) scale(1.4); opacity: 0; }
+  12% { opacity: 1; }
+  55% { transform: translate(calc(var(--fx) * 0.5), calc(var(--fy) * 0.4 - 26px)) scale(1.1); }
   100% { transform: translate(0, 0) scale(1); }
+}
+
+/* flash the post that just landed in the feed */
+.wc-flash {
+  animation: wcFeedFlash 2.4s ease;
+  box-shadow: 0 0 0 3px #0a66c2, 0 8px 24px rgba(10, 102, 194, 0.25);
+}
+@keyframes wcFeedFlash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(10, 102, 194, 0); }
+  15% { box-shadow: 0 0 0 3px #0a66c2, 0 8px 24px rgba(10, 102, 194, 0.35); }
+  70% { box-shadow: 0 0 0 3px #0a66c2, 0 8px 24px rgba(10, 102, 194, 0.25); }
 }
 
 /* responsive */
@@ -697,77 +772,6 @@ body.first-run .composer { box-shadow: 0 0 0 2px #0a66c2; }
 /* ============ OS SHELL ============ */
 html, body { height: 100%; }
 body { overflow: hidden; }
-
-/* ============ REAL WORLD (Three.js POV mode) ============ */
-.world-toggle {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 8001;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  background: #0a66c2;
-  color: #fff;
-  border: none;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(10, 102, 194, 0.45);
-  transition: background 0.15s ease, transform 0.15s ease;
-}
-.world-toggle:hover { background: #004182; transform: translateY(-1px); }
-.world-toggle span { font-size: 15px; }
-
-/* In 3D mode, floating overlays that used body-fixed positioning must not
-   appear over the 3D viewport — the game is "paused" inside the monitor.
-   They now resolve against the transformed #screen and get hidden. */
-body.realworld .toast,
-body.realworld .milestone,
-body.realworld .particle,
-body.realworld .confetti,
-body.realworld .coin,
-body.realworld .imp-float,
-body.realworld .combo-chip,
-body.realworld .comment-pop,
-body.realworld .viral-screen-flash { display: none !important; }
-
-/* Subtle CRT-style "you're looking at a physical monitor" overlay.
-   Only visible in real-world mode; sits above the game screen but
-   never intercepts input. */
-#screen { position: relative; width: 100%; height: 100%; }
-#screen-overlay {
-  display: none;
-  position: absolute;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  /* faint scanlines */
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.12) 0px,
-    rgba(0, 0, 0, 0.12) 1px,
-    transparent 1px,
-    transparent 3px
-  );
-  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.5);
-  mix-blend-mode: multiply;
-}
-/* a brighter inner glass sheen so the screen reads as a glowing panel */
-#screen-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    ellipse at 50% 40%,
-    rgba(140, 190, 255, 0.05) 0%,
-    rgba(0, 0, 0, 0.0) 70%
-  );
-}
-body.realworld #screen-overlay { display: block; }
-
 
 /* boot screen */
 .boot { position: fixed; inset: 0; background: #0a0a0a; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; z-index: 1000; }
@@ -802,7 +806,6 @@ body.realworld #screen-overlay { display: block; }
 
 /* browser */
 .browser { position: fixed; inset: 0; z-index: 950; display: flex; flex-direction: column; background: #fff; }
-body.has-alphamail .browser { right: 300px; }
 .browser-chrome { background: #2b2b2b; padding: 6px 8px 0; }
 .browser-tabs { display: flex; gap: 4px; overflow-x: auto; }
 .b-tab { background: #3a3a3a; color: #bbb; border: none; border-radius: 6px 6px 0 0; padding: 6px 12px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
@@ -816,17 +819,6 @@ body.has-alphamail .browser { right: 300px; }
 .browser-body { flex: 1; overflow-y: auto; position: relative; }
 .app-view { display: none; height: 100%; overflow-y: auto; }
 .app-view.active { display: block; }
-
-/* ============ ALPHAMAIL (side software) ============ */
-.alphamail { position: fixed; top: 0; right: 0; bottom: 0; width: 300px; z-index: 960; background: #f3f2ef; border-left: 1px solid #d0cfcc; display: flex; flex-direction: column; box-shadow: -4px 0 16px rgba(0,0,0,0.12); }
-.am-titlebar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: #e8e6e2; border-bottom: 1px solid #d0cfcc; }
-.am-dot { width: 11px; height: 11px; border-radius: 50%; }
-.am-dot-r { background: #ff5f57; }
-.am-dot-y { background: #febc2e; }
-.am-dot-g { background: #28c840; }
-.am-title { margin-left: 6px; font-size: 12px; font-weight: 700; color: #444; }
-.am-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
-.am-divider { height: 1px; background: #d0cfcc; margin: 14px 0; }
 
 /* ============ BANK APP ============ */
 .bank-body { height: 100%; overflow-y: auto; background: #f3f2ef; }
