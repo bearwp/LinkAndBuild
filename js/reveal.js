@@ -60,6 +60,7 @@ const Reveal = {
     };
     s.posts.unshift(post);
     Engine.trimPosts();
+    Bus.emit('scare:posted', post);
     return post;
   },
 
@@ -71,7 +72,6 @@ const Reveal = {
     const post = this.makeScarePost(toStage);
     const key = toStage === 1 ? 'scare_glitch' : toStage === 2 ? 'scare_address' : 'scare_confession';
     Narrator.say(key, 'notif');
-    if (post) Bus.emit('scare:posted', post);
     State.save();
   },
 

@@ -97,6 +97,15 @@
           <span>Notifications</span>
           <span class="nav-badge bell-badge" id="bell-badge">0</span>
         </button>
+        <button class="nav-item" id="nav-streak" data-tab="me" title="Posting streak">
+          <span class="streak-flame">🔥</span>
+          <span>Streak</span>
+          <span class="nav-badge streak-badge" id="streak-badge">0</span>
+        </button>
+        <button class="nav-item" id="nav-dms" data-tab="dms">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+          <span>Messages</span>
+        </button>
         <div class="nav-item nav-me" data-tab="me">
           <div class="avatar" id="nav-avatar">Y</div>
           <span>Me</span>
@@ -118,11 +127,14 @@
           <div class="stat-row"><span>Connections</span><b id="stat-connections">0</b></div>
           <div class="stat-row"><span>Followers</span><b id="stat-followers">0</b></div>
           <div class="stat-row"><span>🪙 Impressions</span><b id="stat-impressions" class="gold">0</b></div>
+          <div class="stat-row"><span>Engagement</span><b id="stat-engagement">0%</b></div>
+          <div class="stat-row dead-row hidden" id="dead-row"><span>💀 Dead followers</span><b id="stat-dead" class="gold">0</b></div>
           <div class="stat-row retention-row hidden" id="retention-row"><span>Retention</span><b id="stat-retention">0</b></div>
         </div>
       </div>
       <div class="card menu-card" id="menu-card">
         <div class="menu-item" id="menu-analytics"><span>📈</span> Analytics</div>
+        <div class="menu-item" id="menu-pillars"><span>🎯</span> Niche Pillars</div>
         <div class="menu-item" id="menu-premium"><span>⭐</span> Premium <span class="premium-tag">Try free</span></div>
         <div class="menu-item" id="menu-prestige"><span>♻️</span> Brand Equity</div>
         <div class="menu-item" id="menu-endorsements"><span>🏅</span> Endorsements</div>
@@ -157,7 +169,14 @@
         </div>
       </div>
 
-      <!-- feed -->
+      <!-- new posts bar: sits above the feed, zero-height overlay so it
+           never shifts the layout when appears -->
+      <div class="new-posts-bar hidden" id="new-posts-bar">
+        <button class="new-posts-btn" id="new-posts-btn">
+          <span class="npb-count" id="new-posts-count">0</span>
+          <span class="npb-label" id="new-posts-label">new posts</span>
+        </button>
+      </div>
       <div id="feed" class="feed"></div>
       <div class="feed-end" id="feed-end">You're all caught up. Keep scrolling anyway.</div>
 
@@ -176,6 +195,17 @@
       <div id="jobs-view" class="jobs-view hidden">
         <div class="card jobs-card">
           <div class="jobs-empty" id="jobs-empty"></div>
+        </div>
+      </div>
+
+      <!-- DMs view -->
+      <div id="dms-view" class="dms-view hidden">
+        <div class="card dms-card">
+          <div class="dms-head">
+            <span class="dms-title">💬 Messages</span>
+            <span class="dms-sub">Collabs, sponsors, and the algorithm.</span>
+          </div>
+          <div class="dms-list" id="dms-list"></div>
         </div>
       </div>
     </main>
@@ -297,9 +327,22 @@
             <option value="1">Yes</option>
           </select>
         </div>
+        <div class="opt-row">
+          <span class="opt-label">Tone</span>
+          <select id="opt-tone">
+            <option value="safe">Safe</option>
+            <option value="hot">🔥 Hot Take</option>
+            <option value="unpopular">💣 Unpopular Opinion</option>
+          </select>
+        </div>
+        <div class="opt-row trending-row hidden" id="trending-row">
+          <span class="opt-label">📈 Trending</span>
+          <span class="trending-chip" id="trending-chip"></span>
+        </div>
       </div>
       <div class="composer-footer">
         <span class="post-preview" id="post-preview"></span>
+        <span class="tone-warn hidden" id="tone-warn"></span>
         <button class="btn btn-primary" id="publish-btn">Post</button>
       </div>
     </div>
@@ -400,6 +443,28 @@
     </div>
   </div>
 
+  <!-- Niche Pillars -->
+  <div class="modal-overlay hidden" id="pillars-modal">
+    <div class="modal pillars-modal">
+      <div class="modal-head">
+        <span class="modal-title">🎯 Niche Pillars</span>
+        <button class="modal-close" data-close="pillars-modal">✕</button>
+      </div>
+      <div class="pillars-body" id="pillars-body"></div>
+    </div>
+  </div>
+
+  <!-- A/B Test result -->
+  <div class="modal-overlay hidden" id="ab-modal">
+    <div class="modal ab-modal">
+      <div class="modal-head">
+        <span class="modal-title">🧪 A/B Test</span>
+        <button class="modal-close" data-close="ab-modal">✕</button>
+      </div>
+      <div class="ab-body" id="ab-body"></div>
+    </div>
+  </div>
+
   <!-- Rapport popup (click an author to see their profile) -->
   <div class="modal-overlay hidden" id="rapport-modal">
     <div class="modal rapport-modal">
@@ -473,6 +538,7 @@
 <script src="js/prestige.js"></script>
 <script src="js/endorsements.js"></script>
 <script src="js/reveal.js"></script>
+<script src="js/maxxing.js"></script>
 <script src="js/guide.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>

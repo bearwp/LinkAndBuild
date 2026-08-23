@@ -753,6 +753,19 @@ DATA.NETWORK_PEOPLE = [
   { id: 'net8', name: 'Grace Kim', role: 'HR · "I know a guy"', emoji: '👩‍💼', color: '#d32f2f', reach: 60000, arch: 'recruiter' },
 ];
 
+/* ---------- Jobs (the "opportunities" the algorithm dangles) ---------- */
+// Unlocked at 200 followers. Every listing is a real LinkedIn genre, hollowed
+// out: the title is a buzzword, the company is a shell, the "apply" is a
+// button that does nothing but feed the algorithm your attention.
+DATA.JOBS = [
+  { id: 'j1', title: 'Senior Synergy Evangelist', company: 'HustleCorp', icon: '📈', salary: '$140k–$180k', tag: 'Synergy', desc: 'Align on core competencies, leverage cross-functional paradigms, and circle back on the value prop. 5+ years of aligning required.', apply: 'Easy Apply' },
+  { id: 'j2', title: 'Chief Culture Officer', company: 'We\'re a Family Inc.', icon: '👪', salary: '$90k–$110k', tag: 'Culture', desc: 'Own the "family" narrative. Quarterly offsites, mandatory fun, unlimited PTO (unused). You will take a pay cut for the culture. We did.', apply: 'Easy Apply' },
+  { id: 'j3', title: 'AI Prompt Whisperer', company: 'SynergyBot', icon: '🤖', salary: '$160k–$220k', tag: 'AI', desc: 'Type things into ChatGPT and paste the output into a slide deck. Must be comfortable not knowing what half of it means.', apply: 'Easy Apply' },
+  { id: 'j4', title: 'Head of Hustle', company: 'Grindset Capital', icon: '⚡', salary: '$0 (equity vibes)', tag: 'Hustle', desc: 'We\'re looking for someone who lives the grind. 4am wake-ups, cold showers, 3 coffees. Compensation is "the journey".', apply: 'Easy Apply' },
+  { id: 'j5', title: 'Wellness Director (Remote, Beach)', company: 'ZenStartup', icon: '🌴', salary: '$120k–$150k', tag: 'Wellness', desc: 'Lead breathwork sessions from a yacht. Must post about it daily for engagement. The algorithm requires documentation.', apply: 'Easy Apply' },
+  { id: 'j6', title: 'Engagement Specialist', company: 'The Algorithm', icon: '👁️', salary: 'You are the product', tag: 'Engagement', desc: 'Scroll, like, comment, repeat. The room is empty. The number goes up. The rent is due. You will never leave.', apply: 'Easy Apply' },
+];
+
 /* ---------- Bank (pathetic transactions) ---------- */
 DATA.BANK_SEED = [
   { label: 'EngageBot™ Monthly Subscription', amount: -4.99, icon: '🤖' },

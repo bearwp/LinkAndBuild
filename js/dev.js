@@ -225,6 +225,25 @@ const DevState = {
     // follow a spread of archetypes so the feed is full of NPC posts
     s.followedAuthors = ['gym', 'humbled', 'ai', 'recruiter', 'mlm', 'burnout', 'thought', 'greatpost'];
 
+    // --- growth-maxxing showcase ---
+    s.pillars = { chosen: ['ai', 'corporate', 'marketing'], consistency: 4, bestConsistency: 7 };
+    s.deadFollowers = 12000;
+    s.streak = { count: 12, lastPostDay: Maxxing ? Maxxing.dayIndex() : Math.floor(Date.now() / 86400000) };
+    s.trending = { tagId: 'ai', expiresAt: Date.now() + 90000, used: false };
+    // a live race post so the reply-guy bar is visible in the showcase
+    const racePost = Engine.makeNPCPost('gym');
+    racePost.race = true;
+    racePost.raceEndsAt = Date.now() + 8000;
+    s.posts.unshift(racePost);
+    // a collab offer in the DMs panel
+    s.collabs.push({
+      id: 'colshow',
+      personId: 'c2',
+      state: 'offer',
+      split: 50,
+      time: Date.now(),
+    });
+
     return s;
   },
 };

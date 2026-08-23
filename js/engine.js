@@ -238,6 +238,7 @@ const Engine = {
       (opts.question ? 1.2 : 1) *
       (opts.potentialMult || 1) *
       tagMult *
+      Maxxing.pillarMult() *
       (opts.format === 'carousel' ? 1.3 : opts.format === 'poll' ? 1.1 : opts.format === 'video' ? 1.2 : opts.format === 'photo' ? 1.15 : 1);
     const rarity = this.rollRarity(potential);
 
@@ -246,7 +247,7 @@ const Engine = {
     // zero followers reaches nobody — no floor, no pity impressions. You only
     // get reach once you've built a network. The generator ladder (imp/s) is
     // the *passive* economy; a post is the *active* burst. Both are raw counts.
-    const base = (s.followers * 0.1 + s.connections * 0.1) * this.upgradeMult('post_mult') * (1 + Challenges.reward('postMult'));
+    const base = (s.followers * 0.1 + s.connections * 0.1) * this.upgradeMult('post_mult') * (1 + Challenges.reward('postMult')) * Maxxing.rateMult();
     const authCost = (template ? template.auth : 0) + (opts.emojis || 0) * -0.5 + (opts.question ? -1 : 0) + (opts.format === 'carousel' ? -2 : 0);
 
     const post = {
@@ -384,7 +385,15 @@ const Engine = {
     // the feed. Reach is a raw viewer count — it does not expand or compound.
     const ageSec = (Date.now() - post.publishedAt) / 1000;
     const freshness = Math.max(0, 1 - ageSec / this.POST_LIFESPAN);
-    const viewers = post.reach * freshness * dtSec;
+    // golden hour: a fresh post in its first-hour window reaches more. The
+    // scheduler automates this away (a flat 1.5, no anxiety). Rage-bait and
+    // trending tags also multiply reach here.
+    let mult = 1;
+    if (post.authorId === 'you') {
+      mult *= Maxxing.goldenMult(post);
+      mult *= Maxxing.trendingMult(post);
+    }
+    const viewers = post.reach * freshness * dtSec * mult;
 
     // each viewer engages at a flat, honest rate — a fraction like, a smaller
     // fraction comment, a sliver share. No rarity multipliers.
@@ -529,6 +538,8 @@ const Engine = {
           s.likes += 1;
         }
       }
+      // reply-guy race: bots race you after the reveal
+      if (post.race) Maxxing.raceTick(post);
     }
   },
 
@@ -559,13 +570,16 @@ const Engine = {
     // at exactly the per-second rates your generators publish — nothing is
     // derived from another counter.
     const rate = this.rates();
-    const imp = rate.imp * dtSec;
+    // engagement-rate throttle: bought (dead) followers drag your reach down.
+    // The algorithm punshes a low rate — the trap of buying followers.
+    const rateMult = Maxxing.rateMult();
+    const imp = rate.imp * dtSec * rateMult;
     s.impressions += imp;
     s.totalImpressions += imp;
-    s.likes += rate.like * dtSec;
+    s.likes += rate.like * dtSec * rateMult;
     s.followers += rate.follow * dtSec * (1 + Challenges.reward('followers'));
-    s.connections += rate.imp * dtSec * 0.03;
-    s.influence += rate.imp * dtSec * 0.2 + rate.like * dtSec * 0.5;
+    s.connections += rate.imp * dtSec * 0.03 * rateMult;
+    s.influence += rate.imp * dtSec * 0.2 * rateMult + rate.like * dtSec * 0.5 * rateMult;
     const authDamp = Math.max(0, 1 - this.upgradeFlat('auth_less'));
     for (const g of DATA.GENERATORS) {
       const n = s.generators[g.id] || 0;
@@ -934,8 +948,10 @@ const Engine = {
       this.tickAutoPost(dtMs);
       this.tickStream(dtMs);
       this.tickDetection(dtMs);
+      this.tickFourthWall(dtMs);
       this.enforceAuthFloor();
       this.checkMilestones();
+      Maxxing.tick(dtMs);
       Bus.emit('state:changed');
     }, this.tick);
 
@@ -944,6 +960,9 @@ const Engine = {
     const uiLoop = () => {
       if (document.hidden) { this._raf = requestAnimationFrame(uiLoop); return; }
       UI.refresh();
+      UI.updateTrendingChip();
+      // keep the "show new posts" bar's count fresh without a full rebuild
+      UI.updateNewBar();
       // live-update visible post cards in place
       for (const post of State.data.posts) {
         if (post.status === 'live' && UI.isPostVisible(post.id)) UI.updatePostCard(post);
@@ -971,6 +990,23 @@ const Engine = {
     s.effort += 1;
     s.analytics.postsPublished++;
     s.analytics.totalLikes += post.stats.likes;
+    // golden hour: a fresh post enters its first-hour window (doubled reach
+    // while it lasts). The scheduler auto-manages it instead.
+    s.goldenHour[post.id] = {
+      windowEnd: Date.now() + Maxxing.GOLDEN_WINDOW * 1000,
+      autoManaged: !!(s.generators['scheduler'] || 0),
+    };
+    // growth-maxxing tracking: pillar consistency + the daily streak
+    Maxxing.trackPillar(post);
+    Maxxing.trackStreak();
+    // rage-bait tone: roll the ratio risk after the post goes live
+    if (opts.tone) {
+      post.tone = opts.tone;
+      const tone = Maxxing.toneEffect(opts.tone);
+      post.reach = (post.base || 0) * tone.reachMult;
+      post.authCost = (post.authCost || 0) - tone.authCost;
+      Maxxing.rollRatio(post);
+    }
     // challenge tracking: count posts, and posts with no engagement bait
     if (s.challenges.stats) {
       s.challenges.stats.posts++;
@@ -1273,13 +1309,14 @@ const Engine = {
     // run the same production math as a live tick, but in one lump
     // (at the per-second rates your generators publish)
     const rate = this.rates();
-    const imp = rate.imp * dtSec;
+    const rateMult = Maxxing.rateMult();
+    const imp = rate.imp * dtSec * rateMult;
     s.impressions += imp;
     s.totalImpressions += imp;
-    s.likes += rate.like * dtSec;
+    s.likes += rate.like * dtSec * rateMult;
     s.followers += rate.follow * dtSec;
-    s.connections += rate.imp * dtSec * 0.03;
-    s.influence += rate.imp * dtSec * 0.2;
+    s.connections += rate.imp * dtSec * 0.03 * rateMult;
+    s.influence += rate.imp * dtSec * 0.2 * rateMult;
 
     s.lastSeen = now;
     return dtSec;

@@ -39,10 +39,13 @@ const Bank = {
     }
     this.deposit(-pkg.cost, pkg.label, pkg.icon);
     s.impressions += pkg.impressions;
+    // bought followers are DEAD: they raise the follower count but never
+    // engage, dragging your engagement rate down. The trap of buying clout.
     s.followers += pkg.followers;
+    s.deadFollowers = (s.deadFollowers || 0) + pkg.followers;
     s.authenticity = Math.max(0, s.authenticity - pkg.auth);
     Juice.chime();
-    Juice.toast('Purchased ' + pkg.name + '. Your clout just grew.');
+    Juice.toast('Purchased ' + pkg.name + '. Your clout just grew. So did your dead weight.');
     Bus.emit('clout:bought', { id });
   },
 
@@ -99,7 +102,7 @@ const Bank = {
               <div class="bank-tx-icon">${p.icon}</div>
               <div class="bank-tx-info">
                 <div class="bank-tx-label">${p.name}</div>
-                <div class="bank-tx-time">+${Engine.fmt(p.impressions)} impressions · +${Engine.fmt(p.followers)} followers</div>
+                <div class="bank-tx-time">+${Engine.fmt(p.impressions)} impressions · +${Engine.fmt(p.followers)} dead followers</div>
               </div>
               <button class="btn btn-primary bank-buy" data-clout="${p.id}" ${affordable ? '' : 'disabled'}>$${p.cost.toFixed(2)}</button>
             </div>`;

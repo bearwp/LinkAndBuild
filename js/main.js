@@ -75,6 +75,7 @@
   UI.renderBucket();
   UI.renderOpportunities();
   UI.renderBots();
+  UI.renderDms();
   UI.refresh();
   UI.updateBell();
 
@@ -115,10 +116,10 @@
   // This is the seam that lets the narrator, scare posts, and achievements
   // be added later as pure listeners.
   Bus.on('notif:added', () => UI.updateBell());
-  Bus.on('post:autoposted', (post) => { UI.renderFeedDebounced(); UI.updatePostCard(post); });
-  Bus.on('post:streamed', () => UI.renderFeedDebounced());
+  Bus.on('post:streamed', (e) => UI.queueNewPost(e && e.post));
   Bus.on('fourthwall:posted', () => UI.renderFeedDebounced());
-  Bus.on('one-real-person:seen', () => UI.renderFeedDebounced());
+  Bus.on('one-real-person:seen', (post) => UI.queueNewPost(post));
+  Bus.on('scare:posted', (post) => UI.queueNewPost(post));
   Bus.on('detection:restored', () => UI.hideShadowban());
   Bus.on('detection:flag', () => UI.showFlag());
   Bus.on('detection:shadowban', () => UI.showShadowban());
@@ -131,12 +132,26 @@
   Bus.on('premium:bought', () => { UI.hideModal('premium-modal'); UI.refresh(); });
   Bus.on('tag:absorbed', () => { UI.renderBucket(); UI.refresh(); });
   Bus.on('post:published', (post) => { UI.renderFeed(); UI.updatePostCard(post); UI.renderBucket(); UI.renderRecommended(); });
-  Bus.on('post:autoposted', (post) => { UI.renderFeedDebounced(); UI.updatePostCard(post); UI.renderBucket(); });
+  Bus.on('post:autoposted', (post) => { UI.queueNewPost(post); UI.updatePostCard(post); UI.renderBucket(); });
   Bus.on('post:boosted', (post) => { UI.renderFeed(); UI.updatePostCard(post); });
   Bus.on('person:followed', () => { UI.renderRecommended(); UI.renderBucket(); UI.refresh(); });
   Bus.on('person:connected', () => { UI.renderNetwork(); UI.refresh(); });
   Bus.on('bot:bought', () => { UI.renderBots(); UI.refresh(); });
   Bus.on('opportunity:taken', () => { UI.renderOpportunities(); UI.refresh(); });
+  Bus.on('clout:bought', () => { UI.refresh(); });
+  Bus.on('streak:changed', () => { UI.refresh(); });
+  Bus.on('pillars:changed', () => { UI.refresh(); });
+  Bus.on('trending:spawned', () => { UI.updateTrendingChip(); });
+  Bus.on('race:spawned', (post) => { UI.queueNewPost(post); });
+  Bus.on('race:won', (post) => { UI.updatePostCard(post); });
+  Bus.on('collab:offer', () => { UI.renderDms(); });
+  Bus.on('post:replied', (post) => { UI.updatePostCard(post); });
+  Bus.on('post:ratioed', () => { UI.renderFeedDebounced(); });
+  Bus.on('ab:started', (post) => { UI.updatePostCard(post); });
+  Bus.on('ab:decided', (e) => { if (e && e.post) { UI.updatePostCard(e.post); UI.renderAb(e.post); } });
+
+  // new-posts bar: clicking loads the queued posts into the feed
+  document.getElementById('new-posts-btn').addEventListener('click', () => UI.loadNewPosts());
 
   // desktop icons
   document.querySelectorAll('.d-icon').forEach(icon => {
@@ -198,6 +213,7 @@
   $('opt-emojis').addEventListener('change', () => UI.updatePreview());
   $('opt-tags').addEventListener('change', () => UI.updatePreview());
   $('opt-question').addEventListener('change', () => UI.updatePreview());
+  $('opt-tone').addEventListener('change', () => UI.updatePreview());
 
   // publish
   $('publish-btn').addEventListener('click', () => {
@@ -208,6 +224,7 @@
       emojis: parseInt($('opt-emojis').value, 10),
       tags: parseInt($('opt-tags').value, 10),
       question: parseInt($('opt-question').value, 10),
+      tone: $('opt-tone') ? $('opt-tone').value : 'safe',
     };
     const post = Engine.publish(text, opts);
     if (post) {
@@ -260,6 +277,10 @@
   $('menu-analytics').addEventListener('click', () => {
     UI.renderAnalytics();
     UI.showModal('analytics-modal');
+  });
+  $('menu-pillars').addEventListener('click', () => {
+    UI.renderPillars();
+    UI.showModal('pillars-modal');
   });
   $('menu-prestige').addEventListener('click', () => {
     Prestige.render();

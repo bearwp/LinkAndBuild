@@ -49,6 +49,27 @@ function defaultState() {
       engage: 0,             // auto-engage bot count (likes/comments, builds rapport)
       influence: 0,          // auto-influence bot count (reach -> influence)
     },
+    // the growth-maxxing systems: pillars (niche), engagement rate, streaks,
+    // golden hour, rage-bait, trending tags, reply-guy races, A/B tests, collabs.
+    pillars: {               // niche pillars: pick 3 tags and stick to them
+      chosen: [],            // tagIds the player committed to
+      consistency: 0,        // consecutive posts that stayed on-pillar
+      bestConsistency: 0,    // lifetime best streak (for the reward cap)
+    },
+    deadFollowers: 0,        // bought followers who never engage (drag the rate down)
+    streak: {                // the daily posting streak (the addiction as retention)
+      count: 0,              // current streak length
+      lastPostDay: 0,        // day index of the last post that counted
+    },
+    trending: {              // newsjacking: a trending tag with a countdown
+      tagId: null,           // the trending tag id
+      expiresAt: 0,          // timestamp when it expires
+      used: false,           // whether the player already rode this one
+    },
+    races: {},               // reply-guy race state: postId -> { won, claimedAt }
+    abTests: {},             // postId -> { variant, decided, winner, cost }
+    collabs: [],             // collab/S4S DMs: { id, personId, state, split }
+    goldenHour: {},          // postId -> { windowEnd, autoManaged } (first-hour boost)
     milestonesSeen: {},      // id -> true
     fourthWallShown: false,
     onboarding: {            // the first-post arc: like -> comment -> nice comment -> unlock
@@ -201,6 +222,14 @@ const State = {
     merged.opportunities = Object.assign({}, base.opportunities, save.opportunities || {});
     merged.opportunities.taken = (save.opportunities && save.opportunities.taken) || [];
     merged.bots = Object.assign({}, base.bots, save.bots || {});
+    merged.pillars = Object.assign({}, base.pillars, save.pillars || {});
+    merged.pillars.chosen = (save.pillars && save.pillars.chosen) || [];
+    merged.streak = Object.assign({}, base.streak, save.streak || {});
+    merged.trending = Object.assign({}, base.trending, save.trending || {});
+    merged.races = Object.assign({}, base.races, save.races || {});
+    merged.abTests = Object.assign({}, base.abTests, save.abTests || {});
+    merged.collabs = Array.isArray(save.collabs) ? save.collabs : [];
+    merged.goldenHour = Object.assign({}, base.goldenHour, save.goldenHour || {});
     merged.version = this.VERSION;
     return merged;
   },

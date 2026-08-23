@@ -4,19 +4,6 @@
    ============================================================ */
 
 const UI = {
-  /* ---------- post tiers (by impressions) ---------- */
-  // A post's "tier" is earned, not rolled: it is a function of lifetime
-  // impressions. The rarity draw stays the *odds*; the tier is the *score*.
-  // Tiers are the ladder the near-miss bar climbs — each threshold is a rung.
-  IMP_TIERS: [
-    { min: 0,      label: 'Nobody', icon: '👤', cls: 'tier-0' },
-    { min: 100,    label: 'Noticed', icon: '👀', cls: 'tier-1' },
-    { min: 1000,   label: 'Rising', icon: '📈', cls: 'tier-2' },
-    { min: 10000,  label: 'Thought Leader', icon: '🧠', cls: 'tier-3' },
-    { min: 100000, label: 'Viral', icon: '🔥', cls: 'tier-4' },
-    { min: 1000000,label: 'Legend', icon: '👑', cls: 'tier-5' },
-  ],
-
   /* ---------- modal helpers ---------- */
   showModal(id) { document.getElementById(id).classList.remove('hidden'); },
   hideModal(id) { document.getElementById(id).classList.add('hidden'); },
@@ -51,6 +38,30 @@ const UI = {
     ipsEl.textContent = Engine.fmtTick(Engine.totalIps()) + '/s';
     likesEl.textContent = Engine.fmtTick(s.likes);
     gfolEl.textContent = Engine.fmt(s.followers);
+    // engagement rate (the algorithm's favorite number) + dead followers
+    const engEl = $('stat-engagement');
+    if (engEl) {
+      const rate = Maxxing.engagementRate();
+      // cap the display at a sane ceiling so a synthetic/god state never
+      // reads as a broken percentage
+      const shown = Math.min(99.9, rate * 100);
+      const pct = shown.toFixed(1);
+      engEl.textContent = pct + '%';
+      engEl.classList.toggle('rate-bad', rate < 0.01);
+      engEl.classList.toggle('rate-mid', rate >= 0.01 && rate < 0.02);
+    }
+    const deadRow = $('dead-row');
+    if (deadRow) {
+      const dead = Maxxing.deadCount();
+      deadRow.classList.toggle('hidden', dead <= 0);
+      if (dead > 0) $('stat-dead').textContent = Engine.fmt(dead);
+    }
+    // daily posting streak (nav badge)
+    const streakBadge = $('streak-badge');
+    if (streakBadge) {
+      streakBadge.textContent = s.streak && s.streak.count ? s.streak.count : '';
+      streakBadge.style.display = (s.streak && s.streak.count > 0) ? 'inline-block' : 'none';
+    }
     // retention (post-reveal): only shown after the reveal lands
     const retRow = $('retention-row');
     if (retRow) {
@@ -220,6 +231,8 @@ const UI = {
       'nav-network': followers >= 50,    // my network
       'nav-jobs': followers >= 200,      // jobs
       'nav-bell': unlocked,              // notifications
+      'nav-streak': unlocked,            // the streak (the addiction)
+      'nav-dms': unlocked,               // messages (collabs)
       // right rail
       'growth-card': unlocked,           // after the arc: growth console
       'next-card': unlocked,             // next unlock nudge
@@ -228,6 +241,7 @@ const UI = {
       'footer-card': followers >= 100,   // footer links
       // menu items
       'menu-analytics': unlocked,        // analytics menu
+      'menu-pillars': unlocked,          // niche pillars
       'menu-premium': followers >= 200,  // premium upsell
       'menu-prestige': followers >= 500, // brand equity (the reset)
       'menu-endorsements': followers >= 1000, // endorsements
@@ -241,12 +255,15 @@ const UI = {
       'nav-network': 'My Network',
       'nav-jobs': 'Jobs',
       'nav-bell': 'Notifications',
+      'nav-streak': 'Your Posting Streak',
+      'nav-dms': 'Messages',
       'growth-card': 'The Growth Console',
       'next-card': 'Next Unlock',
       'rec-card': 'People you may know',
       'ads-card': 'Sponsored content',
       'footer-card': 'The fine print',
       'menu-analytics': 'Analytics',
+      'menu-pillars': 'Niche Pillars',
       'menu-premium': 'LockedIn Premium',
       'menu-prestige': 'Brand Equity',
       'menu-endorsements': 'Endorsements',
@@ -325,6 +342,9 @@ const UI = {
   _feedDebounceT: null,
   _harvesting: false, // true while the player is holding a post to harvest it
   _rerenderQueued: false, // a feed rebuild was deferred because a harvest was in progress
+  _pendingNew: [], // posts queued behind the "show new posts" bar (not yet in the feed)
+  _newBarShown: false, // whether the new-posts bar is currently visible
+  _newBarDirty: false, // the bar's count is stale and needs a repaint
 
   // Track which post cards are on screen so the 60fps loop only updates
   // visible cards instead of every post in the feed.
@@ -396,6 +416,62 @@ const UI = {
     }, 250);
   },
 
+  // Queue a newly-arrived post behind the "show new posts" bar instead of
+  // inserting it into the feed. The bar counts what's waiting; clicking it
+  // loads them all at once.
+  queueNewPost(post) {
+    if (!post) return;
+    if (this._cards.has(post.id) || this._feedIds.has(post.id)) return;
+    if (this._pendingNew.some(p => p.id === post.id)) return;
+    // Before the first post the feed is hidden (first-run mode) and there is
+    // nothing on screen to yank — render straight into it so the posts are
+    // already there the moment the player's first post lifts first-run.
+    if (State.data.analytics.postsPublished === 0) {
+      this.renderFeedDebounced();
+      return;
+    }
+    this._pendingNew.push(post);
+    this._newBarDirty = true;
+    // paint immediately (don't wait for the next tick)
+    this._paintNewBar();
+  },
+
+  // Show the bar with its current count (called on a throttle from the tick).
+  _paintNewBar() {
+    const bar = document.getElementById('new-posts-bar');
+    if (!bar) return;
+    const n = this._pendingNew.length;
+    if (n > 0) {
+      bar.classList.remove('hidden');
+      const count = document.getElementById('new-posts-count');
+      const label = document.getElementById('new-posts-label');
+      if (count) count.textContent = n;
+      if (label) label.textContent = n === 1 ? 'new post' : 'new posts';
+      this._newBarShown = true;
+    } else if (this._newBarShown) {
+      bar.classList.add('hidden');
+      this._newBarShown = false;
+    }
+    this._newBarDirty = false;
+  },
+
+  // Load the queued posts into the feed (the bar's click handler).
+  loadNewPosts() {
+    if (!this._pendingNew.length) {
+      this._paintNewBar();
+      return;
+    }
+    this._pendingNew = [];
+    this._newBarDirty = false;
+    this.renderFeed();
+  },
+
+  // Called from the engine's 60fps loop: keep the bar's count fresh without
+  // forcing a full feed rebuild.
+  updateNewBar() {
+    if (this._newBarDirty) this._paintNewBar();
+  },
+
   // Run a feed rebuild that was deferred because a harvest was in progress.
   _flushQueuedRender() {
     if (this._rerenderQueued) {
@@ -422,6 +498,13 @@ const UI = {
     const yourCap = 60 - MIN_NPC;
     const shownYours = yours.slice(0, yourCap);
     const posts = shownYours.concat(npcs.slice(0, 60 - shownYours.length));
+    // A post that is queued behind the new-posts bar is not shown yet.
+    const queued = new Set(this._pendingNew.map(p => p.id));
+    const shown = posts.filter(p => !queued.has(p.id));
+    // Drop queued posts that no longer belong in the feed at all (e.g. they
+    // fell off the cap or the author got unfollowed), but keep the rest.
+    const stillInFeed = new Set(posts.map(p => p.id));
+    this._pendingNew = this._pendingNew.filter(p => stillInFeed.has(p.id));
 
     // In-place update: only add/remove cards, never rebuild all.
     const existing = new Map();
@@ -447,8 +530,8 @@ const UI = {
     const seen = new Set();
     // posts array is newest-first; iterate oldest-first so prepending
     // leaves the newest post at the top of the feed.
-    for (let i = posts.length - 1; i >= 0; i--) {
-      const post = posts[i];
+    for (let i = shown.length - 1; i >= 0; i--) {
+      const post = shown[i];
       seen.add(post.id);
       if (existing.has(post.id)) {
         existing.get(post.id).classList.toggle('post-card-first', i === 0);
@@ -496,6 +579,8 @@ const UI = {
         ? 'Your feed is empty. Follow people from "People you may know" to fill it.'
         : "You're all caught up. Keep scrolling anyway.";
     }
+    // keep the new-posts bar's count in sync after any rebuild
+    this._paintNewBar();
   },
 
   // Update a single post card's live numbers in place (no rebuild)
@@ -531,12 +616,6 @@ const UI = {
         // how many impressions landed since the last paint — the amount we
         // cascade into the "+N" float so every gain is legible, not just a blur
         this._impressionWin(post, delta);
-        const tier = this._impTier(post);
-        if ((post._tierMin || 0) !== tier.min) {
-          post._tierMin = tier.min;
-          this._firePost(post);
-          Juice.coin();
-        }
       }
     }
     if (likeEl && likeEl.textContent !== likeNew) {
@@ -548,6 +627,30 @@ const UI = {
     const shareNew = Engine.fmtTick(stats.shares);
     if (shareEl && shareEl.textContent !== shareNew) {
       shareEl.textContent = shareNew;
+    }
+    // reply-guy race: live countdown on the ring, and resolve when it hits 0
+    if (post.race && !post.raceWon) {
+      const ring = card.querySelector('.race-ring');
+      const left = Math.max(0, post.raceEndsAt - Date.now());
+      if (ring && ring.textContent !== String(Math.ceil(left / 1000))) {
+        ring.textContent = Math.ceil(left / 1000);
+      }
+    }
+    // golden hour: live countdown on the timer bar
+    if (post.authorId === 'you') {
+      const ghFill = card.querySelector('[data-gh]');
+      const ghLabel = card.querySelector('[data-gh-label]');
+      if (ghFill || ghLabel) {
+        const left = Maxxing.goldenLeft(post);
+        if (left !== null && left > 0) {
+          const pct = (left / (Maxxing.GOLDEN_WINDOW * 1000)) * 100;
+          if (ghFill) ghFill.style.width = pct + '%';
+          if (ghLabel) ghLabel.textContent = '⏱ First-hour window ' + Math.ceil(left / 1000) + 's · engagement doubles reach';
+        } else if (ghFill) {
+          ghFill.style.width = '0%';
+          if (ghLabel && ghLabel.textContent !== '') ghLabel.textContent = '';
+        }
+      }
     }
     // live comments: append new ones with a slide-in
     if (post.comments && post.comments.length) {
@@ -590,37 +693,7 @@ const UI = {
     }
   },
 
-  _impTier(post) {
-    const imp = post.stats.impressions;
-    let tier = this.IMP_TIERS[0];
-    for (const t of this.IMP_TIERS) {
-      if (imp >= t.min) tier = t;
-    }
-    return tier;
-  },
 
-  // Tier up — the badge that latches to the post and relabels it as it climbs
-  // impressions. It is the "you've won" signal that stays instead of re-firing
-  // stimulus every frame, so the win reads once and then quiets down.
-  _firePost(post) {
-    const card = this._cards.get(post.id);
-    if (!card) return;
-    const tier = this._impTier(post);
-    if (!card._fireEl) {
-      card._fireEl = card.querySelector('.fire-post');
-    }
-    if (!card._fireEl) {
-      card._fireEl = document.createElement('div');
-      card._fireEl.className = 'fire-post';
-      card.insertBefore(card._fireEl, card.firstChild);
-    }
-    card._fireEl.classList.remove('hidden');
-    card._fireEl.innerHTML = `<span>${tier.icon}</span> ${tier.label.toUpperCase()}`;
-    // clear any lower-tier class, apply the current one
-    for (const t of this.IMP_TIERS) card.classList.remove(t.cls);
-    card.classList.add(tier.cls);
-    post._tierMin = tier.min;
-  },
 
   // An impression came in. The impression NUMBER is what earns — so that's
   // what glows and bumps a little on every impression. The post itself stays
@@ -756,7 +829,7 @@ const UI = {
   postCard(post) {
     const s = State.data;
     const card = document.createElement('div');
-    card.className = 'post-card' + (post.fourthWall ? ' fourthwall' : '') + (post.scare ? ' scare' : '');
+    card.className = 'post-card' + (post.fourthWall ? ' fourthwall' : '') + (post.scare ? ' scare' : '') + (post.ratioed ? ' ratioed' : '');
     card.dataset.postId = post.id;
     this._cards.set(post.id, card);
     if (post.rarity === 'legendary') card.classList.add('viral-flash');
@@ -776,6 +849,15 @@ const UI = {
     const isYou = post.authorId === 'you';
     const youTag = isYou ? '<span class="you-tag">• You</span>' : '';
 
+    // rage-bait badge on hot-take posts
+    const rageBadge = (post.tone === 'hot' || post.tone === 'unpopular')
+      ? `<span class="rage-badge">${post.tone === 'hot' ? '🔥' : '💣'} ${post.tone === 'hot' ? 'HOT TAKE' : 'UNPOPULAR'}</span>`
+      : '';
+    // A/B test chip + button on your posts
+    const abChip = (isYou && Maxxing.abState(post.id))
+      ? `<span class="ab-chip">${Maxxing.abState(post.id).decided ? (Maxxing.abState(post.id).winner ? '✓ won' : '✗ lost') : '🧪 testing'}</span>`
+      : '';
+
     const stats = post.stats;
     const likeBtn = isYou
       ? `<div class="pa-btn"><span class="thumb">👍</span> Like</div>`
@@ -783,6 +865,25 @@ const UI = {
     const commentBtn = isYou
       ? `<div class="pa-btn"><span>💬</span> Comment</div>`
       : `<button class="pa-btn" data-comment="${post.id}"><span>💬</span> Comment</button>`;
+    // A/B test button on your own posts
+    const abBtn = (isYou && !Maxxing.abState(post.id))
+      ? `<button class="pa-btn ab-btn" data-ab="${post.id}"><span>🧪</span> A/B Test</button>`
+      : '';
+    // reply-guy race bar (a big account posted, be first)
+    let raceHtml = '';
+    if (post.race) {
+      const left = Math.max(0, post.raceEndsAt - Date.now());
+      const won = post.raceWon;
+      const ringCls = won ? (post.raceWinner === 'you' ? 'won' : 'lost') : '';
+      raceHtml = `<div class="race-bar">
+        <div class="race-ring ${ringCls}">${won ? (post.raceWinner === 'you' ? '🏆' : '🤖') : Math.ceil(left / 1000)}</div>
+        <div class="race-box">
+          <div class="race-title">${won ? (post.raceWinner === 'you' ? 'You were first. Top comment.' : 'A bot beat you.') : 'Be first to comment'}</div>
+          <div class="race-sub">${won ? '' : 'First comment gets 3× reach. The algorithm rewards speed.'}</div>
+        </div>
+        ${!won ? `<button class="race-comment-btn" data-race="${post.id}">Be first</button>` : ''}
+      </div>`;
+    }
 
     let commentsHtml = '';
     if (post.comments && post.comments.length) {
@@ -790,14 +891,25 @@ const UI = {
       const total = post.comments.length;
       const shown = post._showAllComments ? post.comments : post.comments.slice(-SHOW_LIMIT);
       const hidden = post._showAllComments ? 0 : total - shown.length;
-      const rows = shown.map(c => `
+      const rows = shown.map((c, ci) => {
+        const idx = post.comments.indexOf(c);
+        const replyBtn = isYou && !c.replied && c.author !== 'You'
+          ? `<button class="pc-reply" data-reply="${post.id}" data-reply-idx="${idx}">Reply</button>`
+          : '';
+        const replied = c.replied
+          ? `<div class="pc-replied">✓ Replied</div><div class="pc-replied-text">${this.escapeHtml(c.replyText || 'Thanks! Really appreciate the support. 🙏')}</div>`
+          : '';
+        return `
         <div class="pc${c.troll ? ' pc-troll' : ''}">
           <div class="pc-avatar" style="background:${c.color || '#b3c6d8'}">${c.emoji || '🙂'}</div>
           <div class="pc-body">
             <div class="pc-author">${this.escapeHtml(c.author)} <span class="pc-role">${c.role || ''}</span></div>
             <div class="pc-text">${this.escapeHtml(c.text)}</div>
+            ${replyBtn}
+            ${replied}
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
       const moreLink = hidden > 0
         ? `<button class="pc-more" data-more="${post.id}">Show all ${total} comments</button>`
         : '';
@@ -807,12 +919,26 @@ const UI = {
       commentsHtml = `<div class="post-comments"></div>`;
     }
 
+    // golden hour: a pulsing timer bar on your fresh posts
+    let goldenHtml = '';
+    if (isYou) {
+      const gh = State.data.goldenHour[post.id];
+      if (gh) {
+        if (gh.autoManaged) {
+          goldenHtml = `<div class="gh-bar"><div class="gh-fill" style="width:100%;background:linear-gradient(90deg,#0a66c2,#7fb8e8)"></div></div><div class="gh-label auto">📅 Auto-managed by Scheduler</div>`;
+        } else {
+          const left = Math.max(0, gh.windowEnd - Date.now());
+          const pct = (left / (Maxxing.GOLDEN_WINDOW * 1000)) * 100;
+          goldenHtml = `<div class="gh-bar"><div class="gh-fill" data-gh="${post.id}" style="width:${pct}%"></div></div><div class="gh-label" data-gh-label="${post.id}">⏱ First-hour window ${Math.ceil(left / 1000)}s · engagement doubles reach</div>`;
+        }
+      }
+    }
+
     card.innerHTML = `
-      <div class="fire-post hidden"></div>
       <div class="post-head">
         <div class="avatar" style="background:${post.authorColor}">${post.authorEmoji}</div>
         <div>
-          <div class="post-author">${post.authorName}${youTag}${tierBadge}</div>
+          <div class="post-author">${post.authorName}${youTag}${tierBadge}${rageBadge}${abChip}</div>
           <div class="post-meta">${post.authorRole} · ${ageStr}</div>
         </div>
       </div>
@@ -825,7 +951,9 @@ const UI = {
         <span><b class="st-com">${Engine.fmt(stats.comments)}</b> comments</span>
         <span><b class="st-share">${Engine.fmt(stats.shares)}</b> reposts</span>
       </div>
-      <div class="post-actions">${likeBtn}${commentBtn}<div class="pa-btn"><span>↗</span> Repost</div><div class="pa-btn"><span>✈️</span> Send</div>${post.authorId === 'you' ? `<div class="pa-btn boost" data-boost="${post.id}"><span>🚀</span> Boost</div>` : ''}</div>
+      ${goldenHtml}
+      ${raceHtml}
+      <div class="post-actions">${likeBtn}${commentBtn}${abBtn}<div class="pa-btn"><span>↗</span> Repost</div><div class="pa-btn"><span>✈️</span> Send</div>${post.authorId === 'you' ? `<div class="pa-btn boost" data-boost="${post.id}"><span>🚀</span> Boost</div>` : ''}</div>
       ${commentsHtml}
     `;
 
@@ -863,6 +991,27 @@ const UI = {
       this.updatePostCard(post);
     });
 
+    // reply to a comment (manual boost — the engage bot does it silently)
+    card.querySelectorAll('[data-reply]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        Maxxing.replyToComment(post.id, parseInt(btn.dataset.replyIdx, 10));
+      });
+    });
+
+    // reply-guy race: be first to comment
+    const raceBtn = card.querySelector('[data-race]');
+    if (raceBtn) raceBtn.addEventListener('click', () => {
+      Maxxing.winRace(post.id);
+      this.updatePostCard(post);
+    });
+
+    // A/B test
+    const abBtnEl = card.querySelector('[data-ab]');
+    if (abBtnEl) abBtnEl.addEventListener('click', () => {
+      Maxxing.startAbTest(post.id);
+      this.updatePostCard(post);
+    });
+
     // "Show all X comments" expand
     const moreEl = card.querySelector('[data-more]');
     if (moreEl) moreEl.addEventListener('click', () => {
@@ -870,8 +1019,6 @@ const UI = {
       this.renderFeed();
     });
 
-    // restore any earned tier badge (in case this card was rebuilt)
-    if (this._impTier(post).min > 0) this._firePost(post);
     // restore the on-fire state so flames persist across feed rebuilds
     if (post.onFire) this._ignite(post, card);
 
@@ -997,6 +1144,53 @@ const UI = {
     } else {
       el.textContent = 'Free write: authentic, lower potential.';
     }
+    // tone warning: rage-bait costs authenticity and risks a ratio
+    const toneSel = document.getElementById('opt-tone');
+    const toneWarn = document.getElementById('tone-warn');
+    if (toneSel && toneWarn) {
+      const tone = toneSel.value;
+      if (tone === 'hot') {
+        toneWarn.textContent = '🔥 Hot take: 2.5× reach, −12 authenticity, ratio risk.';
+        toneWarn.classList.remove('hidden');
+      } else if (tone === 'unpopular') {
+        toneWarn.textContent = '💣 Unpopular opinion: 3.5× reach, −20 authenticity, ratio risk.';
+        toneWarn.classList.remove('hidden');
+      } else {
+        toneWarn.classList.add('hidden');
+      }
+    }
+    // trending chip: the countdown ring for newsjacking
+    this.updateTrendingChip();
+  },
+
+  // the trending tag chip in the composer (newsjacking)
+  // Throttled: the uiLoop calls it every frame, but it only needs to repaint
+  // when the countdown crosses a second boundary (or the tag appears/expires).
+  _trendingChipAt: 0,
+  updateTrendingChip() {
+    const row = document.getElementById('trending-row');
+    const chip = document.getElementById('trending-chip');
+    if (!row || !chip) return;
+    const info = Maxxing.trendingInfo();
+    if (!info) {
+      if (!row.classList.contains('hidden')) row.classList.add('hidden');
+      return;
+    }
+    const secs = Math.ceil(info.left / 1000);
+    const used = info.used;
+    // repaint only when the visible second or used-state changes, or when
+    // the chip is currently hidden
+    if (row.classList.contains('hidden') || chip.dataset.secs !== String(secs) || chip.dataset.used !== String(used)) {
+      row.classList.remove('hidden');
+      const d = Tags.def(info.tagId);
+      chip.className = 'trending-chip' + (used ? ' expired' : '');
+      chip.innerHTML = (d ? d.emoji + ' ' + d.name : info.tagId) +
+        (used
+          ? ' <span class="tc-timer">used</span>'
+          : ' <span class="tc-timer">' + secs + 's</span>');
+      chip.dataset.secs = String(secs);
+      chip.dataset.used = String(used);
+    }
   },
 
   openComposer() {
@@ -1096,28 +1290,44 @@ const UI = {
     };
 
     const order = [
-      { key: 'content',  label: 'CONTENT',    desc: 'quality' },
-      { key: 'audience', label: 'AUDIENCE',   desc: 'network' },
-      { key: 'engage',   label: 'ENGAGE',     desc: 'resonance' },
-      { key: 'schedule', label: 'DISTRIBUTE', desc: 'timing' },
+      { key: 'content',  icon: '✍️', label: 'CONTENT' },
+      { key: 'audience', icon: '👥', label: 'AUDIENCE' },
+      { key: 'engage',   icon: '👍', label: 'ENGAGE' },
+      { key: 'schedule', icon: '📅', label: 'DISTRIBUTE' },
     ];
 
-    const nodes = order.map(o => {
+    // a conveyor: each gate is a machine station; a flowing workpiece carries
+    // the count from one station to the next; the output falls into the hopper.
+    const stations = order.map((o, i) => {
       const g = gates[o.key] || { hand: true, name: o.key };
+      const isMachine = !g.hand;
       const val = Engine.fmtTick(flow[o.key]);
+      const gear = isMachine ? '⚙️' : o.icon;
       return `
-        <div class="gate ${g.hand ? 'hand' : 'machine'}">
-          <div class="gate-handler">${g.hand ? '🖐 You' : '🤖 ' + g.name}</div>
-          <div class="gate-flow" data-gate="${o.key}">${val}</div>
-          <div class="gate-label">${o.label} · ${o.desc}</div>
-        </div>`;
-    }).join('<div class="fl-arrow">→</div>');
+        <div class="fl-station ${isMachine ? 'machine' : 'hand'}">
+          <div class="fl-machine ${isMachine ? 'machine' : 'hand'}">
+            <span class="fl-gear">${gear}</span>
+            <div class="fl-flow-val" data-gate="${o.key}" style="font-size:10px;font-weight:800;color:${isMachine ? '#0a66c2' : '#999'};font-variant-numeric:tabular-nums;">${val}</div>
+          </div>
+          <div class="fl-slot-label">${o.label}</div>
+        </div>
+        ${i < order.length - 1 ? '<div class="fl-flow"><span class="workpiece"></span></div>' : ''}
+        ${i === order.length - 1 ? '<div class="fl-hopper"><span class="fl-hopper-num" data-gate="out">' + val + '</span><span class="fl-hopper-label">IMP/S</span></div>' : ''}
+      `;
+    }).join('');
 
     return `
       <div class="factory-line ${gens > 0 ? 'online' : 'offline'}">
-        <div class="fl-title">🏭 ${gens > 0 ? 'THE MACHINE IS RUNNING' : 'THE MACHINE IS IDLE'}</div>
-        <div class="fl-stages">${nodes}</div>
-        <div class="fl-sub">${gens > 0 ? 'Built by hand first. Delegate each step to a factory. The machine wires the rest.' : 'Every step is yours by hand. Buy a factory to automate it.'}</div>
+        <div class="fl-head">
+          <div class="fl-title">🏭 THE FACTORY</div>
+          <div class="fl-rpm"><span class="rpm-dot ${gens > 0 ? 'blink' : ''}"></span><span data-rpm>${gens > 0 ? Engine.fmt(p.ips) : 0}/s</span></div>
+        </div>
+        <div class="fl-conveyor">
+          <div class="fl-belt"></div>
+          <div class="fl-track">${stations}</div>
+        </div>
+        <div class="fl-sub">${gens > 0 ? 'The machine is running. It never sleeps, never stops, never asks why.' : 'Every step is yours by hand. Buy a machine and it runs without you.'}</div>
+        <div class="fl-machines-note" data-note>Built by hand first. Delegate each step to a machine.</div>
       </div>`;
   },
 
@@ -1128,7 +1338,7 @@ const UI = {
     strip.innerHTML = this.factoryLineHtml();
   },
 
-  // Live-tick the factory strip in place while visible. Each gate's throughput
+  // Live-tick the factory strip in place while visible. Each station's flow
   // rolls in real time so the machine visibly works even when you're idle.
   factoryLive() {
     const strip = document.getElementById('factory-strip');
@@ -1144,17 +1354,25 @@ const UI = {
       audience: p.ips,
       engage: p.likes + p.comments + p.shares,
       schedule: p.impressions,
+      out: p.impressions,
     };
-    line.querySelectorAll('.gate-flow').forEach(el => {
+    line.querySelectorAll('[data-gate]').forEach(el => {
       const key = el.dataset.gate;
       if (key && flow[key] !== undefined) {
         const v = Engine.fmtTick(flow[key]);
         if (el.textContent !== v) el.textContent = v;
       }
     });
+    const rpm = line.querySelector('[data-rpm]');
+    if (rpm) {
+      const v = Engine.fmt(p.impressions) + '/s';
+      if (rpm.textContent !== v) rpm.textContent = v;
+    }
+    const note = line.querySelector('[data-note]');
+    if (note) note.style.display = gens > 0 ? 'block' : 'none';
     // refresh handler badges when a gate's ownership changes
     const title = line.querySelector('.fl-title');
-    if (title) title.textContent = '🏭 ' + (gens > 0 ? 'THE MACHINE IS RUNNING' : 'THE MACHINE IS IDLE');
+    if (title) title.textContent = '🏭 THE FACTORY';
   },
 
   /* ---------- analytics ---------- */
@@ -1388,6 +1606,47 @@ const UI = {
     const el = document.getElementById('jobs-empty');
     if (!el) return;
     el.textContent = '';
+    const s = State.data;
+    // jobs unlock at 200 followers; before that show the locked nudge
+    if (s.followers < 200) {
+      el.innerHTML = `<div class="jobs-locked">
+        <div style="font-size:32px">🔒</div>
+        <div style="font-weight:700;margin:8px 0">Jobs are locked</div>
+        <div style="color:#666">Reach 200 followers and the algorithm will start dangling "opportunities" at you.</div>
+        <div style="color:#999;margin-top:6px;font-size:11px">${Engine.fmt(200 - s.followers)} followers to go</div>
+      </div>`;
+      return;
+    }
+    const jobs = DATA.JOBS.map(j => `
+      <div class="job-item">
+        <div class="job-icon">${j.icon}</div>
+        <div class="job-body">
+          <div class="job-title">${j.title}</div>
+          <div class="job-company">${j.company} · <span class="job-tag">${j.tag}</span></div>
+          <div class="job-desc">${j.desc}</div>
+          <div class="job-pay">${j.salary}</div>
+        </div>
+        <button class="btn btn-primary job-apply" data-job="${j.id}">${j.apply}</button>
+      </div>`).join('');
+    el.innerHTML = `<div class="jobs-head">
+        <span class="jobs-title">💼 Opportunities</span>
+        <span class="jobs-sub">The algorithm dangles a ladder. The ladder is a treadmill.</span>
+      </div><div class="jobs-list">${jobs}</div>`;
+    el.querySelectorAll('[data-job]').forEach(b => {
+      b.addEventListener('click', () => {
+        const j = DATA.JOBS.find(x => x.id === b.dataset.job);
+        if (!j) return;
+        if (j.id === 'j6') {
+          // the algorithm's own listing: the loop closes
+          Juice.toast('You applied. The algorithm noted your application. The room is still empty.');
+          Narrator.say('jobs_applied', 'notif');
+        } else {
+          Juice.toast('Applied to ' + j.title + ' at ' + j.company + '. They will ghost you. The algorithm watched.');
+        }
+        b.textContent = 'Applied';
+        b.disabled = true;
+      });
+    });
   },
 
   /* ---------- recommended people ---------- */
@@ -1745,6 +2004,120 @@ const UI = {
     }
   },
 
+  /* ---------- niche pillars ---------- */
+  renderPillars() {
+    const body = document.getElementById('pillars-body');
+    if (!body) return;
+    const s = State.data;
+    const chosen = s.pillars.chosen || [];
+    const mult = Maxxing.pillarMult();
+    const opts = DATA.TAGS.filter(t => t.id !== 'beg').map(t => {
+      const sel = chosen.includes(t.id);
+      return `<div class="pillar-opt ${sel ? 'selected' : ''}" data-pillar="${t.id}">
+        <span class="p-emoji">${t.emoji}</span>
+        <span class="p-name">${t.name}</span>
+        <span class="p-check">${sel ? '✓' : ''}</span>
+      </div>`;
+    }).join('');
+    body.innerHTML = `
+      <div class="pillar-intro">Pick up to 3 topics to be <b>known for</b>. Posts that use a pillar tag build consistency; posts that wander reset it. The algorithm rewards a focused niche — up to <b>+45% reach</b>.</div>
+      ${chosen.length ? `<div class="pillar-current">🎯 Current pillars: ${chosen.map(id => { const d = Tags.def(id); return d ? d.emoji + ' ' + d.name : id; }).join(', ')}</div>` : ''}
+      <div class="pillar-grid">${opts}</div>
+      <div class="pillar-consistency">Consistency streak: ${s.pillars.consistency} on-pillar posts · best ${s.pillars.bestConsistency || 0} · current multiplier ×${mult.toFixed(2)}</div>
+      <button class="btn btn-primary pillar-save" id="pillar-save">Save Pillars</button>`;
+    body.querySelectorAll('[data-pillar]').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.dataset.pillar;
+        const i = chosen.indexOf(id);
+        if (i >= 0) chosen.splice(i, 1);
+        else if (chosen.length < 3) chosen.push(id);
+        this.renderPillars();
+      });
+    });
+    const save = document.getElementById('pillar-save');
+    if (save) save.addEventListener('click', () => {
+      Maxxing.choosePillars(chosen);
+      this.hideModal('pillars-modal');
+      this.refresh();
+    });
+  },
+
+  /* ---------- A/B test ---------- */
+  renderAb(post) {
+    const body = document.getElementById('ab-body');
+    if (!body) return;
+    const ab = Maxxing.abState(post.id);
+    body.innerHTML = `
+      <div class="ab-copy">The algorithm sampled two versions of your post against a small audience.</div>
+      ${ab && ab.decided
+        ? `<div class="ab-copy" style="font-weight:700;color:${ab.winner ? '#2e7d32' : '#d11124'}">${ab.winner ? '✓ Your post won. Reach doubled.' : '✗ The other version won. You never saw it.'}</div>`
+        : `<div class="ab-copy">Sampling in progress… check back in a moment.</div>`}`;
+    this.showModal('ab-modal');
+  },
+
+  /* ---------- DMs (collabs + the algorithm) ---------- */
+  renderDms() {
+    const list = document.getElementById('dms-list');
+    if (!list) return;
+    const s = State.data;
+    const collabs = s.collabs || [];
+    const narratorDms = (s.dms || []).filter(d => d.narrator).slice(0, 5);
+    let html = '';
+    if (!collabs.length && !narratorDms.length) {
+      html = '<div class="dm-item"><div class="dm-body"><div class="dm-name">No messages yet</div><div class="dm-text">Collabs and the algorithm will reach out as you grow.</div></div></div>';
+    }
+    // collab offers
+    for (const c of collabs) {
+      const person = Maxxing.COLLAB_POOL.find(p => p.id === c.personId);
+      if (!person) continue;
+      const state = c.state;
+      html += `<div class="dm-item">
+        <div class="dm-avatar" style="background:${person.color}">${person.emoji}</div>
+        <div class="dm-body">
+          <div class="dm-name">${person.name}</div>
+          <div class="dm-role">${person.role}</div>
+          <div class="dm-text">"Hey! I love your content. Want to do a collab? We post each other's stuff to our audiences — ${Engine.fmt(person.reach)} people on my side."</div>
+          ${state === 'offer' ? `
+            <div class="dm-split">My audience split: <input type="number" id="split-${c.id}" value="${c.split}" min="10" max="90" step="5">%</div>
+            <div class="dm-actions">
+              <button class="btn btn-primary" data-collab-accept="${c.id}">Accept</button>
+              <button class="btn" data-collab-decline="${c.id}">Decline</button>
+            </div>` : ''}
+          ${state === 'accepted' ? `<div class="dm-state accepted">✓ Accepted. Your post is reaching their network.</div>` : ''}
+          ${state === 'declined' ? `<div class="dm-state declined">Declined. The algorithm noted your hesitation.</div>` : ''}
+        </div>
+      </div>`;
+    }
+    // narrator DMs (the algorithm's voice)
+    for (const d of narratorDms) {
+      html += `<div class="dm-item">
+        <div class="dm-avatar" style="background:${d.color || '#111'}">${d.emoji || '👁️'}</div>
+        <div class="dm-body">
+          <div class="dm-name">${d.name}</div>
+          <div class="dm-role">${d.role}</div>
+          <div class="dm-text">${this.escapeHtml(d.text)}</div>
+        </div>
+      </div>`;
+    }
+    list.innerHTML = html;
+    list.querySelectorAll('[data-collab-accept]').forEach(b => {
+      b.addEventListener('click', () => {
+        const id = b.dataset.collabAccept;
+        const inp = document.getElementById('split-' + id);
+        const split = parseInt(inp && inp.value, 10) || 50;
+        Maxxing.acceptCollab(id, split);
+        this.renderDms();
+        this.refresh();
+      });
+    });
+    list.querySelectorAll('[data-collab-decline]').forEach(b => {
+      b.addEventListener('click', () => {
+        Maxxing.declineCollab(b.dataset.collabDecline);
+        this.renderDms();
+      });
+    });
+  },
+
   /* ---------- tab switching ---------- */
   switchTab(tab) {
     const items = document.querySelectorAll('.nav-item');
@@ -1755,6 +2128,7 @@ const UI = {
     const composer = document.getElementById('composer');
     const networkView = document.getElementById('network-view');
     const jobsView = document.getElementById('jobs-view');
+    const dmsView = document.getElementById('dms-view');
     const show = (el, on) => { if (el) el.classList.toggle('hidden', !on); };
     const isFeed = tab === 'feed';
     show(feed, isFeed);
@@ -1762,6 +2136,7 @@ const UI = {
     show(composer, isFeed);
     show(networkView, tab === 'network');
     show(jobsView, tab === 'jobs');
+    show(dmsView, tab === 'dms');
 
     if (tab === 'bell') {
       this.showModal('bell-modal');
@@ -1773,6 +2148,8 @@ const UI = {
       this.renderNetwork();
     } else if (tab === 'jobs') {
       this.renderJobs();
+    } else if (tab === 'dms') {
+      this.renderDms();
     }
   },
 };
